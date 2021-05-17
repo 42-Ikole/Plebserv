@@ -7,6 +7,7 @@
   
   ## FEATURES
   * centered image in README.md
+  * Confusion counter
 
 ## COLLAB WITH
 @Alpha_1337k
@@ -15,3 +16,5 @@
 ### Special Shout Out
 @rpet91
   
+# Confusion Counter
+  1
