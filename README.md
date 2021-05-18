@@ -11,7 +11,7 @@
 
 ## COLLAB WITH 💞
 * @Alpha_1337k
-* @victorofzo
+* @VictorTennekes
 
 ### Special Shout Out 💯
 * @rpet91
