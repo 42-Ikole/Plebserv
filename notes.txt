@@ -1,0 +1,84 @@
+Host/Port 				=	https://nginx.org/en/docs/http/ngx_http_core_module.html#listen
+							listen [server]:[port]
+							listen [server]	#defaults to port 80
+							listen [port]
+							listen localhost:[port]
+							Default = listen *:80 | *:8000
+
+Server_name 			=	www.domain.com / domain.com / localhost
+							server_name example.com www.example.com ""
+							"" resolves back to server chosen by listen
+							https://nginx.org/en/docs/http/ngx_http_core_module.html#server_name
+
+Default error page 		=	http://nginx.org/en/docs/http/ngx_http_core_module.html#error_page
+							error_page [error]+ [location]
+							Default = ----
+
+Client max body size	=	https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+							client_max_body_size [size]
+							1g 1m 8k 100 0(disable)
+							Default = 16k
+
+--- LOCATION ---
+
+location [uri] {
+	[config]
+}
+
+Limit HTTP				=	https://nginx.org/en/docs/http/ngx_http_core_module.html#limit_except
+							https://www.tutorialspoint.com/http/http_methods.htm
+							limit_except [methods]
+
+Root					=	http://nginx.org/en/docs/http/ngx_http_core_module.html#root
+							root [path]
+							Default = html
+
+Autoindex				=	http://nginx.org/en/docs/http/ngx_http_autoindex_module.html
+							on off
+							Default = off
+
+Index					=	https://nginx.org/en/docs/http/ngx_http_index_module.html#index
+							default: index index.html
+							index [file]+
+							http://nginx.org/en/docs/http/ngx_http_core_module.html#try_files
+
+Location:
+	- List of HTTP methods 			=
+	- Directory or file location	= if url /kapouet is rooted to /tmp/www, url /kapouet/pouic/toto/pouet is /tmp/www/pouic/toto/pouet
+	- def file if request is dir	= 
+	- exec CGI based on file extension:
+		* https://en.wikipedia.org/wiki/Common_Gateway_Interface
+		* Use Full path as PATH_INFO
+		* Unchunck chuncked requests until eof
+		* EOF means end of returned data
+		* Set Meta variables (see subject)
+		* Call cgi with the file as first argument
+		* Run in correct relative directory
+		* Should work with php-cgi
+	- make the route able to accept uploaded files and configure where it should be saved  --- !TODO! ---
+
+
+https://helpx.adobe.com/coldfusion/cfml-reference/reserved-words-and-variables/cgi-environment-cgi-scope-variables/cgi-server-variables.html
+https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
+https://www.whoishostingthis.com/compare/cgi-access/variables/
+https://datatracker.ietf.org/doc/html/rfc3875#section-4.1
+CGI Meta Variables		=	
+							AUTH_TYPE			= BASIC/SSL or null
+							CONTENT_LENGTH		= [-1] / size of message in octets idk idc idgaf imho
+							CONTENT_TYPE		= [content-type (html header)] / [NULL]
+							GATEWAY_INTERFACE	= [CGI/revision]
+							PATH_INFO			= (absolute path naar file toe)
+							PATH_TRANSLATED		= (absolute path naar file toe)
+							QUERY_STRING		= (string in de Uri na de path eg; var1=value1&var2=with%20percent%20encoding)
+							REMOTE_ADDR			= ip of the client
+							REMOTE_IDENT		= remote username retrieved from the server. idk idc idgaf
+													ID of user running CGI script
+							REMOTE_USER			= login of the user if authenticated else null
+							REQUEST_METHOD		= [get] / [set]
+							REQUEST_URI			= (uri van request)
+							SCRIPT_NAME			= Returns the part of the URL from the protocol name up to the query string in the first line of the HTTP request.
+							SERVER_NAME			= server_name 
+							SERVER_PORT			= port
+							SERVER_PROTOCOL		= HTTP/1.1
+							SERVER_SOFTWARE		= "Plebserv (linux) PHP/7.3.7"
+
