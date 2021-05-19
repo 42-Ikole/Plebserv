@@ -1,17 +1,21 @@
-NAME=plebserv
+NAME		=	plebserv
 
-CC=clang++
-FLAGS=-Wall -Werror -Wextra -std=c++98 -pedantic
-DEBUG_FLAGS=-g -fsanitize=address
-SRC=src/*.cpp
-LIBS=
-OBJ=
-RM =rm -rf
+CC			=	clang++
+FLAGS		=	# -std=c++98 # -pedantic -Wall -Werror -Wextra 
+DEBUG_FLAGS	=	-g -fsanitize=address
+SRC			=	src/*.cpp
+# SRC			=	src/main.cpp \
+# 				src/error.cpp \
+# 				src/parser_config.cpp \
+# 				src/server.cpp
+LIBS		=	
+OBJ			=	
+RM 			=	rm -f
 
 all: $(NAME)
 
 $(NAME): $(SRC)
-	$(CC) $(FLAGS) $(SRC) $(LIBS) -o $(NAME)
+	$(CC) $(FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME)
 
 clean:
 	$(RM) $(OBJ)
@@ -25,4 +29,4 @@ run: re
 	./$(NAME)
 
 debug: fclean
-	$(CC) $(FLAGS) $(DEBUG_FLAGS) $(SRC) $(LIBS) -o $(NAME)
+	$(CC) $(FLAGS) $(DEBUG_FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME)

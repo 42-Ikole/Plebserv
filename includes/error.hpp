@@ -1,0 +1,17 @@
+#ifndef ERROR_HPP
+# define ERROR_HPP
+
+# include <string>
+
+# define COLOR_RED "\033[31;01m"
+# define COLOR_RESET "\033[0m"
+
+enum ErrorCode
+{
+	PARSER,
+	SERVER
+};
+
+void error(ErrorCode code, std::string msg);
+
+#endif
