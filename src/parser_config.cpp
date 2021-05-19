@@ -6,6 +6,7 @@
 
 #include <error.hpp>
 #include <server.hpp>
+#include <utilities.hpp>
 
 using namespace std;
 #define BUFFER 128
@@ -36,11 +37,6 @@ vector<string> get_lines(string file)
 	return (res);
 }
 
-static inline std::string &ltrim(std::string &s) {
-	s.erase(s.begin(), s.begin() + s.find_first_not_of(" \t"));
-	return s;
-}
-
 vector<Server>	get_servers(vector<string> lines)
 {
 	vector<Server>	res;
@@ -48,20 +44,16 @@ vector<Server>	get_servers(vector<string> lines)
 	
 	for (vector<string>::iterator it = lines.begin(); it != lines.end();)
 	{
-		string s = *it;
-		ltrim(s);
-		ltrim(*it);
-		cout << "ik ben net buiten de server" << endl;
+		string s = ltrim(*it);
+		cerr << "ik ben net buiten de server" << endl;
 		if (s == "server {")
 		{
-			cout << "ik ben in de server" << endl;
+			cerr << "ik ben in de server" << endl;
 			vector<string>::iterator start = it++;
 			depth++;
 			while (depth != 0)
 			{
-				s = *it;
-				ltrim(s);
-				ltrim(*it);
+				s = ltrim(*it);
 				if (s.find("{") != string::npos)
 					depth++;
 				else if (s.find("}") != string::npos)
@@ -72,7 +64,6 @@ vector<Server>	get_servers(vector<string> lines)
 		}
 		else
 			it++;
-
 	}
 	return (res);
 }
