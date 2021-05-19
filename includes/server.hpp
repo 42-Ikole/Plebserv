@@ -36,8 +36,9 @@ class Server
 		void 	call(const string& s, vector<string> val);
 		int		parse_args(vector<string> arr, int i);
 		void 	load_ports(vector<string> val);
-		void 	load_ser_name(vector<string> val);
+		void 	load_server_name(vector<string> val);
 		void 	load_client_max_body_size(vector<string> val);
+		void	load_locations(vector<string> val);
 };
 
 #endif

@@ -50,6 +50,7 @@ vector<Server>	get_servers(vector<string> lines)
 	{
 		string s = *it;
 		ltrim(s);
+		ltrim(*it);
 		cout << "ik ben net buiten de server" << endl;
 		if (s == "server {")
 		{
@@ -59,6 +60,8 @@ vector<Server>	get_servers(vector<string> lines)
 			while (depth != 0)
 			{
 				s = *it;
+				ltrim(s);
+				ltrim(*it);
 				if (s.find("{") != string::npos)
 					depth++;
 				else if (s.find("}") != string::npos)

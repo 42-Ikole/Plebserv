@@ -9,7 +9,11 @@ typedef void (Server::*LoadFunction)(vector<string> val);
 inline map<string, LoadFunction> create_map()
 {
 	map<string, LoadFunction> m;
-	m["location"] = &Server::load_ports;
+	m["location"] 				= &Server::load_locations;
+	m["server_name"] 			= &Server::load_server_name;
+	m["client_max_body_size"]	= &Server::load_client_max_body_size;
+	m["listen"]					= &Server::load_ports;
+
 	return m;
 }
 
@@ -35,13 +39,12 @@ Server	&Server::operator=(Server const &tba)
 
 Server::Server(vector<string> input)
 {
-	for (std::vector<std::string>::iterator i = input.begin(); i != input.end(); i++)
+	for (size_t x = 1; x < input.size();)
 	{
-		std::cout << *i << "$" << std::endl;
-				
+		std::cout << input[x] << "----" << std::endl;
+		x += parse_args(input, x);
 	}
 	std::cout << "DIKKE ARIE" << std::endl;
-	call("location", input);
 }
 
 void Server::call(const string& s, vector<string> val)
@@ -52,17 +55,24 @@ void Server::call(const string& s, vector<string> val)
 
 void	Server::load_ports(vector<string> val)
 {
-	cerr << "WORKING" << endl;
+	cerr << "PORTS" << endl;
 }
 
-void	Server::load_ser_name(vector<string> val)
+void	Server::load_server_name(vector<string> val)
 {
+	cerr << "SERVER_NAME" << endl;
 	_server_name.push_back(val[0]);
 }
 
 void	Server::load_client_max_body_size(vector<string> val)
 {
+	cerr << "MAX BODY SIZE" << endl;
 	_server_name.push_back(val[0]);
+}
+
+void	Server::load_locations(vector<string> val)
+{
+	cerr << "LOCATIONS" << endl;
 }
 
 
@@ -95,15 +105,16 @@ int	Server::parse_args(vector<string> arr, int i)
 					args.push_back(s);
 			}
 			break;
-		}	
+		}
 	}
 	if (depth == 1)
 		args.push_back(s);
-	std::cout << "Name: " << param << std::endl;
+	std::cout << "Name:" << param << "$" << std::endl;
 	for (std::vector<std::string>::iterator it = args.begin(); it != args.end(); it++)
 	{
 		std::cout << *it << "$" << std::endl;		
 	}
 	cout << "---------" << std::endl;
+	call(param, args);
 	return (x);
 }
