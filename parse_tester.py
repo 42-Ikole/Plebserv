@@ -39,9 +39,9 @@ def main():
 		else:
 			result = test(i)
 		if (result == 0):
-			print(i + "\t\t" + bcolors.OKGREEN + "[ OK ]" + bcolors.ENDC)
+			print('{:<30s} {:>20s}'.format(i, "\t\t" + bcolors.OKGREEN + "[ OK ]" + bcolors.ENDC))
 		else:
-			print(i + "\t\t" + bcolors.FAIL + "[ KO ]" + bcolors.ENDC)
+			print('{:<30s} {:>20s}'.format(i, "\t\t" + bcolors.FAIL + "[ KO ]" + bcolors.ENDC))
 			error_count += 1
 		count += 1
 	print(str(count - error_count) + " out of " + str(count) + " OK")
