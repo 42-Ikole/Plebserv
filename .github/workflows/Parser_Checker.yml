@@ -24,6 +24,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.7'
+  
+      - name: make
+        run: make re
 
       - name: Checker
         run: python3.7 parse_tester.py
