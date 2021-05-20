@@ -3,6 +3,7 @@
 #include <vector>
 #include <error.hpp>
 #include <map>
+#include <utilities.hpp>
 
 using namespace std;
 
@@ -39,14 +40,16 @@ void Location::set_root(vector<string> val)
 
 void Location::set_auto_index(vector<string> val)
 {
-	if (val[0] == "on;")
+	if (val[0] == "on")
 		_auto_index = on;
-	else if (val[0] == "off;")
+	else if (val[0] == "off")
 		_auto_index = off;
+	// else
 }
 
 void Location::set_index_page(vector<string> val)
 {
+	_index_page.clear();
 	for (size_t i = 0; i < val.size(); i++)
 	{
 		_index_page.push_back(val[i]);
@@ -63,6 +66,7 @@ void Location::set_limit_except(vector<string> val)
 
 Location& Location::operator=(Location const& tba)
 {
+	_location = tba._location;
 	_methods = tba._methods;
 	_limit_except = tba._limit_except;
 	_root = tba._root;
@@ -73,7 +77,7 @@ Location& Location::operator=(Location const& tba)
 
 std::ostream &operator<<(std::ostream &out, Location const &value)
 {
-	out << "------------ LOCATION " << value._location << "--------" << std::endl;
+	out << "------------ LOCATION " << value._location << " --------" << std::endl;
 	out << std::setw(20) << "ROOT | " << value._root << std::endl;
 	out << std::setw(20) << "AUTO INDEX | " << (value._auto_index == false ? COLOR_RED : COLOR_GREEN) << value._auto_index << COLOR_RESET << std::endl;
 	out << std::setw(20) << "INDEX PAGE | ";
@@ -93,42 +97,28 @@ std::ostream &operator<<(std::ostream &out, Location const &value)
 	return (out);
 }
 
-int	Location::parse_args(vector<string> arr, int i)
+int	Location::parse_args(string str)
 {
-	if (i >= arr.size())
-		return (0);
-	string s = arr[i];
-	size_t pos = s.find(" ");
-	string param = s.substr(0, pos);
 	vector<string> args;
+	vector<string> tokens;
 
-	s = s.substr(pos + 1, s.size());
-	for (pos = s.find(" "); pos != string::npos; pos = s.find(" "))
-	{
-		args.push_back(s.substr(0, pos));
-		s = s.substr(pos + 1, s.size());
-	}
-	args.push_back(s);
-	std::cout << "Name:" << param << "$" << std::endl;
-	for (std::vector<std::string>::iterator it = args.begin(); it != args.end(); it++)
-	{
-		std::cout << *it << "$" << std::endl;		
-	}
-	cout << "---------" << std::endl;
-	call(param, args);
+	if (!str.size())
+		return (0);
+	tokens = ft::split(str);
+	for (int i = 1; i < tokens.size(); i++)
+		args.push_back(tokens[i]);
+	call(tokens[0], args);
 	return (1);
 }
 
-Location::Location(vector<string> val) //: _root("/www/"), _server("default name"), _max_body_size(16000)
+Location::Location(vector<string> val): _root("/html"), _auto_index(off), _location(val[0])
 {
-	cout << "AHJAHAHAHHA WE ARE STARTING TO LOCATION" << std::endl;
-	_location = val[0];
-	for (size_t x = 1; x < val.size();)
-	{
-		std::cout << val[x] << "----" << std::endl;
-		x += parse_args(val, x);
-	}
-	
+	_index_page.push_back("index.html");
+	_index_page.push_back("index");
+
+	for (size_t x = 1; x < val.size(); x++)
+		if (!val[x].empty())
+			parse_args(val[x]);	
 }
 
 void Location::call(const string& s, vector<string> val)

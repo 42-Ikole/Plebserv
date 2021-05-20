@@ -15,7 +15,6 @@ typedef struct	s_err_page
 
 class Server
 {
-
 	public:
 		vector<int>					_port;
 		string						_server;
@@ -27,7 +26,7 @@ class Server
 		Server();
 
 	public:
-		~Server();
+		virtual ~Server();
 		Server(vector<string> input);
 		Server(const Server &tbc);
 		Server & operator=(const Server &tba);
@@ -38,6 +37,10 @@ class Server
 		void 	load_server_identifier(vector<string> val);
 		void 	load_client_max_body_size(vector<string> val);
 		void	load_locations(vector<string> val);
+		
+		vector<string>	check_listen(string &val);
+		void			check_port(string &val);
+		void			check_servername(string &val);
 };
 
 std::ostream &operator<<(std::ostream &out, Server const &value);

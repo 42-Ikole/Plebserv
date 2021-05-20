@@ -46,13 +46,13 @@ class Location
 		Location();
 	
 	public:
-		~Location();
+		virtual ~Location();
 		Location(vector<string> input);
 		Location(const Location &tbc);
 		Location & operator=(const Location &tba);
 
 		void 	call(const string& s, vector<string> val);
-		int		parse_args(vector<string> arr, int i);
+		int		parse_args(string str);
 		void 	set_root(vector<string> val);
 		void 	set_auto_index(vector<string> val);
 		void 	set_index_page(vector<string> val);

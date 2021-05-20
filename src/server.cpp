@@ -61,15 +61,13 @@ std::ostream &operator<<(std::ostream &out, Server const &value)
 }
 
 Server::Server(vector<string> input) :
-	_port({80, 8000}), _server("localhost"), _server_identifier(), _max_body_size(160000) 
+	_server("localhost"), _server_identifier(), _max_body_size(160000)
 {
+	_server_identifier.push_back("");
+	_port.push_back(80);
+	_port.push_back(8000);
 	for (size_t x = 1; x < input.size();)
-	{
-		std::cout << input[x] << "----" << std::endl;
 		x += parse_args(input, x);
-	}
-	std::cout << "DIKKE ARIE" << std::endl;
-	std::cout << *this << std::endl;
 }
 
 void Server::call(const string& s, vector<string> val)
@@ -80,71 +78,129 @@ void Server::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
+void	Server::check_servername(string &val)
+{
+	vector<string> tokens = ft::split(val, ".");
+	if ((tokens.size() == 3 && tokens[0] != "www") || tokens.size() > 3)
+		throw Plebception(ERR_INVALID_VALUE, "listen1", val);
+	else if(tokens.size() == 3)
+		tokens.erase(tokens.begin());
+	string res = tokens[0];
+	if (tokens.size() == 2)
+		res += '.' + tokens[1];
+	if (_server != "" && _server != res)
+		throw Plebception(ERR_MULTIPLE_DOM, "listen2", res);
+}
+
+void	Server::check_port(string &val)
+{
+	if (val.find_first_not_of("0123456789") != string::npos)
+		throw Plebception(ERR_INVALID_VALUE, "listen3", val);
+}
+
+vector<string>	Server::check_listen(string &val)
+{
+	vector<string> tmp = ft::split(val, ":");
+
+	if (tmp.size() > 2)
+		throw Plebception(ERR_INVALID_VALUE, "listen4", val);
+	else if (tmp.size() == 2)
+	{
+		check_servername(tmp[0]);			
+		check_port(tmp[1]);
+	}
+	else if (tmp[0].find_first_not_of("0123456789") != string::npos)
+		check_servername(tmp[0]);
+	else
+		check_port(tmp[0]);
+	return tmp;
+}
+
 void	Server::load_ports(vector<string> val)
 {
-	cerr << "PORTS" << endl;
+	_port.clear();
+	_server = "";
+	for (size_t i = 0; i < val.size(); i++)
+	{
+		vector<string> tmp = check_listen(val[i]);
+		for (int j = 0; j < tmp.size(); j++)
+		{
+			if (tmp[j].find_first_not_of("0123456789") != string::npos)
+				_server = tmp[j];
+			else
+				_port.push_back(ft::stoi(tmp[j]));
+		}
+	}
 }
 
 void	Server::load_server_identifier(vector<string> val)
 {
-	cerr << "SERVER_NAME" << endl;
+	_server_identifier.clear();
 	for (size_t i = 0; i < val.size(); i++)
-		_server_identifier.push_back(trim_char(val[i], ';'));
+		_server_identifier.push_back(ft::trim_char(val[i], ';'));
 }
 
 void	Server::load_client_max_body_size(vector<string> val)
 {
-	cerr << "MAX BODY SIZE" << endl;
-	val[0] = trim_char(val[0], ';');
-	_max_body_size = std::atoi(val[0].c_str());
+	val[0] = ft::trim_char(val[0], ';');
+	_max_body_size = ft::stoi(val[0]);
 }
 
 void	Server::load_locations(vector<string> val)
 {
-	cerr << "LOCATIONS" << endl;
 	_locations.push_back(Location(val));
 }
 
-
-int	Server::parse_args(vector<string> arr, int i)
+static void check_line(string &s, char delim)
 {
-	if (i >= arr.size())
-		return (0);
-	string s = arr[i];
-	size_t pos = s.find(" ");
-	string param = s.substr(0, pos);
-	vector<string> args;
-	int x = 1;
-	int depth = 1;
-
-	s = s.substr(pos + 1, s.size());
-	for (pos = s.find(" "); pos != string::npos; pos = s.find(" "))
-	{
-		args.push_back(s.substr(0, pos));
-		s = s.substr(pos + 1, s.size());
-		if (s.find('{') != string::npos)
-		{
-			while (depth)
-			{
-				s = arr[i + x++];
-				if (s.find("{") != string::npos)
-					depth++;
-				else if (s.find("}") != string::npos)
-					depth--;
-				if (depth)
-					args.push_back(s);
-			}
-			break;
-		}
-	}
-	if (depth == 1)
-		args.push_back(s);
-	std::cout << "Name:" << param << "$" << std::endl;
-	for (std::vector<std::string>::iterator it = args.begin(); it != args.end(); it++)
-	{
-		std::cout << *it << "$" << std::endl;		
-	}
-	cout << "---------" << std::endl;
-	call(param, args);
-	return (x);
+	if (s.find(delim) != s.size() - 1)
+		throw Plebception(ERR_SEMICOLON, "test", s);
+	else
+		s = ft::trim_char(s, delim);
 }
+
+static bool verify_line(string s, char delim) {
+	if (count(s.begin(), s.end(), delim) == 1 && s.find(delim) == s.size() - 1)
+		return(true);
+	return(false);
+}
+
+int Server::parse_args(vector<string> arr, int index)
+{
+	std::vector<string> tokens;
+	std::vector<string> args;
+	bool location = false;
+
+	size_t i;
+	for (i = index; i < arr.size(); i++)
+	{
+		string s = arr[i];
+		if (!s.size())
+			continue ;
+		tokens = ft::split(s);
+		if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';'))
+			throw Plebception(ERR_INVALID_TOKEN, tokens[0], s);
+		if (tokens[tokens.size() - 1] == "{")
+		{
+			location = true;
+			args.push_back(tokens[1]);
+			for(i++; i < arr.size() && arr[i].find('}') == string::npos; i++)
+				args.push_back(arr[i]);
+		}
+		if (location == false)
+			for (int j = 1; j < tokens.size(); j++)
+				args.push_back(tokens[j]);
+		for (int j = 0; j < args.size(); j++)
+			if (args[j][args[j].size() - 1] == ';')
+				args[j] = ft::trim_char(args[j], ';');
+		cerr << "[" << tokens[0] << "]" << endl << "{";
+		for (int j = 0; j < args.size(); j++)
+			cerr << args[j] << " ";
+		cerr << "}" << endl;
+		call(tokens[0], args);
+		args.clear();
+		location = false;
+	}
+	return(i);
+}
+

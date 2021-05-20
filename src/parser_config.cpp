@@ -1,5 +1,5 @@
 #include <fcntl.h>
-#include <iostream>     // std::cout'
+#include <iostream>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -40,20 +40,18 @@ vector<string> get_lines(string file)
 vector<Server>	get_servers(vector<string> lines)
 {
 	vector<Server>	res;
-	int				depth = 0;
+	int				depth;
 	
 	for (vector<string>::iterator it = lines.begin(); it != lines.end();)
 	{
-		string s = ltrim(*it);
-		cerr << "ik ben net buiten de server" << endl;
+		depth = 1;
+		string s = ft::ltrim(*it);
 		if (s == "server {")
 		{
-			cerr << "ik ben in de server" << endl;
 			vector<string>::iterator start = it++;
-			depth++;
 			while (depth != 0)
 			{
-				s = ltrim(*it);
+				s = ft::ltrim(*it);
 				if (s.find("{") != string::npos)
 					depth++;
 				else if (s.find("}") != string::npos)
