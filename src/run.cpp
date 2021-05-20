@@ -31,8 +31,7 @@ server_data	setup_server(Server ser, short port, int backlog)
 	if ((res.fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 		perror("socket failed");
 
-    if (setsockopt(res.fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                                                  &opt, sizeof(opt)))
+    if (setsockopt(res.fd, SOL_SOCKET, SO_REUSEADDR , &opt, sizeof(opt)))
     {
         perror("setsockopt");
         exit(EXIT_FAILURE);
@@ -71,8 +70,8 @@ void	handle_connection(connect_data client_socket)
 
 	*/
 	char buffer[1025];
-	std::string returnval = "HAHAHAHHAHAHAHAHHAHAHAHAHAHAHHA";
-
+	std::string returnval = "HTTP/1.1 200 OK Date: Thu, 08 Apr 2004 18:24:33 GMT Server: Apache/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4 Content-Language: nl Content-Type: text/html; charset=iso-8859-1 X-Cache: MISS from wikipedia.org Connection: close Content-Type: text/html Content-Length: 49\n\n";
+	returnval += "victor je moeter";
 		printf("Got a connection!\n");
 
 	int valread = read( client_socket.fd , buffer, 1024);
@@ -92,6 +91,7 @@ void	host_servers(vector<Server> serv)
 	{
 		for (size_t x = 0; x < serv[i]._port.size(); x++)
 		{
+			std::cout << "Server " << serv[i]._server << " port: " << serv[i]._port[x] << std::endl;
 			data.push_back(setup_server(serv[i], serv[i]._port[x] , 3));
 		}
 	}
