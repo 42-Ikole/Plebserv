@@ -2,10 +2,12 @@
 
 Plebception::Plebception(string msg, string type, string val)
 {
-	_msg = COLOR_GREEN + string("[") + type + string("] ") + COLOR_RED + string("Error: ") + COLOR_RESET + msg + string(" <") + val + string(">"); 
+	_msg = string("[") + COLOR_GREEN + type + COLOR_RESET+ string("] ") + 
+		COLOR_RED + string("Error: ") + COLOR_RESET + msg + 
+		string(" <") + COLOR_YELLOW + val + COLOR_RESET + string(">"); 
 }
 
-Plebception::~Plebception()
+Plebception::~Plebception() _NOEXCEPT
 {}
 
 Plebception::Plebception(const Plebception &tbc)

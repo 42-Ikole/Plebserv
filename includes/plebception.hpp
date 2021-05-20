@@ -5,6 +5,15 @@
 # include <string>
 # include <error.hpp>
 
+# define ERR_SEMICOLON		"WHOA, looks like you forgot a semicolon"
+# define ERR_INVALID_TOKEN	"Invalid token found in"
+# define ERR_INVALID_VALUE	"Invalid value"
+# define ERR_BLOCK			"Looks like you forgot to close block"
+# define ERR_TOO_MANY_ARG	"You have too many arguments"
+# define ERR_INVALID_CONFIG "Yarr, This config is not valid"
+# define ERR_UNKNOWN_IDENT	"OI AMIGO, what is this identifier?"
+# define ERR_MULTIPLE_DOM	"Looks like you are defining multiple domains"
+
 using namespace std;
 
 class	Plebception : public exception
@@ -14,7 +23,7 @@ class	Plebception : public exception
 		Plebception();
 	public:
 		Plebception(string msg, string type, string val);
-		~Plebception();
+		virtual ~Plebception() _NOEXCEPT;
 		Plebception(const Plebception &tbc);
 		Plebception & operator=(const Plebception &tba);
 		const char *what() const throw();
