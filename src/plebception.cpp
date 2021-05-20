@@ -8,12 +8,13 @@ Plebception::Plebception(string msg, string type, string val)
 }
 
 #ifdef LINUX
-	Plebception::~Plebception() _NOEXCEPT
+	Plebception::~Plebception()
 	{}
 #else
 	Plebception::~Plebception() _NOEXCEPT
 	{}
 #endif
+
 Plebception::Plebception(const Plebception &tbc)
 {
 	*this = tbc;
