@@ -9,7 +9,7 @@ private:
 	
 public:
 	Header(std::string in);
-	~Header();
+	virtual ~Header();
 };
 
 #endif

@@ -17,12 +17,12 @@ int main(int argc, char **argv, char **env)
 	else
 		filename = argv[1];
 	
-	try {
-		throw Plebception("dit ging fout", "main", "deze voor je");
-	} catch (std::exception &e){
-		cerr << e.what() << std::endl;
+	std::vector<Server> l = load_config(filename);
+	for (size_t i = 0; i < l.size(); i++)
+	{
+		std::cout << l[i] << std::endl;
 	}
-	// std::vector<Server> l = load_config(filename);
+	
 	// std::vector<std::string> res = get_lines(filename);
 	// for (std::vector<std::string>::iterator i = res.begin(); i != res.end(); i++)
 	// {
