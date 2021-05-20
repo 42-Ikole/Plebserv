@@ -19,7 +19,7 @@ int main(int argc, char **argv, char **env)
 	std::vector<Server> l = load_config(filename);
 	for (size_t i = 0; i < l.size(); i++)
 		std::cout << l[i] << std::endl;
-	// host_servers(l);
+	host_servers(l);
 	(void)env;
 	return (0);
 }

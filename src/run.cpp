@@ -22,7 +22,7 @@ struct	connect_data
 	Server *ser;
 };
 
-server_data	setup_server(Server ser, short port, int backlog)
+server_data	setup_server(Server &ser, short port, int backlog)
 {
 	server_data res;
 	int opt = 1;
@@ -72,7 +72,8 @@ void	handle_connection(connect_data client_socket)
 	char buffer[1025];
 	std::string returnval = "HTTP/1.1 200 OK Date: Thu, 08 Apr 2004 18:24:33 GMT Server: Apache/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4 Content-Language: nl Content-Type: text/html; charset=iso-8859-1 X-Cache: MISS from wikipedia.org Connection: close Content-Type: text/html Content-Length: 49\n\n";
 	returnval += "victor je moeter";
-		printf("Got a connection!\n");
+	
+	std::cout << "We've got an connection! using server " << *client_socket.ser << std::endl;
 
 	int valread = read( client_socket.fd , buffer, 1024);
 
