@@ -44,11 +44,11 @@ Server	&Server::operator=(Server const &tba)
 std::ostream &operator<<(std::ostream &out, Server const &value)
 {
 	out << "------------ SERVER " << value._server << "--------" << std::endl;
-	out << std::endl << std::setw(15) << "BODY SIZE | " << value._max_body_size << std::endl;
+	out << std::setw(15) << "BODY SIZE | " << value._max_body_size << std::endl;
 	out << std::setw(15) << "LISTEN | ";
 	for (size_t i = 0; i < value._port.size(); i++)
 		out << value._port[i] << " ";
-	out << std::setw(15) << "IDENTIFERS | ";
+	out << std::endl << std::setw(15) << "IDENTIFERS | ";
 	for (size_t i = 0; i < value._server_identifier.size(); i++)
 		out << "{" << value._server_identifier[i] << "} ";
 	out << std::endl << std::setw(15) << "LOCATIONS | " << endl;
@@ -201,6 +201,8 @@ int Server::parse_args(vector<string> arr, int index)
 		if (!s.size())
 			continue ;
 		tokens = ft::split(s);
+		if (tokens[0].length() == 1)
+			return (1);
 		if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';'))
 			throw Plebception(ERR_INVALID_TOKEN, tokens[0], s);
 		if (tokens[tokens.size() - 1] == "{")
@@ -216,6 +218,7 @@ int Server::parse_args(vector<string> arr, int index)
 		for (int j = 0; j < args.size(); j++)
 			if (args[j][args[j].size() - 1] == ';')
 				args[j] = ft::trim_char(args[j], ';');
+		std::cout << tokens[0] << " ' " << args[0] << std::endl;
 		call(tokens[0], args);
 		args.clear();
 	}
