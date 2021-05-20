@@ -1,8 +1,13 @@
 #ifndef UTILITIES_HPP
 # define UTILITIES_HPP
 
-std::string &ltrim(std::string &s);
-std::vector<std::string> split(std::string str, std::string delim);
-std::string trim_char(std::string str, char delim);
+
+namespace ft
+{
+	std::string& ltrim(std::string& s, std::string delim = " \t");
+	std::vector<std::string> split(std::string str, std::string delim = " \t\n");
+	std::string trim_char(std::string str, char delim);
+	int stoi(std::string number, const std::string base = "0123456789");
+}
 
 #endif
