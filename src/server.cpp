@@ -218,7 +218,6 @@ int Server::parse_args(vector<string> arr, int index)
 		for (int j = 0; j < args.size(); j++)
 			if (args[j][args[j].size() - 1] == ';')
 				args[j] = ft::trim_char(args[j], ';');
-		std::cout << tokens[0] << " ' " << args[0] << std::endl;
 		call(tokens[0], args);
 		args.clear();
 	}
