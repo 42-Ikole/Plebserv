@@ -1,9 +1,8 @@
-
 #include <location.hpp>
 #include <vector>
-#include <error.hpp>
 #include <map>
 #include <utilities.hpp>
+#include <plebception.hpp>
 
 using namespace std;
 
@@ -44,24 +43,21 @@ void Location::set_auto_index(vector<string> val)
 		_auto_index = on;
 	else if (val[0] == "off")
 		_auto_index = off;
-	// else
+	else
+		throw Plebception(ERR_INVALID_VALUE, "auto index", val[0]);
 }
 
 void Location::set_index_page(vector<string> val)
 {
 	_index_page.clear();
 	for (size_t i = 0; i < val.size(); i++)
-	{
 		_index_page.push_back(val[i]);
-	}
 }
 
 void Location::set_limit_except(vector<string> val)
 {
 	for (size_t i = 0; i < val.size(); i++)
-	{
 		_limit_except.push_back(val[i]);		
-	}
 }
 
 Location& Location::operator=(Location const& tba)

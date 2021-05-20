@@ -44,26 +44,22 @@ Server	&Server::operator=(Server const &tba)
 std::ostream &operator<<(std::ostream &out, Server const &value)
 {
 	out << "------------ SERVER " << value._server << "--------" << std::endl;
+	out << std::endl << std::setw(15) << "BODY SIZE | " << value._max_body_size << std::endl;
 	out << std::setw(15) << "LISTEN | ";
 	for (size_t i = 0; i < value._port.size(); i++)
 		out << value._port[i] << " ";
-	out << std::endl;
-	out << std::setw(15) << "BODY SIZE | " << value._max_body_size << std::endl;
 	out << std::setw(15) << "IDENTIFERS | ";
 	for (size_t i = 0; i < value._server_identifier.size(); i++)
 		out << "{" << value._server_identifier[i] << "} ";
-	out << std::endl;
-	out << std::setw(15) << "LOCATIONS | " << endl;
+	out << std::endl << std::setw(15) << "LOCATIONS | " << endl;
 	for (size_t i = 0; i < value._locations.size(); i++)
 		out << value._locations[i] << " ";
-	out << std::endl;
-
-	out << "---------------- DONE ----------------" << std::endl;
+	out << std::endl << "---------------- DONE ----------------" << std::endl;
 	return (out);
 }
 
 Server::Server(vector<string> input) :
-	_server("localhost"), _server_identifier(), _max_body_size(160000)
+	_server(""), _server_identifier(), _max_body_size(160000)
 {
 	_server_identifier.push_back("");
 	_port.push_back(80);
@@ -121,7 +117,6 @@ vector<string>	Server::check_listen(string &val)
 void	Server::load_ports(vector<string> val)
 {
 	_port.clear();
-	_server = "";
 	for (size_t i = 0; i < val.size(); i++)
 	{
 		vector<string> tmp = check_listen(val[i]);
@@ -139,13 +134,38 @@ void	Server::load_server_identifier(vector<string> val)
 {
 	_server_identifier.clear();
 	for (size_t i = 0; i < val.size(); i++)
-		_server_identifier.push_back(ft::trim_char(val[i], ';'));
+	{
+		check_servername(val[i]);
+		_server_identifier.push_back(val[i]);
+	}
 }
 
 void	Server::load_client_max_body_size(vector<string> val)
 {
-	val[0] = ft::trim_char(val[0], ';');
-	_max_body_size = ft::stoi(val[0]);
+	size_t	pos = val[0].find_first_not_of("0123456789");
+	size_t	mul = 1;
+
+	if (pos != string::npos)
+	{
+		if (val[0][pos] != *(val[0].end() - 1))
+			throw Plebception(ERR_INVALID_VALUE, "client_max_body_size", val[0]);
+		char c = val[0][pos];
+		switch (c)
+		{
+			case 'k':
+				mul = 1000;
+				break;
+			case 'm':
+				mul = 1000000;
+				break;
+			case 'g':
+				mul = 1000000000;
+				break;
+			default:
+				throw Plebception(ERR_INVALID_VALUE, "client_max_body_size", val[0]);
+		}
+	}
+	_max_body_size = ft::stoi(val[0]) * mul;
 }
 
 void	Server::load_locations(vector<string> val)
@@ -171,11 +191,12 @@ int Server::parse_args(vector<string> arr, int index)
 {
 	std::vector<string> tokens;
 	std::vector<string> args;
-	bool location = false;
+	bool location;
 
 	size_t i;
 	for (i = index; i < arr.size(); i++)
 	{
+		location = false;
 		string s = arr[i];
 		if (!s.size())
 			continue ;
@@ -195,14 +216,8 @@ int Server::parse_args(vector<string> arr, int index)
 		for (int j = 0; j < args.size(); j++)
 			if (args[j][args[j].size() - 1] == ';')
 				args[j] = ft::trim_char(args[j], ';');
-		cerr << "[" << tokens[0] << "]" << endl << "{";
-		for (int j = 0; j < args.size(); j++)
-			cerr << args[j] << " ";
-		cerr << "}" << endl;
 		call(tokens[0], args);
 		args.clear();
-		location = false;
 	}
 	return(i);
 }
-

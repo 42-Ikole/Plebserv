@@ -4,9 +4,9 @@
 #include <unistd.h>
 #include <vector>
 
-#include <error.hpp>
 #include <server.hpp>
 #include <utilities.hpp>
+#include <plebception.hpp>
 
 using namespace std;
 #define BUFFER 128
@@ -19,7 +19,7 @@ vector<string> get_lines(string file)
 	vector<string>	res;
 
 	if (fd == -1)
-		error(PARSER, "could not open file");
+		throw Plebception(ERR_FD, "FD", file);
 	for (int ret = 1; ret > 0;)
 	{
 		ret = read(fd, incoming, BUFFER);
@@ -33,7 +33,7 @@ vector<string> get_lines(string file)
 			str_buff = str_buff.substr(pos + 1, str_buff.size());
 		}
 	}
-	res.push_back(str_buff.substr(0, str_buff.find("\0") + 1));
+	res.push_back(str_buff.substr(0, str_buff.size()));
 	return (res);
 }
 
@@ -66,6 +66,18 @@ vector<Server>	get_servers(vector<string> lines)
 	return (res);
 }
 
+void	depth_check(vector<string> lines, string filename)
+{
+	int depth = 0;
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		depth += count(lines[i].begin(), lines[i].end(), '{');
+		depth -= count(lines[i].begin(), lines[i].end(), '}');
+	}
+	if (depth != 0)
+		throw Plebception(ERR_BLOCK, filename, "go to dentist, missing brackets: " + to_string(depth));
+}
+
 /*
 	Loading +
 	Checking if valid
@@ -74,6 +86,7 @@ vector<Server>	get_servers(vector<string> lines)
 vector<Server> load_config(string filename)
 {
 	vector<string> lines = get_lines(filename);
+	depth_check(lines, filename);
 	vector<Server> res = get_servers(lines);
 
 	return (res);

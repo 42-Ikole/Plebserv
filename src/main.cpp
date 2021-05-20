@@ -1,5 +1,4 @@
 #include <plebception.hpp>
-#include <error.hpp>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -8,6 +7,7 @@
 
 std::vector<std::string> get_lines(std::string file);
 std::vector<Server> load_config(std::string filename);
+void	host_servers(vector<Server> serv);
 
 int main(int argc, char **argv, char **env)
 {
@@ -16,19 +16,10 @@ int main(int argc, char **argv, char **env)
 		filename = "configs/basic-server.conf";
 	else
 		filename = argv[1];
-	
 	std::vector<Server> l = load_config(filename);
 	for (size_t i = 0; i < l.size(); i++)
-	{
 		std::cout << l[i] << std::endl;
-	}
-	
-	// std::vector<std::string> res = get_lines(filename);
-	// for (std::vector<std::string>::iterator i = res.begin(); i != res.end(); i++)
-	// {
-	// 	std::cout << *i << "$" << std::endl;
-	// }
-
+	// host_servers(l);
 	(void)env;
 	return (0);
 }
