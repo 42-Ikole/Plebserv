@@ -3,7 +3,6 @@
 
 # include <exception>
 # include <string>
-# include <error.hpp>
 
 # define ERR_SEMICOLON		"WHOA, looks like you forgot a semicolon"
 # define ERR_INVALID_TOKEN	"Invalid token found in"
@@ -13,6 +12,12 @@
 # define ERR_INVALID_CONFIG "Yarr, This config is not valid"
 # define ERR_UNKNOWN_IDENT	"OI AMIGO, what is this identifier?"
 # define ERR_MULTIPLE_DOM	"Looks like you are defining multiple domains"
+# define ERR_FD				"Couldn't open fd"
+
+# define COLOR_RED		"\033[31;01m"
+# define COLOR_GREEN	"\033[32m"
+# define COLOR_RESET	"\033[0m"
+# define COLOR_YELLOW	"\033[33m"
 
 using namespace std;
 
