@@ -82,3 +82,19 @@ CGI Meta Variables		=
 							SERVER_PROTOCOL		= HTTP/1.1
 							SERVER_SOFTWARE		= "Plebserv (linux) PHP/7.3.7"
 
+
+
+--- SOCKETS ALLOWED FUNCTION ---
+
+setsockopt				=	
+							get and set options on sockets 
+								int setsockopt(int sockfd, int level, int optname,
+								const void *optval, socklen_t optlen);
+							
+select					=
+							synchronous I/O multiplexing (e.g listen to multiple fd's without blocking)
+							int select(int nfds, fd_set *readfds, fd_set *writefds,
+										fd_set *exceptfds, struct timeval *timeout);
+
+							nfds: number of fd's
+							readfds: 
