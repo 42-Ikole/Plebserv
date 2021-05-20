@@ -98,3 +98,80 @@ select					=
 
 							nfds: number of fd's
 							readfds: 
+
+
+
+--- HTTP HEADERS ---
+
+**
+	Editors note:	Waarom moeten we sommige headers doen? 
+					zit hier enige logica achter en gaan we ze uberhaupt gebruiken?
+**
+
+
+https://en.m.wikipedia.org/wiki/List_of_HTTP_header_fields
+
+
+	THE WHAT TO DO LINE		=
+								[METHOD] [LOCATION] [HTTPTYPE]
+	Accept-Language			=
+								https://en.m.wikipedia.org/wiki/Content_negotiation
+								List of acceptable human languages for response. See Content negotiation.
+								Accept-Language: [en-US] 
+								** Editors note: 404 french requests?? **
+	Accept-Charsets			=
+								Character sets that are acceptable.
+								Accept-Charsets: utf-8 / ascii / unicode?
+	Allow					=
+								The Allow header lists the set of methods supported by a resource.
+								Allow: GET, POST, HEAD etc..
+	Authorization			=
+								Authentication credentials for HTTP authentication.
+								Basic: [auth key]
+	Content-Language		=
+								The natural language or languages of the intended audience for the enclosed content
+								Content-Language: [da] [nl] [en] etc..
+	Content-Length			=
+								The length of the request body in octets (8-bit bytes).
+								Content-Length: 295
+	Content-Type			=
+								The Media type of the body of the request (used with POST and PUT requests).
+								Content-Type: application/x-www-form-urlencoded
+								Content-Type: text/html
+	Date					=
+								https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.1.1
+								The date and time at which the message was originated
+								Date: Sun, 06 Nov 1994 08:49:37 GMT
+	Host					=
+								The domain name of the server (for virtual hosting), and the TCP port number on which the server is listening. 
+								The port number may be omitted if the port is the standard port for the service requested.
+								Host: en.wikipedia.org:8080
+								Host: en.wikipedia.org
+	Last-Modified			=
+								The last modified date for the requested object (in "HTTP-date" format as defined by RFC 7231)
+								Last-Modified: Tue, 15 Nov 1994 12:45:26 GMT
+	Location				=
+								Used in redirection, or when a new resource has been created.
+								Location: http://www.w3.org/pub/WWW/People.html
+								Location: /pub/WWW/People.html						
+	Referer					=
+								This is the address of the previous web page from which a link to the currently requested page was followed. 
+								(The word "referrer" has been misspelled in the RFC as well as in most implementations to the point that it has 
+								become standard usage and is considered correct terminology)
+								Referer: http://en.wikipedia.org/wiki/Main_Page
+	Retry-After				=
+								If an entity is temporarily unavailable, this instructs the client to try again later. Value could be a specified period of time (in seconds) or a HTTP-date.[54]	
+								Retry-After: 120
+								Retry-After: Fri, 07 Nov 2014 23:59:59 GMT
+	Server					=
+								A name for the server
+								Server: Apache/2.4.1 (Unix) or Plebserv/x.x.x (Unix)
+	Transfer-Encoding		=
+								The form of encoding used to safely transfer the entity to the user. 
+								Transfer-Encoding: chunked / compress / deflate / gzip / identity
+	User-Agent				=
+								The user agent string of the user agent.
+								User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0
+	WWW-Authenticate		=	
+								Indicates the authentication scheme that should be used to access the requested entity.	
+								WWW-Authenticate: Basic
