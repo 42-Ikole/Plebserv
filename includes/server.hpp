@@ -20,7 +20,7 @@ class Server
 		string						_server;
 		vector<string>				_server_identifier;
 		vector<err_page>			_error_pages;
-		unsigned int				_max_body_size;
+		size_t						_max_body_size;
 		vector<Location>			_locations;
 		
 		Server();
