@@ -16,17 +16,36 @@
 
 using namespace std;
 
-class	Plebception : public exception
-{
-	private:
-		string	_msg;
-		Plebception();
-	public:
-		Plebception(string msg, string type, string val);
-		virtual ~Plebception() _NOEXCEPT;
-		Plebception(const Plebception &tbc);
-		Plebception & operator=(const Plebception &tba);
-		const char *what() const throw();
-};
+# ifdef LINUX
+
+	class	Plebception : public exception
+	{
+		private:
+			string	_msg;
+			Plebception();
+		public:
+			Plebception(string msg, string type, string val);
+			virtual ~Plebception();
+			Plebception(const Plebception &tbc);
+			Plebception & operator=(const Plebception &tba);
+			const char *what() const throw();
+	};
+
+# else
+
+	class	Plebception : public exception
+	{
+		private:
+			string	_msg;
+			Plebception();
+		public:
+			Plebception(string msg, string type, string val);
+			virtual ~Plebception() _NOEXCEPT;
+			Plebception(const Plebception &tbc);
+			Plebception & operator=(const Plebception &tba);
+			const char *what() const throw();
+	};
+	
+# endif
 
 #endif

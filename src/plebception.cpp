@@ -7,9 +7,13 @@ Plebception::Plebception(string msg, string type, string val)
 		string(" <") + COLOR_YELLOW + val + COLOR_RESET + string(">"); 
 }
 
-Plebception::~Plebception() _NOEXCEPT
-{}
-
+#ifdef LINUX
+	Plebception::~Plebception() _NOEXCEPT
+	{}
+#else
+	Plebception::~Plebception() _NOEXCEPT
+	{}
+#endif
 Plebception::Plebception(const Plebception &tbc)
 {
 	*this = tbc;

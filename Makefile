@@ -12,6 +12,17 @@ LIBS		=
 OBJ			=	
 RM 			=	rm -f
 
+# OS detection for libs and headers
+UNAME_S			:=	$(shell uname -s)
+
+ifeq ($(UNAME_S),Linux)
+FLAGS			+=	-DLINUX
+endif #Linux
+
+ifeq ($(UNAME_S),Darwin)
+endif #Darwin
+
+
 all: $(NAME)
 
 $(NAME): $(SRC)

@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <map>
 #include <iostream>
+
 #include <plebception.hpp>
 #include <server.hpp>
 #include <utilities.hpp>
