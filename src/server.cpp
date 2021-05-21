@@ -203,14 +203,20 @@ int Server::parse_args(vector<string> arr, int index)
 		tokens = ft::split(s);
 		if (tokens[0].length() == 1)
 			return (i + 1);
-		if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';')) // ook in location block checken
+		if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';'))
 			throw Plebception(ERR_INVALID_TOKEN, tokens[0], s);
 		if (tokens[tokens.size() - 1] == "{")
 		{
 			location = true;
 			args.push_back(tokens[1]);
 			for(i++; i < arr.size() && arr[i].find('}') == string::npos; i++)
+			{
+				if (arr[i].length() == 0)
+					continue ;
+				if (!verify_line(arr[i], ';'))
+					throw Plebception(ERR_SEMICOLON, tokens[0], arr[i]);
 				args.push_back(arr[i]);
+			}
 		}
 		if (location == false)
 			for (int j = 1; j < tokens.size(); j++)
