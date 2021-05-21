@@ -65,7 +65,7 @@ Server::Server(vector<string> input) :
 	_port.push_back(80);
 	_port.push_back(8000);
 	for (size_t x = 1; x < input.size();)
-		x += parse_args(input, x);
+		x = parse_args(input, x);
 }
 
 void Server::call(const string& s, vector<string> val)
@@ -176,7 +176,7 @@ void	Server::load_locations(vector<string> val)
 static void check_line(string &s, char delim)
 {
 	if (s.find(delim) != s.size() - 1)
-		throw Plebception(ERR_SEMICOLON, "test", s);
+		throw Plebception(ERR_SEMICOLON, "line", s);
 	else
 		s = ft::trim_char(s, delim);
 }
@@ -202,8 +202,8 @@ int Server::parse_args(vector<string> arr, int index)
 			continue ;
 		tokens = ft::split(s);
 		if (tokens[0].length() == 1)
-			return (1);
-		if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';'))
+			return (i + 1);
+		if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';')) // ook in location block checken
 			throw Plebception(ERR_INVALID_TOKEN, tokens[0], s);
 		if (tokens[tokens.size() - 1] == "{")
 		{
