@@ -75,7 +75,7 @@ void	Server::call(const string& s, vector<string> val)
 {
 	LoadFunction func = g_server_load_map[s];
 	if (func == 0)
-		return;
+		throw Plebception(ERR_UNKNOWN_IDENT, s, val[0]);
 	(this->*func)(val);
 }
 
