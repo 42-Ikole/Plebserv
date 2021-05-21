@@ -44,19 +44,24 @@ Server	&Server::operator=(Server const &tba)
 std::ostream &operator<<(std::ostream &out, Server const &value)
 {
 	out << "------------ SERVER " << value._server << "--------" << std::endl;
+
 	out << std::setw(15) << "BODY SIZE | " << value._max_body_size << std::endl;
 	out << std::setw(15) << "LISTEN | ";
 	for (size_t i = 0; i < value._port.size(); i++)
 		out << value._port[i] << " ";
+
 	out << std::endl << std::setw(15) << "IDENTIFERS | ";
 	for (size_t i = 0; i < value._server_identifier.size(); i++)
 		out << "{" << value._server_identifier[i] << "} ";
+
 	out << std::endl << std::setw(15) << "ERROR PAGES | ";
 	for (size_t i = 0; i < value._error_pages.size(); i++)
 		out << "{" << value._error_pages[i].html_error_code << ' ' << value._error_pages[i].location << "} ";
+	
 	out << std::endl << std::setw(15) << "LOCATIONS | " << endl;
 	for (size_t i = 0; i < value._locations.size(); i++)
 		out << value._locations[i] << " ";
+
 	out << std::endl << "---------------- DONE ----------------" << std::endl;
 	return (out);
 }
@@ -213,16 +218,39 @@ static bool verify_line(string s, char delim) {
 	return(false);
 }
 
+static void	validate_line(string token, string s)
+{
+	if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';'))
+		throw Plebception(ERR_INVALID_TOKEN, token, s);
+}
+
+static void trim_lines(vector<string> &args)
+{
+	for (int j = 0; j < args.size(); j++)
+		if (args[j][args[j].size() - 1] == ';')
+			args[j] = ft::trim_char(args[j], ';');
+}
+
+static void	parse_location_block(vector<string> &args, vector<string> &arr, vector<string> &tokens, size_t &i)
+{
+	args.push_back(tokens[1]);
+	for(i++; i < arr.size() && arr[i].find('}') == string::npos; i++)
+	{
+		if (arr[i].length() == 0)
+			continue ;
+		validate_line(tokens[0], arr[i]);
+		args.push_back(arr[i]);
+	}
+}
+
 int Server::parse_args(vector<string> arr, int index)
 {
 	std::vector<string> tokens;
 	std::vector<string> args;
-	bool location;
 
 	size_t i;
 	for (i = index; i < arr.size(); i++)
 	{
-		location = false;
 		string s = arr[i];
 		if (!s.size())
 			continue ;
@@ -231,27 +259,15 @@ int Server::parse_args(vector<string> arr, int index)
 			return (i + 1);
 		if (tokens.size() < 2)
 			throw Plebception(ERR_TOO_FEW_ARG, tokens[0], "");
-		if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';'))
-			throw Plebception(ERR_INVALID_TOKEN, tokens[0], s);
+		validate_line(tokens[0], s);
 		if (tokens[tokens.size() - 1] == "{")
+			parse_location_block(args, arr, tokens, i);
+		else
 		{
-			location = true;
-			args.push_back(tokens[1]);
-			for(i++; i < arr.size() && arr[i].find('}') == string::npos; i++)
-			{
-				if (arr[i].length() == 0)
-					continue ;
-				if (!verify_line(arr[i], ';'))
-					throw Plebception(ERR_SEMICOLON, tokens[0], arr[i]);
-				args.push_back(arr[i]);
-			}
-		}
-		if (location == false)
 			for (int j = 1; j < tokens.size(); j++)
 				args.push_back(tokens[j]);
-		for (int j = 0; j < args.size(); j++)
-			if (args[j][args[j].size() - 1] == ';')
-				args[j] = ft::trim_char(args[j], ';');
+		}
+		trim_lines(args);
 		call(tokens[0], args);
 		args.clear();
 	}
