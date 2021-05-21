@@ -1,9 +1,16 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include <string>
-# include <vector>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <map>
+#include <iostream>
 # include <location.hpp>
+# include <plebception.hpp>
+# include <server.hpp>
+# include <utilities.hpp>
+# include <header.hpp>
 
 using namespace std;
 
@@ -42,6 +49,9 @@ class Server
 		vector<string>	check_listen(string &val);
 		void			check_port(string &val);
 		void			check_servername(string &val);
+
+		Location		*match_location(string path);
+		string			create_response(Header h);
 };
 
 std::ostream &operator<<(std::ostream &out, Server const &value);

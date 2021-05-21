@@ -21,7 +21,7 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-f = open("log.txt", "w")
+# f = open("log.txt", "w")
 
 def test(path_to_config):
 	result = subprocess.run(['./plebserv', '-t', path_to_config], stdout=subprocess.PIPE)

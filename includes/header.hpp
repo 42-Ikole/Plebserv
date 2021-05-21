@@ -2,14 +2,25 @@
 #define HEADER_HPP
 
 #include <string>
+#include <vector>
+#include <plebception.hpp>
+#include <utilities.hpp>
+
+using namespace std;
 
 class Header
 {
-private:
-	
 public:
-	Header(std::string in);
-	virtual ~Header();
+	string	_method;
+	string	_path;
+	string	_http_version;
+	string	_host;
+	string	_connection;
+	vector<string> _other_headers;
+public:
+	Header(vector<std::string> in);
+	void	Parse_request(string request);
+	// virtual ~Header();
 };
 
 #endif

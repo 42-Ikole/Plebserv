@@ -7,18 +7,21 @@
 #include <string.h>
 #include <string>
 #include <iostream>     // std::cout
+#include <header.hpp>
+#include <utilities.hpp>
+#include <sstream> //tmp
 
 
 struct server_data
 {
-	int fd;
+	int fd;		// sever fd
 	struct sockaddr_in server_addr;
 	Server	*ser;
 };
 
 struct	connect_data
 {
-	int fd;
+	int fd;		// client fd
 	Server *ser;
 };
 
@@ -70,15 +73,22 @@ void	handle_connection(connect_data client_socket)
 
 	*/
 	char buffer[1025];
-	std::string returnval = "HTTP/1.1 200 OK Date: Thu, 08 Apr 2004 18:24:33 GMT Server: Apache/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4 Content-Language: nl Content-Type: text/html; charset=iso-8859-1 X-Cache: MISS from wikipedia.org Connection: close Content-Type: text/html Content-Length: 49\n\n";
-	returnval += "victor je moeter";
+	std::stringstream returnval;
+	returnval << "HTTP/1.1 200 OK Date: Thu, 08 Apr 2004 18:24:33 GMT Server: Apache/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4 Content-Language: nl Content-Type: text/html; charset=iso-8859-1 X-Cache: MISS from wikipedia.org Connection: close Content-Type: text/html Content-Length: 49\n\n";
 	
+	returnval << *client_socket.ser;
 	std::cout << "We've got an connection! using server " << *client_socket.ser << std::endl;
 
 	int valread = read( client_socket.fd , buffer, 1024);
 
+	Header incoming_header = Header(ft::split(buffer));
+	string rv = client_socket.ser->create_response(incoming_header);
+	/*
+		- parse incoming header and data
+		- return corresponding data
+	*/
 	// printf("%s\n", buffer);
-	send(client_socket.fd , returnval.c_str() , returnval.length() , 0 );
+	send(client_socket.fd , returnval.str().c_str() , returnval.str().length() , 0 );
 	close(client_socket.fd);
 
 }

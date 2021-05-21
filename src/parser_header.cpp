@@ -1,9 +1,38 @@
+#include <header.hpp>
+#include <iostream>
+#include <exception>
+
+using namespace std;
+
+void	Header::Parse_request(string request)
+{
+	vector<string> parsed = ft::split(request);
+
+	try
+	{	
+		_method	= parsed[0];
+		_path	= parsed[1];
+		_http_version = parsed[2];
+	}
+	catch (exception &e)
+	{
+		cout << e.what() << endl;
+		throw Plebception(ERR_INVALID_VALUE, "parsing request", "");
+	}
+}
+
+Header::Header(vector<string> in)
+{
+	Parse_request(in[0]);
+	in.erase(in.begin());
+	_other_headers = in;
+}
 
 // /*
 
 
 
-// GET / HTTP/1.1
+// GET /buy.html HTTP/1.1
 // Host: localhost:8080
 // Connection: keep-alive
 // Pragma: no-cache
@@ -22,7 +51,19 @@
 // Accept-Language: nl-NL,nl;q=0.9,ru-RU;q=0.8,ru;q=0.7,en-US;q=0.6,en;q=0.5
 
 
-
+// HTTP/1.1 200 OK
+// Date: Thu, 08 Apr 2004 18:24:33 GMT
+// Server: Apache/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4
+// Content-Language: nl
+// Content-Type: text/html;
+// charset=iso-8859-1
+// X-Cache: MISS from wikipedia.org
+// Connection: close 
+// Content-Type: text/html
+// Content-Length: 49"
+//
+//
+// data
 
 
 
