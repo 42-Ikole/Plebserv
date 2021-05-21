@@ -17,7 +17,7 @@ static map<string, LoadFunction> create_map()
 	m["server_name"] 			= &Server::load_server_identifier;
 	m["client_max_body_size"]	= &Server::load_client_max_body_size;
 	m["listen"]					= &Server::load_ports;
-
+	m["error_page"]				= &Server::load_error_page;
 	return m;
 }
 
@@ -51,6 +51,9 @@ std::ostream &operator<<(std::ostream &out, Server const &value)
 	out << std::endl << std::setw(15) << "IDENTIFERS | ";
 	for (size_t i = 0; i < value._server_identifier.size(); i++)
 		out << "{" << value._server_identifier[i] << "} ";
+	out << std::endl << std::setw(15) << "ERROR PAGES | ";
+	for (size_t i = 0; i < value._error_pages.size(); i++)
+		out << "{" << value._error_pages[i].html_error_code << ' ' << value._error_pages[i].location << "} ";
 	out << std::endl << std::setw(15) << "LOCATIONS | " << endl;
 	for (size_t i = 0; i < value._locations.size(); i++)
 		out << value._locations[i] << " ";
@@ -68,7 +71,7 @@ Server::Server(vector<string> input) :
 		x = parse_args(input, x);
 }
 
-void Server::call(const string& s, vector<string> val)
+void	Server::call(const string& s, vector<string> val)
 {
 	LoadFunction func = g_server_load_map[s];
 	if (func == 0)
@@ -86,7 +89,7 @@ void	Server::check_servername(string &val)
 	string res = tokens[0];
 	if (tokens.size() == 2)
 		res += '.' + tokens[1];
-	if (_server != "" && _server != res)
+	if (_server != "" && _server.find(res) == string::npos)
 		throw Plebception(ERR_MULTIPLE_DOM, "listen2", res);
 }
 
@@ -137,11 +140,35 @@ void	Server::load_server_identifier(vector<string> val)
 	{
 		check_servername(val[i]);
 		_server_identifier.push_back(val[i]);
+		if (_server == "")
+			_server = val[i];
 	}
+}
+
+void	Server::load_error_page(vector<string> val)
+{
+	if (val.size() > 2)
+		Plebception(ERR_TOO_MANY_ARG, "error_page", val[2]);
+	else if (val.size() < 2)
+		Plebception(ERR_TOO_FEW_ARG, "error_page", val[0]);
+	else if (val[0].find_first_not_of("0123456789") != string::npos)
+		Plebception(ERR_INVALID_VALUE, "error_page", val[0]);
+
+	int code = ft::stoi(val[0]);
+	if (code < 100 && code >= 600)
+		Plebception(ERR_OUT_OF_RANGE, "error_page", val[0]);
+
+	err_page custom_error;
+	custom_error.html_error_code = code;
+	custom_error.location = val[1];
+	_error_pages.push_back(custom_error);
 }
 
 void	Server::load_client_max_body_size(vector<string> val)
 {
+	cout << "SIZE " << val.size() << std::endl;
+	if (val.size() == 0)
+		throw Plebception(ERR_NO_VALUE, "client_max_body_size", "");
 	size_t	pos = val[0].find_first_not_of("0123456789");
 	size_t	mul = 1;
 
@@ -203,6 +230,8 @@ int Server::parse_args(vector<string> arr, int index)
 		tokens = ft::split(s);
 		if (tokens[0].length() == 1)
 			return (i + 1);
+		if (tokens.size() < 2)
+			throw Plebception(ERR_TOO_FEW_ARG, tokens[0], "");
 		if (!verify_line(s, '{') && !verify_line(s, '}') && !verify_line(s, ';'))
 			throw Plebception(ERR_INVALID_TOKEN, tokens[0], s);
 		if (tokens[tokens.size() - 1] == "{")

@@ -37,6 +37,7 @@ class Server
 		void 	load_server_identifier(vector<string> val);
 		void 	load_client_max_body_size(vector<string> val);
 		void	load_locations(vector<string> val);
+		void	load_error_page(vector<string> val);
 		
 		vector<string>	check_listen(string &val);
 		void			check_port(string &val);

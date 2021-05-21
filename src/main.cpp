@@ -14,8 +14,8 @@ void	parser_test(char *filename)
 	try
 	{
 		vector<Server> s = load_config(filename);
-		// for (size_t i = 0; i < s.size(); i++)
-		// 	std::cerr << s[i] << std::endl;
+		for (size_t i = 0; i < s.size(); i++)
+			std::cerr << s[i] << std::endl;
 		std::cout << "[ " << COLOR_GREEN << "OK" << COLOR_RESET << " ]" << std::endl;
 		exit(0);
 	}

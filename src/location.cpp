@@ -112,6 +112,8 @@ Location::Location(vector<string> val): _root("/html"), _auto_index(off), _locat
 	_index_page.push_back("index.html");
 	_index_page.push_back("index");
 
+	if (val[0].find('{') != string::npos)
+		throw Plebception(ERR_NO_VALUE, "location path", val[0]);
 	for (size_t x = 1; x < val.size(); x++)
 		if (!val[x].empty())
 			parse_args(val[x]);	
