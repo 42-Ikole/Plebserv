@@ -8,6 +8,8 @@ using namespace std;
 
 typedef void (Location::*LoadFunction)(vector<string> val);
 
+string methods[] = {"GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "TRACE", "PATCH"};
+
 static map<string, LoadFunction> create_map()
 {
 	map<string, LoadFunction> m;
@@ -34,17 +36,21 @@ Location::Location(const Location& tbc)
 
 void Location::set_root(vector<string> val)
 {
+	if (val.size() > 1)
+		throw Plebception(ERR_TOO_MANY_ARG, "root", val[1]);
 	_root = val[0];
 }
 
 void Location::set_auto_index(vector<string> val)
 {
+	if (val.size() > 1)
+		throw Plebception(ERR_TOO_MANY_ARG, "autoindex", val[1]);
 	if (val[0] == "on")
 		_auto_index = on;
 	else if (val[0] == "off")
 		_auto_index = off;
 	else
-		throw Plebception(ERR_INVALID_VALUE, "auto index", val[0]);
+		throw Plebception(ERR_INVALID_VALUE, "autoindex", val[0]);
 }
 
 void Location::set_index_page(vector<string> val)
@@ -56,8 +62,21 @@ void Location::set_index_page(vector<string> val)
 
 void Location::set_limit_except(vector<string> val)
 {
+	size_t x = 0;
+
 	for (size_t i = 0; i < val.size(); i++)
-		_limit_except.push_back(val[i]);		
+	{
+		for (x = 0; x < 8; x++)
+		{
+			if (val[i] == methods[x])
+			{
+				_limit_except.push_back(val[i]);		
+				break;
+			}
+			if (x == 7)
+				throw Plebception(ERR_INVALID_VALUE, "limit_execpt", val[i] + " not found!");
+		}
+	}
 }
 
 Location& Location::operator=(Location const& tba)

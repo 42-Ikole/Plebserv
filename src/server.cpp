@@ -166,7 +166,6 @@ void	Server::load_error_page(vector<string> val)
 
 void	Server::load_client_max_body_size(vector<string> val)
 {
-	cout << "SIZE " << val.size() << std::endl;
 	if (val.size() == 0)
 		throw Plebception(ERR_NO_VALUE, "client_max_body_size", "");
 	size_t	pos = val[0].find_first_not_of("0123456789");
