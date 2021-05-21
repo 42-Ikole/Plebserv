@@ -1,0 +1,102 @@
+﻿<html>
+<head>
+  <title>Phantom Coin</title>
+  <meta charset="UTF-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="/Assets/Css/css main ptc.css">
+  <link href="https://fonts.googleapis.com/css?family=Bentham|Playfair+Display|Raleway:400,500|Suranna|Trocchi" rel="stylesheet">
+  <meta name="google-signin-client_id" content="615125774410-cmsh7prcupda2u8sqiag23ail6jlmjmd.apps.googleusercontent.com">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <link rel="icon" href="/Assets/Media/pb.png">
+  <script type="text/javascript" src="/Assets/Scripts/linkscoin.js"></script>
+  <script type="text/javascript" src="/Assets/Scripts/signin.js"></script>
+  <script type="text/javascript" src="/Assets/Scripts/global.js"></script>
+  
+</head>
+<body>
+<form action="http://phantom:80/SendData" method="post" enctype="multipart/form-data">
+<p>
+
+<strong>My file:</strong><br/>
+<form>
+<input type="file" name="myFile">
+<input type="submit" value="Submit">
+</form>
+</p>
+<input type="submit" value = "Name">
+</form>
+<form action="http://phantom:80/SendData" method="post" enctype="multipart/form-data">
+  First name: <input type="text" name="fname"><br>
+  Last name: <input type="text" name="lname"><br>
+  <input type="submit" value="Submit">
+</form>
+<button onclick="xd()">xd</button>
+<script type="text/javascript">
+	function xd()
+	{
+		var myKeyVals = { A1984 : 1, A9873 : 5, A1674 : 2, A8724 : 1, A3574 : 3, A1165 : 5 }
+
+
+
+var saveData = $.ajax({
+      type: 'POST',
+      url: "http://phantom:80/SendData",
+      data: myKeyVals,
+      dataType: "text",
+      success: function(resultData) { alert("Save Complete") }
+});
+	}
+</script>
+</body>
+</html>
+<html>
+<head>
+  <title>Phantom Coin</title>
+  <meta charset="UTF-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="/Assets/Css/css main ptc.css">
+  <link href="https://fonts.googleapis.com/css?family=Bentham|Playfair+Display|Raleway:400,500|Suranna|Trocchi" rel="stylesheet">
+  <meta name="google-signin-client_id" content="615125774410-cmsh7prcupda2u8sqiag23ail6jlmjmd.apps.googleusercontent.com">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <link rel="icon" href="/Assets/Media/pb.png">
+  <script type="text/javascript" src="/Assets/Scripts/linkscoin.js"></script>
+  <script type="text/javascript" src="/Assets/Scripts/signin.js"></script>
+  <script type="text/javascript" src="/Assets/Scripts/global.js"></script>
+  
+</head>
+<body>
+<form action="http://phantom:80/SendData" method="post" enctype="multipart/form-data">
+<p>
+
+<strong>My file:</strong><br/>
+<form>
+<input type="file" name="myFile">
+<input type="submit" value="Submit">
+</form>
+</p>
+<input type="submit" value = "Name">
+</form>
+<form action="http://phantom:80/SendData" method="post" enctype="multipart/form-data">
+  First name: <input type="text" name="fname"><br>
+  Last name: <input type="text" name="lname"><br>
+  <input type="submit" value="Submit">
+</form>
+<button onclick="xd()">xd</button>
+<script type="text/javascript">
+	function xd()
+	{
+		var myKeyVals = { A1984 : 1, A9873 : 5, A1674 : 2, A8724 : 1, A3574 : 3, A1165 : 5 }
+
+
+
+var saveData = $.ajax({
+      type: 'POST',
+      url: "http://phantom:80/SendData",
+      data: myKeyVals,
+      dataType: "text",
+      success: function(resultData) { alert("Save Complete") }
+});
+	}
+</script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Phantom Coin</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" type="text/css" href="/Assets/Css/css main ptc.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Bentham|Playfair+Display|Raleway:400,500|Suranna|Trocchi" rel="stylesheet">
+  <meta name="google-signin-client_id" content="615125774410-cmsh7prcupda2u8sqiag23ail6jlmjmd.apps.googleusercontent.com">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <link rel="icon" href="/Assets/Media/pb.png">
+  <script type="text/javascript" src="/Assets/Scripts/linkscoin.js"></script>
+  <script type="text/javascript" src="/Assets/Scripts/signin.js"></script>
+  <script type="text/javascript" src="/Assets/Scripts/global.js"></script>  
+</head>
+<body id="body" style="background-color:#eaeaea; ">
+<div class="topnav" id="myTopnav">
+  <a class="topnav-context" id ="logo" href="javascript:void(0);" onclick="NewPage(011)"><img id ="logo" src="\Assets\Media/p.png" width="20" height="20" alt="logo">  | Phantom</a>
+  <!--<a class="topnav-context" id="logo" href="#Home">| Phantom</a>-->
+  <a class="topnav-context" href="javascript:void(0)" onclick="NewPage(022)">| My Profile</a>
+  <a class="topnav-context" href="#about" onclick="ok()">About</a>
+</div>
+<div class="overlaynav-spine">
+  <nav class="navigation">
+    <ul class="mainmenu">
+      <li><a class="overlay-sidebar" href="javascript:void(0)" onclick="NewPage(001)">HOME</a></li>
+      <li><a class="overlay-sidebar" href="javascript:void(0)" onclick="NewPage(002)">SEND / RECIEVE</a></li>
+      <li><a class="overlay-sidebar" href="javascript:void(0)" onclick="NewPage(003)">ACCOUNT</a>
+      <li><a class="overlay-sidebar" href="javascript:void(0)" onclick="NewPage(004)">BUY / SELL</a></li>
+      <li><a class="overlay-sidebar" href="javascript:void(0)" onclick="NewPage(005)">MY PROFILE</a></li>
+      <li><a class="overlay-sidebar" href="javascript:void(0)" onclick="NewPage(006)">DEVELOPER</a></li>
+    </ul>
+  </nav>
+</div>
+<!--Mainbox and stuff xx -->
+<div class="phantomcoinheader">
+  <h1 class="mainheader left">Ƥ | PHANTOMCOIN</h1>
+  <h2 class="mainheader right" id="h2header"> BALANCE : <span>6.238 Ƥ</span></h2>
+</div>
+<div class="mainbox">
+  <div id="textbox">
+    <h1 class="phanthomcointitle"> Phantom Coin makes transfering money as easy as it can be.</h1>
+    <hr>
+    <p> Phantom coin makes the lines between cryptocurrecies and normal currencies even more blend, while also making the world a better place. With this currency you can buy items in more than 16 million stores, with your own phanthom coin card. </p>
+    <p> And there is even more good news. While other cryptocurrencies are wasting potential compute power for something that can be simplified so badly, we chose to use that compute power for scientific purposes . And that is good for everyone.</p>
+    <p>This currency is also non regio locked, hasnt got any transation fees, is backed on gold, very secure (aes 256), you can order a physical card for physical stores, and much more to come.</p>
+  </div>
+  <div id="srbox">
+    <h1 id="s\r"><span onclick="sr('s')">Send</span> / <span onclick="sr('r')">Recieve</span></h1>
+    <hr>
+    <div id="sendbox">
+      <div id="notbox" style="width: 100%; height: 41px; background-color: lightgreen;">
+        <p>Transfer is currently in que. To see the status of the transaction click <a href="Account.html">Here</a></p>
+      </div>
+      <h2>Required Data</h2>
+      <p>Receivent Adress</p>
+      <form method="post" action="php/process-form-data.php">
+        <input type="text" name="ReceiventAdress" class="req">
+      <p>Transmitting Adress</p>
+        <select name="TransmittingAdress" id="transadress" class="req"></select>
+      <p>Amount</p>
+        <input type="number" name="Amount" style="width: 50%" min="0" class="req">
+        <!--<input type="text" name="Amountcurrency" style="width: 60px; text-align: center;">-->
+        <select name="valuta">
+          <option value="PTC">PTC</option>
+          <option value="EUR">EUR</option>
+        </select>
+      <h2>Additional Data</h2>
+      <p>Title</p>
+        <input type="text" name="Title">
+      <p>Description</p>
+        <input type="text" name="Description" style="height: 75px;">
+      <h2>Confirm Transfer</h2>
+      <p>Personal code</p>
+        <input type="password" name="Personal" style="width: 40%">
+        <input type="submit" style="width: 100px;">
+      </form>
+      <p class="warningp">Warning! Please check if this connection is secured. You can see your status in the url bar.</p>
+    </div>
+
+
+    <div id="recievebox" style="display: none;">
+      <div id="notbox" style="width: 100%; height: 41px; background-color: lightgreen;">
+        <p>Transfer is currently in que. To see the status of the transaction click <a href="Account.html">Here</a></p>
+      </div>
+      <h2>Required Data</h2>
+      <p>Receivent Adress</p>
+      <form method="post" action="php/process-form-data.php">
+        <select name="RecieventAdress" id="recieveadress" class="req" style="width: 96%; margin-left: 2%"></select>
+      <p>Amount</p>
+        <input type="number" name="Amount" style="width: 50%" min="0" class="req">
+        <!--<input type="text" name="Amountcurrency" style="width: 60px; text-align: center;">-->
+        <select name="valuta">
+          <option value="PTC">PTC</option>
+          <option value="EUR">EUR</option>
+        </select>
+        <br>
+        <input type="checkbox" name="donation">
+      <p>This is a donation.</p>
+      <p>Personal code</p>
+        <input type="password" name="Personal" style="width: 40%">
+        <input type="submit" style="width: 100px;">
+      </form>
+      <p class="warningp">Warning! Please check if this connection is secured. You can see your status in the url bar.</p>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+var url_string = document.URL; //window.location.href
+var url = new URL(url_string);
+var trans = url.searchParams.get("Trans");
+console.log(trans);
+if(trans == "Que") {
+  document.getElementById("notbox").style.display = "block";
+}
+</script>
+<script type="text/javascript">
+$.ajax({
+  type : 'GET', 
+  url : '../Assets/Data/coin/users/' + id + "/global.json" ,
+  async : true,
+  cache: false,
+  username: id,
+  password: "sooniguess",
+  beforeSend : function(){/*loading*/},
+  dataType : 'json', 
+  success : function(result){
+   var buffer="";
+   var accountbuffer="";
+   var count = 0;
+    $.each(result, function(index, val){
+      for(var i=0; i < val.length; i++){ 
+        var item = val[i]; 
+        buffer+="<option value='"+item.name+"'>"+item.AccountID+"</option>";
+      }
+      $("#transadress").html(buffer);
+      $("#recieveadress").html(buffer);
+    });
+  }
+ });
+</script>
+<script type="text/javascript">
+  if($('.req').val().length>0) {
+    console.log("cool");
+  }
+  else{
+    console.log("gay");
+  }
+</script>
+<script type="text/javascript">
+  function sr(n){
+    if (n == "r") {
+        document.getElementById("sendbox").style.display = "none";
+        document.getElementById("recievebox").style.display = "block";
+    }
+    if (n == "s") {
+        document.getElementById("recievebox").style.display = "none";
+        document.getElementById("sendbox").style.display = "block";
+    }
+  }
+</script>
+</body>
+</html>

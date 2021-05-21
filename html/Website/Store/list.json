@@ -1,0 +1,86 @@
+{
+"states": [
+    { 
+        "name":"Inquery User 774584744881" , 
+        "command":"+ 1.255 Ƥ" }, 
+
+    { 
+        "name":"G2A Limited" , 
+        "command":"- 2.255 Ƥ" }, 
+
+    { 
+        "name":"Account Transfer" , 
+        "command":"- 2.214 Ƥ" }, 
+
+    { 
+        "name":"Mining Payoff" , 
+        "command":"+ 2.328 Ƥ" },
+    { 
+        "name":"G2A Limited" , 
+        "command":"- 2.255 Ƥ" }, 
+
+    { 
+        "name":"Account Transfer" , 
+        "command":"- 2.214 Ƥ" }, 
+
+    { 
+        "name":"Mining Payoff" , 
+        "command":"+ 2.328 Ƥ" },
+    { 
+        "name":"Inquery User 774584744881" , 
+        "command":"+ 1.255 Ƥ" }, 
+
+    { 
+        "name":"G2A Limited" , 
+        "command":"- 2.255 Ƥ" }, 
+
+    { 
+        "name":"Account Transfer" , 
+        "command":"- 2.214 Ƥ" }, 
+
+    { 
+        "name":"Mining Payoff" , 
+        "command":"+ 2.328 Ƥ" },
+    { 
+        "name":"G2A Limited" , 
+        "command":"- 2.255 Ƥ" }, 
+
+    { 
+        "name":"Account Transfer" , 
+        "command":"- 2.214 Ƥ" }, 
+
+    { 
+        "name":"Mining Payoff" , 
+        "command":"+ 2.328 Ƥ" }, 
+    { 
+        "name":"Inquery User 774584744881" , 
+        "command":"+ 1.255 Ƥ" }, 
+
+    { 
+        "name":"G2A Limited" , 
+        "command":"- 2.255 Ƥ" }, 
+
+    { 
+        "name":"Account Transfer" , 
+        "command":"- 2.214 Ƥ" }, 
+
+    { 
+        "name":"Mining Payoff" , 
+        "command":"+ 2.328 Ƥ" },
+    { 
+        "name":"G2A Limited" , 
+        "command":"- 2.255 Ƥ" }, 
+
+    { 
+        "name":"Account Transfer" , 
+        "command":"- 2.214 Ƥ" }, 
+
+    { 
+        "name":"Mining Payoff" , 
+        "command":"+ 2.328 Ƥ" }, 
+
+    { 
+        "name":"Money deposit" , 
+        "command":"+ 5 Ƥ" }
+    ]
+}

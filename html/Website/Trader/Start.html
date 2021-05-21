@@ -1,0 +1,225 @@
+<html>
+<head>
+  <title>Phantom Host</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" type="text/css" href="/Assets/Css/css main.css">
+  <link href="https://fonts.googleapis.com/css?family=Bentham|Playfair+Display|Raleway:400,500|Suranna|Trocchi" rel="stylesheet">
+  <meta name="google-signin-client_id" content="615125774410-cmsh7prcupda2u8sqiag23ail6jlmjmd.apps.googleusercontent.com">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <link rel="icon" href="/Assets/Media/pb.png">
+
+  <script type="text/javascript" src="/Assets/Scripts/linkscoin.js"></script>
+    <script type="text/javascript">
+  function onSignIn(googleUser) {
+  var profile = googleUser.getBasicProfile();
+  console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+  console.log('Name: ' + profile.getName());
+  console.log('Image URL: ' + profile.getImageUrl());
+  console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+
+  x=document.getElementsByClassName("USER_NAME");  // Find the element
+        for(var i = 0; i < x.length; i++){
+        x[i].innerText=profile.getName();    // Change the content
+        }
+
+  x=document.getElementsByClassName("profilepic");  // Find the element
+        for(var i = 0; i < x.length; i++){
+        x[i].src=profile.getImageUrl();    // Change the content
+        }
+  x=document.getElementsByClassName("emailusr");  // Find the element
+        for(var i = 0; i < x.length; i++){
+        x[i].innerText=profile.getName();    // Change the content
+        }
+  document.getElementById("overlay").style.display = "none";
+}
+</script>
+
+</head>
+
+
+<body id="body" style="background-color: #ebebeb; ">
+<div class="topnav" id="myTopnav">
+  <a class="topnav-context" id ="logo" href="javascript:void(0);" onclick="NewPage(011)"><img id ="logo" src="\Assets\Media/p.png" width="20" height="20" alt="logo">  | Phantom</a>
+  <!--<a class="topnav-context" id="logo" href="#Home">| Phantom</a>-->
+  <a class="topnav-context" href="javascript:void(0)" onclick="NewPage(022)">| My Profile</a>
+  <a class="topnav-context" href="#about">About</a>
+</div>
+<div style="width:100%;background-color: #ebebeb; height:calc(100% - 47px); ">
+
+
+  <div style="width:100%;height:50px;background-color:#eaeaea;box-shadow: 0px 14px 32px 0px rgba(0, 0, 0, 0.15);">
+    <div class="subheader">
+      <p> Exhange </p>
+    </div>
+    <div class="subheader">
+      <p> Wallet </p>
+    </div>
+    <div class="subheader">
+      <p> History </p>
+    </div>
+    <div class="subheader">
+      <p> Support </p>
+    </div>
+  </div>
+  <div id="mainbg">
+    <div style="padding: 5%">
+      <h1 class="mainheadermar"> Ƥ | PHANTOMTRADER </h1>
+      <h2 style="font-size:14px;"><i>the most competitive exhange platform yet.</i></h2>
+    <br>
+    </div>
+    <div id="exhangecenter">
+
+      <div class="alignexhange">
+          <div style="float:left; width:50px; height: 40px;"></div>
+        <div class="exhangediv">
+
+          <select name="cars">
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+            <option value="BTC">BTC</option>
+            <option value="ETH">ETH</option>
+            <option value="PTC">PTC</option>
+          </select>
+            <input type="text" id="fname" name="fname">
+        </div>
+        <div style="float:left; width:50px; height: 40px;"><h2 onclick="SwapCurrency()">↹</h2></div>
+        <div class="exhangediv">
+
+            <select name="cars">
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+              <option value="PTC">PTC</option>
+            </select>
+            <input type="text" id="fname" name="fname">
+        </div>
+        <br><br>
+      </div>
+      <div class="ExchangeButton" style="">
+      <button type="button" onclick="Exchange()" style="float:none">Exchange</button>
+      </div>
+
+
+    </div>
+
+  </div>
+  <div id="mainbox" class="mainbox">
+    <div style="height: 100px;">
+      <h1 class="mainheader left">Ƥ | Phantom Trader</h1>
+      <div  class="ExchangeButton right" style="    margin-top: 22px; margin-bottom: 10px; margin-right: 3%; height:auto;">
+      <button type="button" onclick="Info()" style="float:none" id="InfoButton">Learn More</button>
+      </div>
+    </div>
+    <div class="overviewtrd" id="overviewtrd">
+      <div class="overviewitem">
+        <img src="/Assets/Media/startup.png">
+        <i><p>Fast exhanges</p></i>
+      </div>
+      <div class="overviewitem">
+        <img src="/Assets/Media/lowprice.png">
+        <i><p>Low fee of 1%</p></i>
+      </div>
+      <div class="overviewitem">
+        <img src="/Assets/Media/phantomcoin.png">
+        <i><p>We support Phantom Coin</p></i>
+      </div>
+      <div class="overviewitem">
+        <img src="/Assets/Media/wallet.png">
+        <i><p>Fast and safe online wallet</p></i>
+      </div>
+  </div>
+  <div id="detaildoverview">
+    <div id="textbox">
+      <h1 class="subtitle"> Phantom Coin is the perfect blend between cryptocurrencies and normal valuta.</h1>
+      <hr>
+      <p> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel dignissim felis. Aliquam diam ligula, commodo non mattis vitae, faucibus quis quam. Proin tincidunt, magna eu hendrerit sodales, tortor ante rhoncus lacus, in sodales nibh ipsum ut ex. Nullam tempus, sem eu euismod semper, metus diam aliquam eros, eu ornare quam nisi sit amet nulla. Ut euismod est sit amet ipsum fermentum, et varius sem congue. Ut pulvinar urna vel sem mollis vehicula. Fusce erat justo, eleifend eget mollis eget, ultrices vitae ex. Praesent ac laoreet nisl, eget bibendum mauris. Pellentesque nec auctor quam, nec suscipit nunc. Quisque luctus, magna auctor tincidunt iaculis, elit nibh mattis nisi, in maximus nisi massa et tortor. Duis pharetra, erat sit amet auctor semper, mauris tellus malesuada lorem, nec posuere tortor ante in lorem.
+
+Nunc in est enim. Aenean mattis vestibulum maximus. Sed pretium eleifend elit, sit amet dignissim felis. Nam cursus sit amet augue vel volutpat. Quisque placerat, orci eu dignissim tempus, lacus nibh aliquet orci, pulvinar suscipit nibh massa vitae sapien. Curabitur sodales porta dui, ac luctus nisl. Ut efficitur nisl ipsum, vel tincidunt odio finibus vel. Donec fermentum mauris augue, a posuere ligula consectetur vel. Etiam varius tristique suscipit. Phasellus et mauris ac tortor tempor bibendum. Fusce sed ante magna.
+
+Curabitur ultrices elit in nulla aliquam, eu sagittis lorem iaculis. Sed a justo ac felis faucibus imperdiet eu et enim. Aenean congue lacus in tellus hendrerit, nec lobortis arcu sodales. Sed egestas, purus ut faucibus ornare, ligula lectus tempor enim, sed placerat eros elit vel neque. Suspendisse ultricies sapien dolor. Morbi tristique nisi ut augue volutpat condimentum. Mauris id blandit tellus, ac lobortis diam. Ut vulputate diam vel tellus pharetra sagittis ac et eros.
+
+Curabitur congue sapien id pellentesque sagittis. In eget ex eget turpis tincidunt volutpat. Fusce sagittis semper justo, ut interdum orci finibus sit amet. Curabitur eu venenatis nisi, ac posuere urna. Ut elementum interdum ligula, eu lacinia odio. Pellentesque nisl tellus, auctor vel ex bibendum, ornare cursus est. In hac habitasse platea dictumst.
+
+Cras volutpat venenatis mattis. Vivamus laoreet dignissim ex, vitae volutpat arcu. Maecenas lobortis rutrum lacinia. In eget tortor vitae lectus molestie dictum. Nam non molestie lorem. Phasellus odio nunc, interdum at libero egestas, pretium hendrerit massa. Donec molestie risus ac urna gravida, ut pretium velit dictum. Aliquam vitae ligula eget nibh venenatis commodo. In non dui sed felis sollicitudin fringilla. Donec interdum malesuada nulla sit amet accumsan. Proin dictum fringilla nisi ac malesuada. Nunc rhoncus, arcu egestas ornare finibus, leo nulla blandit risus, ullamcorper consectetur augue nibh vestibulum ligula. Fusce vel urna dolor. Nam ut euismod est, sit amet viverra ante.
+
+Curabitur condimentum elit eget turpis condimentum rutrum. Mauris at libero pharetra, scelerisque nisi sed, tristique magna. In convallis tempus nisl a pharetra. Mauris sollicitudin malesuada dui, quis bibendum velit finibus at. Cras metus elit, interdum sit amet gravida ac, egestas nec tortor. Maecenas eu enim id dolor bibendum feugiat sit amet a velit. Vestibulum egestas facilisis enim, ac gravida mauris sagittis at. Integer viverra lacus lorem, vel pulvinar diam convallis in.
+
+Donec tincidunt fermentum sapien at molestie. Suspendisse ac porta ante. Aliquam nec risus auctor, euismod mauris non, viverra magna. Nam at erat et erat interdum luctus et sit amet leo. Curabitur sodales laoreet aliquet. Sed convallis elit non quam mattis semper. Suspendisse non felis pellentesque, congue urna ut, mollis odio. Sed placerat tellus ac nunc fringilla, et suscipit ligula facilisis.
+
+Curabitur egestas nisl ex, vel dapibus tellus egestas nec. Nulla efficitur, nisi a sollicitudin aliquam, massa leo eleifend velit, et elementum tortor leo vel nulla. Etiam pellentesque eleifend eros, faucibus sollicitudin est convallis in. Suspendisse at velit purus. Cras vulputate mi erat, quis consequat lectus tristique eget. Vestibulum fringilla malesuada purus nec ultrices. Integer erat nunc, efficitur quis arcu eu, accumsan maximus risus. Donec interdum sagittis elit ut dictum. Vestibulum quis nisi vel nisl molestie varius. Quisque varius lectus id neque fermentum ultricies. Sed consectetur vehicula ipsum nec volutpat. Aliquam urna magna, malesuada eu suscipit vitae, iaculis a mi. Sed vehicula vel dolor eu blandit. Sed convallis elit nibh, vel vestibulum odio ultrices in.
+
+Donec quis venenatis metus, id molestie mauris. Proin consequat nulla quam, quis pretium lacus lacinia et. Nullam ullamcorper enim bibendum nibh porta commodo. Etiam commodo eu est a vehicula. Morbi congue neque et tortor dictum, a malesuada eros hendrerit. Cras odio dolor, ornare sit amet ex sit amet, volutpat cursus ex. Proin ex purus, scelerisque nec mi id, ultrices varius orci. Sed ullamcorper dolor et arcu malesuada faucibus. Phasellus hendrerit libero arcu, ac finibus tellus pellentesque vitae. Vestibulum non maximus mi, quis consectetur elit. Phasellus at ultricies risus. Duis non pulvinar erat. Praesent leo mauris, rhoncus nec neque in, eleifend sollicitudin leo. Vivamus orci velit, imperdiet sit amet ligula sollicitudin, cursus tincidunt enim. Cras facilisis purus sed elit rhoncus sagittis.
+
+Ut viverra velit faucibus dui rhoncus venenatis. Nunc odio odio, commodo non sodales a, tincidunt ac tellus. Phasellus interdum pulvinar mauris, non egestas est accumsan venenatis. Nam aliquet mauris non elit cursus imperdiet. Etiam ut turpis vel velit ultrices lobortis vel at sapien. Integer ut sapien eget turpis efficitur lacinia. Nulla quis diam ante. Proin nunc ligula, eleifend eu nunc eget, pretium facilisis mi. Phasellus venenatis lacinia lorem sed suscipit. Nam placerat, leo faucibus porttitor sodales, elit massa euismod sem, ac tristique magna velit eu justo.</p>
+    </div>
+
+
+
+  </div>
+
+
+</div>
+
+<script type="text/javascript">
+function Info()
+{
+  var OverlayOpen = document.getElementById("mainbox").style.top;
+  if(OverlayOpen != "0px")
+  {
+    console.log("C");
+    openOverlay();
+
+  }
+  if(OverlayOpen == "0px")
+  {
+      console.log("Open");
+      closeOverlay();
+  }
+
+}
+function openOverlay()
+{
+  var xx = document.getElementById("mainbox");
+  xx.style.top = 0;
+  xx.style.height = "800px";
+  document.getElementById("InfoButton").innerHTML = "Close";
+  document.getElementById("overviewtrd").style.opacity = 0;
+  setTimeout(function(){
+    document.getElementById("overviewtrd").style.display = "none";
+    document.getElementById("detaildoverview").style.display = "block";
+    document.getElementById("detaildoverview").style.opacity = 100;
+}, 500);
+
+}
+function closeOverlay()
+{
+  var main = document.getElementById("mainbox");
+  main.style.top = "50%";
+  main.style.height = "calc(45% - 90px)";
+  document.getElementById("InfoButton").innerHTML = "Learn More";
+  document.getElementById("detaildoverview").style.opacity = 0;
+  setTimeout(function(){
+    document.getElementById("detaildoverview").style.display = "none";
+    document.getElementById("overviewtrd").style.display = "block";
+      document.getElementById("overviewtrd").style.opacity = 100;
+}, 500);
+
+}
+
+function Exchange()
+{
+  document.getElementById("mainbox").style.opacity = 0;
+  document.getElementById("mainbg").style.height = "90%";
+  document.getElementById("exhangecenter").style.opacity = 0;
+  setTimeout(function(){
+    document.getElementById("exhangecenter").style.display = "none";
+
+}, 500);
+
+}
+</script>
+
+</body>
+
+</html>

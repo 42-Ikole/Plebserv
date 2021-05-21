@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Phantom Coin</title>
+  <meta charset="UTF-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="/Assets/Css/css main ptc.css">
+  <link href="https://fonts.googleapis.com/css?family=Bentham|Playfair+Display|Raleway:400,500|Suranna|Trocchi" rel="stylesheet">
+  <meta name="google-signin-client_id" content="615125774410-cmsh7prcupda2u8sqiag23ail6jlmjmd.apps.googleusercontent.com">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <link rel="icon" href="/Assets/Media/pb.png">
+  <script type="text/javascript" src="/Assets/Scripts/linkscoin.js"></script>
+  <script type="text/javascript" src="/Assets/Scripts/signin.js"></script>
+</head>
+<body id="body">
+<div class="topnav" id="myTopnav">
+  <a class="topnav-context" id ="logo" onclick="NewPage(011)"><img id ="logo" src="\Assets\Media/p.png" width="20" height="20" alt="logo">  | Phantom</a>
+  <!--<a class="topnav-context" id="logo" href="#Home">| Phantom</a>-->
+  <a class="topnav-context" onclick="myprofile()" id="profheader"> My Profile</a>
+  <a class="topnav-context" href="#" >|</a>
+  <a class="topnav-context">About</a>
+</div>
+<div id="profileoverlay">
+  <div id="profilename">
+     <h3 class="USER_NAME">My Profile</h3>
+  </div>
+  <hr>
+  <div style="margin-left: 10%">
+  <div class="profiletab"><p> My profile </p> </div>
+  <div class="profiletab" onclick="signOut()"><p> Log out </p> </div>
+  <div class="profiletab"><p> About </p></div>
+  </div>
+</div>
+<div class="g-signin2" data-width="300" data-height="50" data-longtitle="true" data-onsuccess="onSignIn" style="margin-left: 10%; margin-top: 5%;"></div>
+
+</body>
+<script type="text/javascript">
+  var profOpen
+  function myprofile() {
+    if(profOpen == 1){
+      document.getElementById("profileoverlay").style.height = "0px";
+      document.getElementById("profileoverlay").style.display = "none";
+      profOpen = 0;
+    }
+    else {
+      document.getElementById("profileoverlay").style.display = "block";
+      document.getElementById("profileoverlay").style.height = "250px";
+      profOpen = 1;
+    }
+  }
+</script>
+<script>
+  function signOut() {
+    var auth2 = gapi.auth2.getAuthInstance();
+    auth2.signOut().then(function () {
+      console.log('User signed out.');
+      NewPage(001)
+    });
+  }
+</script>
+<script type="text/javascript">
+  x=document.getElementsByClassName("USER_NAME");  // Find the element
+        for(var i = 0; i < x.length; i++){
+        x[i].innerText=name;    // Change the content
+        }
+
+  x=document.getElementsByClassName("profilepic");  // Find the element
+        for(var i = 0; i < x.length; i++){
+        x[i].src=img;    // Change the content
+        }
+  x=document.getElementsByClassName("emailusr");  // Find the element
+        for(var i = 0; i < x.length; i++){
+        x[i].innerText=email;    // Change the content
+        }
+</script>
+</html>
