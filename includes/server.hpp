@@ -51,7 +51,7 @@ class Server
 		void			check_servername(string &val);
 
 		Location		*match_location(string path);
-		string			create_response(Header h);
+		char			*create_response(Header h, size_t *len);
 };
 
 std::ostream &operator<<(std::ostream &out, Server const &value);
