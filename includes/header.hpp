@@ -5,6 +5,8 @@
 #include <vector>
 #include <plebception.hpp>
 #include <utilities.hpp>
+#include <iomanip>
+
 
 using namespace std;
 
@@ -21,6 +23,11 @@ public:
 	Header(vector<std::string> in);
 	void	Parse_request(string request);
 	// virtual ~Header();
+
+	string	content_type_switch();
+	string create_header(int response_code, int body_length);
 };
+
+std::ostream &operator<<(std::ostream &out, Header const &value);
 
 #endif

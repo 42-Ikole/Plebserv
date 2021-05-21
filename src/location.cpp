@@ -145,3 +145,72 @@ void Location::call(const string& s, vector<string> val)
 		return;
 	(this->*func)(val);
 }
+
+void	read_file(string path)
+{
+	int fd;
+	int ret = 1;
+	char buf[1025];
+	string rv;
+
+	if ((fd = open(path.c_str(), O_RDONLY)) == -1)
+		throw Plebception(ERR_FD, "read_file", path);
+	while (ret)
+	{
+		ret = read(fd, &buf, 1024);
+		if (ret < 0)
+			throw Plebception(ERR_READ, "read_file", path);
+		buf[ret] = '\0';
+		rv += buf;
+	}
+}
+
+string	Location::find_file(Header h, int *response_code, size_t *length)
+{
+	string full_path;
+	if (h._path.find("?") != string::npos)
+		full_path = _root + h._path.substr(0, h._path.find("?"));
+	else
+		full_path = _root + h._path;
+	struct stat file_status;
+
+	std::cout << full_path << std::endl;	
+	if (stat(full_path.c_str(), &file_status) == -1)
+		throw Plebception(ERR_NO_LOCATION, "find_file", full_path);
+	*length = file_status.st_size;
+	if (file_status.st_mode & S_IFREG)
+	{
+		try
+		{
+			return (full_path);
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+			*response_code = 404;
+			return ("");
+		}
+	}
+	// else if (file_status.st_mode & S_IFDIR)
+	// {
+	// 	for (size_t i = 0; i < _index_page.size(); i++)
+	// 	{
+	// 		string new_path = full_path + _index_page[i];
+	// 		try
+	// 		{
+	// 			return (read_file(new_path));
+	// 		}
+	// 		catch(const std::exception& e)
+	// 		{
+	// 			std::cerr << e.what() << '\n';
+	// 		}
+	// 	}
+	// 	*response_code = 404;
+	// 	return ("");
+	// }
+	return ("");
+	/*
+		- see if file or dir
+			- if dir + index_page and try to read
+	*/
+}

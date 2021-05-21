@@ -16,6 +16,9 @@
 # define ERR_UNKNOWN_IDENT	"OI AMIGO, what is this identifier?"
 # define ERR_MULTIPLE_DOM	"Looks like you are defining multiple domains"
 # define ERR_FD				"Couldn't open fd"
+# define ERR_READ			"Couldn't read fd"
+# define ERR_NO_LOCATION	"Can't find matching location"
+
 
 # define COLOR_RED		"\033[31;01m"
 # define COLOR_GREEN	"\033[32m"
