@@ -93,6 +93,50 @@ void	handle_connection(connect_data client_socket)
 
 }
 
+static void accept_connect(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, size_t &fd_match)	
+{
+	for (size_t i = 0; i < data.size(); i++)
+	{
+		if (data[i].fd == fd_match)
+		{
+			connect_data opencon;
+			opencon.fd = accept_connection(data[i].fd, data[i].server_addr);
+			opencon.ser = data[i].ser;
+			FD_SET(opencon.fd, &current_sockets);	// add to select to watch
+			open_connections.push_back(opencon);
+		}
+	}
+			
+}
+
+static void	erase_connections(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, size_t &fd_match)
+{
+	for (size_t i = 0; i < open_connections.size(); i++)
+	{
+		if (open_connections[i].fd == fd_match)
+		{
+			handle_connection(open_connections[i]);
+			FD_CLR(fd_match, &current_sockets);
+			open_connections.erase(open_connections.begin() + i);
+		}
+	}
+}
+
+static void	connection_handler(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections)
+{
+	fd_set ready_sockets = current_sockets;
+
+	if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0)
+		perror("sockets");
+	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
+	{
+		if (FD_ISSET(fd_match, &ready_sockets))
+			accept_connect(current_sockets, data, open_connections, fd_match);
+		else
+			erase_connections(current_sockets, data, open_connections, fd_match);
+	}
+}
+
 void	host_servers(vector<Server> serv)
 {
 	vector<server_data> data;
@@ -106,7 +150,7 @@ void	host_servers(vector<Server> serv)
 			data.push_back(setup_server(serv[i], serv[i]._port[x] , 3));
 		}
 	}
-	fd_set current_sockets, ready_sockets;
+	fd_set current_sockets;
 
 	FD_ZERO(&current_sockets);
 	for (size_t i = 0; i < data.size(); i++)
@@ -114,40 +158,5 @@ void	host_servers(vector<Server> serv)
 		FD_SET(data[i].fd, &current_sockets);
 	}
 	while (true)
-	{
-		ready_sockets = current_sockets;
-
-		if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0)
-			perror("sockets");
-		for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
-		{
-			if (FD_ISSET(fd_match, &ready_sockets))
-			{
-				for (size_t i = 0; i < data.size(); i++)
-				{
-					if (data[i].fd == fd_match)
-					{
-						connect_data opencon;
-						opencon.fd = accept_connection(data[i].fd, data[i].server_addr);
-						opencon.ser = data[i].ser;
-						FD_SET(opencon.fd, &current_sockets);	// add to select to watch
-						open_connections.push_back(opencon);
-					}
-				}
-			}
-			else 
-			{
-				for (size_t i = 0; i < open_connections.size(); i++)
-				{
-					if (open_connections[i].fd == fd_match)
-					{
-						handle_connection(open_connections[i]);
-						FD_CLR(fd_match, &current_sockets);
-						open_connections.erase(open_connections.begin() + i);
-					}
-				}
-				
-			}
-		}
-	}
+		connection_handler(current_sockets, data, open_connections);
 }
