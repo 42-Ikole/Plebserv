@@ -55,4 +55,5 @@ namespace ft
         sign += (!sign);
         return (sign * res);
     }
+
 }

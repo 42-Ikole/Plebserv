@@ -7,6 +7,11 @@
 # include <string>
 # include <iomanip>
 # include <exception>
+# include <header.hpp> 
+# include <unistd.h>
+# include <fcntl.h>
+# include <sys/types.h>
+# include <sys/stat.h>
 
 using namespace std;
 
@@ -57,6 +62,9 @@ class Location
 		void 	set_auto_index(vector<string> val);
 		void 	set_index_page(vector<string> val);
 		void 	set_limit_except(vector<string> val);
+
+		char	*read_file(size_t len);
+		string	find_file(Header h, int *response_code, size_t *length);
 };
 
 std::ostream &operator<<(std::ostream &out, Location const &value);
