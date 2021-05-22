@@ -55,8 +55,8 @@ std::ostream &operator<<(std::ostream &out, Server const &value)
 		out << "{" << value._server_identifier[i] << "} ";
 
 	out << std::endl << std::setw(15) << "ERROR PAGES | ";
-	for (size_t i = 0; i < value._error_pages.size(); i++)
-		out << "{" << value._error_pages[i].html_error_code << ' ' << value._error_pages[i].location << "} ";
+	for (auto i = value._error_pages.begin(); i != value._error_pages.end(); ++i)
+		out << "{" << i->first << ' ' << i->second << "} ";
 	
 	out << std::endl << std::setw(15) << "LOCATIONS | " << endl;
 	for (size_t i = 0; i < value._locations.size(); i++)
@@ -162,11 +162,7 @@ void	Server::load_error_page(vector<string> val)
 	int code = ft::stoi(val[0]);
 	if (code < 100 && code >= 600)
 		Plebception(ERR_OUT_OF_RANGE, "error_page", val[0]);
-
-	err_page custom_error;
-	custom_error.html_error_code = code;
-	custom_error.location = val[1];
-	_error_pages.push_back(custom_error);
+	_error_pages[code] = val[1];
 }
 
 void	Server::load_client_max_body_size(vector<string> val)

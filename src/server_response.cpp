@@ -113,16 +113,13 @@ static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset=
 
 inline size_t Server::get_error_file_len(int response_code)
 {
-	for (size_t i = 0; i < _error_pages.size(); i++)
+	if (!_error_pages[response_code].empty())
 	{
-		if (_error_pages[i].html_error_code == response_code)
-		{
-			struct stat file_status;
-			// actually needs to break and return default, maybe??
-			if (stat(_error_pages[i].location.c_str(), &file_status) == -1)
-				throw Plebception(ERR_FD, "get_error_file_len", _error_pages[i].location);
-			return (file_status.st_size);
-		}
+		struct stat file_status;
+		// actually needs to break and return default, maybe??
+		if (stat(_error_pages[response_code].c_str(), &file_status) == -1)
+			throw Plebception(ERR_FD, "get_error_file_len", _error_pages[response_code]);
+		return (file_status.st_size);
 	}
 	return (err_default.length() - 8 + g_http_errors[response_code].length() - 14);
 }
@@ -145,13 +142,13 @@ void	Server::err_code_file(char *rv, int response_code)
 	}
 	else
 	{
-		if ((fd = open(_error_pages[0].location.c_str(), O_RDONLY)) == -1)
-			throw Plebception(ERR_FD, "read_file", ERROR_PAGE);
+		if ((fd = open(_error_pages[response_code].c_str(), O_RDONLY)) == -1)
+			throw Plebception(ERR_FD, "err_read_file", ERROR_PAGE);
 		while (ret)
 		{
 			ret = read(fd, &buf, 1024);
 			if (ret < 0)
-				throw Plebception(ERR_READ, "read_file", ERROR_PAGE);
+				throw Plebception(ERR_READ, "err_read_file", ERROR_PAGE);
 			if (ret == 0)
 				break ;
 			buf[ret] = '\0';

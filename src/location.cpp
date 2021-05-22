@@ -146,25 +146,6 @@ void Location::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
-void	read_file(string path)
-{
-	int fd;
-	int ret = 1;
-	char buf[1025];
-	string rv;
-
-	if ((fd = open(path.c_str(), O_RDONLY)) == -1)
-		throw Plebception(ERR_FD, "read_file", path);
-	while (ret)
-	{
-		ret = read(fd, &buf, 1024);
-		if (ret < 0)
-			throw Plebception(ERR_READ, "read_file", path);
-		buf[ret] = '\0';
-		rv += buf;
-	}
-}
-
 string	Location::find_file(Header h, int *response_code, size_t *length)
 {
 	string full_path;

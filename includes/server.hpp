@@ -26,7 +26,7 @@ class Server
 		vector<int>					_port;
 		string						_server;
 		vector<string>				_server_identifier;
-		vector<err_page>			_error_pages;
+		map<int, string>			_error_pages;
 		size_t						_max_body_size;
 		vector<Location>			_locations;
 		
