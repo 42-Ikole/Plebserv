@@ -145,7 +145,7 @@ void	Server::err_code_file(char *rv, int response_code)
 	}
 	else
 	{
-		if ((fd = open(ERROR_PAGE, O_RDONLY)) == -1)
+		if ((fd = open(_error_pages[0].location.c_str(), O_RDONLY)) == -1)
 			throw Plebception(ERR_FD, "read_file", ERROR_PAGE);
 		while (ret)
 		{
@@ -155,11 +155,8 @@ void	Server::err_code_file(char *rv, int response_code)
 			if (ret == 0)
 				break ;
 			buf[ret] = '\0';
-			string tmp = string(buf);
-			tmp.replace(tmp.find("$error_code"), 11, to_string(response_code));
-			tmp.replace(tmp.find("$error_message"), 14, g_http_errors[response_code]);
 			std::cout << "ret: " << ret << "i " << i << std::endl;
-			memcpy(&rv[i], tmp.c_str(), ret);
+			memcpy(&rv[i], buf, ret);
 			i += ret;
 		}
 	}
@@ -261,7 +258,6 @@ char	*Server::create_response(Header h, size_t *len)
 			file_size = get_error_file_len(response_code);
 		}
 	}
-	
 	string response = h.create_header(response_code, file_size, g_http_errors);
 
 	std::cout << "response: " <<  response << "\n\nbody_size: " << file_size << " path: " << file_path << std::endl;
