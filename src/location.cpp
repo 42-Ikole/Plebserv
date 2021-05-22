@@ -195,7 +195,7 @@ string	Location::find_file(Header h, int *response_code, size_t *length)
 				return (new_path);
 			}
 		}
-		*response_code = 404;
 	}
+	*response_code = 404;
 	throw (Plebception(ERR_NO_LOCATION, "find_file", full_path));
 }

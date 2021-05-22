@@ -5,6 +5,7 @@
 # include <sys/stat.h>
 #include <string.h>
 #include <map>
+#include <dirent.h>
 
 /*
 	- de path matchen met een location
@@ -164,6 +165,35 @@ void	Server::err_code_file(char *rv, int response_code)
 	}
 }
 
+string inline create_dirlist(string root, string path, size_t &len)
+{
+	string res = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Directory listing of $DIR </title></head><body><h1>Directory listing of $DIR</h1><br><br>";
+	DIR *dir;
+	struct dirent *cur_file;
+	dir = opendir(string((root + path)).c_str());
+
+	res.replace(res.find("$DIR"), 4, path);
+	res.replace(res.find("$DIR"), 4, path);
+	if (dir != NULL)
+	{
+		while ((cur_file = readdir(dir)))
+		{
+			if (cur_file->d_type == DT_DIR)
+			{
+				// icoontje idk idc idgaf
+				res += "<a href='" + string(cur_file->d_name) + "/'>" + string(cur_file->d_name) + "</a> <br>";
+			}
+			else
+				res += "<a href='" + string(cur_file->d_name) + "'>" + string(cur_file->d_name) + "</a> <br>";
+		}
+		(void) closedir (dir);
+	}
+	res += "</body></html>";
+	len = res.length();
+	std::cout << res << "LENGTH: " << len << std::endl;
+	return (res);
+}
+
 void	read_file(char *rv, string path)
 {
 	int fd;
@@ -209,6 +239,7 @@ char	*Server::create_response(Header h, size_t *len)
 	if (l == NULL)
 		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
 	int response_code = 200;
+	string response_body;
 	size_t	file_size = 0;
 	string file_path;
 	try
@@ -217,17 +248,17 @@ char	*Server::create_response(Header h, size_t *len)
 	}
 	catch(const std::exception& e)
 	{
-		if (1 || l->_auto_index == off)
+		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << "AUTOINDEX " << l->_auto_index << endl;
+		if (ft::ends_with(h._path, "/") && l->_auto_index == on)
 		{
-			struct stat file_status;
-
-			std::cerr << e.what() << '\n';
-			response_code = 404;
-			file_size = get_error_file_len(response_code);
+			response_code = 200;
+			response_body = create_dirlist(l->_root, h._path, file_size);
 		}
 		else
 		{
-			// auto index
+			std::cerr << e.what() << '\n';
+			response_code = 404;
+			file_size = get_error_file_len(response_code);
 		}
 	}
 	
@@ -244,8 +275,10 @@ char	*Server::create_response(Header h, size_t *len)
 	memcpy(rval, response.c_str(), response.length());
 	memcpy(&rval[response.length()], "\r\n", 2);
 
-	if (response_code == 200)
+	if (response_code == 200 && !file_path.empty())
 		read_file(&rval[response.length() + 2], file_path);
+	else if (response_code == 200 && file_path.empty())
+		memcpy(&rval[response.length() + 2], response_body.c_str(), response_body.length());
 	else
 		err_code_file(&rval[response.length() + 2], response_code);
 	*len = file_size + response.length() + 3;

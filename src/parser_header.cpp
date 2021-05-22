@@ -30,26 +30,21 @@ Header::Header(vector<string> in)
 	in.erase(in.begin());
 	_other_headers = in;
 }
-inline bool ends_with(std::string const & value, std::string const & ending)
-{
-    if (ending.size() > value.size()) return false;
-    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-}
 
 string	Header::content_type_switch()
 {
 	string path_to_check = _path.substr(0, _path.find("?"));
-	if (ends_with(path_to_check, ".html"))
+	if (ft::ends_with(path_to_check, ".html"))
 		return ("text/html");
-	if (ends_with(path_to_check, ".css"))
+	if (ft::ends_with(path_to_check, ".css"))
 		return ("text/css");
-	if (ends_with(path_to_check, ".jpg"))
+	if (ft::ends_with(path_to_check, ".jpg"))
 		return ("image/jpeg");
-	if (ends_with(path_to_check, ".js"))
+	if (ft::ends_with(path_to_check, ".js"))
 		return ("text/javascript");
-	if (ends_with(path_to_check, ".png"))
+	if (ft::ends_with(path_to_check, ".png"))
 		return ("image/png");
-	if (ends_with(path_to_check, ".json"))
+	if (ft::ends_with(path_to_check, ".json"))
 		return ("application/json");
 	return ("text/html");
 }
