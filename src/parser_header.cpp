@@ -47,16 +47,19 @@ inline bool ends_with(std::string const & value, std::string const & ending)
 
 string	Header::content_type_switch()
 {
-	if (ends_with(_path, ".html"))
+	string path_to_check = _path.substr(0, _path.find("?"));
+	if (ends_with(path_to_check, ".html"))
 		return ("text/html");
-	if (ends_with(_path, ".css"))
+	if (ends_with(path_to_check, ".css"))
 		return ("text/css");
-	if (ends_with(_path, ".jpg"))
+	if (ends_with(path_to_check, ".jpg"))
 		return ("image/jpeg");
-	if (ends_with(_path, ".js"))
+	if (ends_with(path_to_check, ".js"))
 		return ("text/javascript");
-	if (ends_with(_path, ".png"))
+	if (ends_with(path_to_check, ".png"))
 		return ("image/png");
+	if (ends_with(path_to_check, ".json"))
+		return ("application/json");
 	return ("text/html");
 }
 
