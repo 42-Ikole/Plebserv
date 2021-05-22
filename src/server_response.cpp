@@ -12,7 +12,7 @@
 	- response header maken
 */
 
-static map<int, string> create_map()
+map<int, string> create_map()
 {
 	map<int, string> m;
 /*
@@ -106,6 +106,8 @@ static map<int, string> create_map()
 
 map<int, string> g_http_errors = create_map();
 
+#define ERROR_PAGE "html/error_page/error.html"
+
 static void	err_code_file(char *rv, int response_code)
 {
 	int fd;
@@ -114,25 +116,21 @@ static void	err_code_file(char *rv, int response_code)
 	char *file;
 	size_t i = 0;
 
-	if ((fd = open("html/error_page/error.html", O_RDONLY)) == -1)
-		throw Plebception(ERR_FD, "read_file", "/html/error_page/error.html");
+	if ((fd = open(ERROR_PAGE, O_RDONLY)) == -1)
+		throw Plebception(ERR_FD, "read_file", ERROR_PAGE);
 	while (ret)
 	{
 		ret = read(fd, &buf, 1024);
 		if (ret < 0)
-			throw Plebception(ERR_READ, "read_file", "/html/error_page/error.html");
+			throw Plebception(ERR_READ, "read_file", ERROR_PAGE);
 		if (ret == 0)
 			break ;
 		buf[ret] = '\0';
 		string tmp = string(buf);
-		ret = ret - 8 + g_http_errors[response_code].length() - 14;
-		tmp.replace(tmp.find("$error_code"), 11, to_string(response_code));
+		tmp.replace(tmp.find("$error_code"), 11, to_string(response_code));			//bigass chance of segfault
 		tmp.replace(tmp.find("$error_message"), 14, g_http_errors[response_code]);
-		for (size_t j = 0; j < 1025 && tmp[j]; j++)
-			buf[j] = tmp[j];
-		buf[ret] = '\0';
-		std::cout << "ret: " << ret << "i " << i << std::endl;
-		memcpy(&rv[i], buf, ret);
+		std::cout << "ret: " << tmp.length() << "i " << i << std::endl;
+		memcpy(&rv[i], tmp.c_str(), tmp.length());
 		i += ret;
 	}
 	cerr << "wazap" << endl;
@@ -191,14 +189,19 @@ char	*Server::create_response(Header h, size_t *len)
 	}
 	catch(const std::exception& e)
 	{
+		struct stat file_status;
+
 		std::cerr << e.what() << '\n';
-		file_size = 347 - 8 + g_http_errors[response_code].length() - 14; // niet de filesize hardcoden
+		if (stat(ERROR_PAGE, &file_status) == -1)
+			throw Plebception(ERR_NO_LOCATION, "find_file", ERROR_PAGE);
 		response_code = 404;
+		file_size = file_status.st_size - 8 + g_http_errors[response_code].length() - 14; // niet de filesize hardcoden
 	}
 	
-	string response = h.create_header(response_code, file_size);
+	string response = h.create_header(response_code, file_size, g_http_errors);
 
 	std::cout << "response: " <<  response << "\n\nbody_size: " << file_size << " path: " << file_path << std::endl;
+	std::cout << "Full malloc length: " << (file_size + response.length() + 3) << std::endl;
 
 	/*
 		Creating the return value
@@ -212,6 +215,7 @@ char	*Server::create_response(Header h, size_t *len)
 		read_file(&rval[response.length() + 2], file_path);
 	else
 		err_code_file(&rval[response.length() + 2], response_code);
-	*len = file_size + response.length() + 2;
+	*len = file_size + response.length() + 3;
+	std::cout << "rval len " << *len << std::endl;
 	return (rval);
 }
