@@ -152,7 +152,6 @@ void	Server::err_code_file(char *rv, int response_code)
 			if (ret == 0)
 				break ;
 			buf[ret] = '\0';
-			std::cout << "ret: " << ret << "i " << i << std::endl;
 			memcpy(&rv[i], buf, ret);
 			i += ret;
 		}
@@ -204,7 +203,6 @@ void	read_file(char *rv, string path)
 		if (ret < 0)
 			throw Plebception(ERR_READ, "read_file", path);
 		buf[ret] = '\0';
-		std::cout << "ret: " << ret << "i " << i << std::endl;
 		memcpy(&rv[i], buf, ret);
 		i += ret;
 	}

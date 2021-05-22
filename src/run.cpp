@@ -73,15 +73,22 @@ void	handle_connection(connect_data client_socket)
 	buffer[valread] = 0;
 
 	vector<string> splitted = ft::split(buffer, "\n");
-	std::cout << "Split obtained!" << std::endl;
-	Header incoming_header = Header(splitted);
-	std::cout << incoming_header << std::endl;
-	size_t len = 0;
-	char *rv = client_socket.ser->create_response(incoming_header, &len);
-
-	send(client_socket.fd , rv , len , 0 );
-	close(client_socket.fd);
-	free(rv);
+	try
+	{
+		Header incoming_header = Header(splitted);
+		std::cout << incoming_header << std::endl;
+		size_t len = 0;
+		char *rv = client_socket.ser->create_response(incoming_header, &len);
+		send(client_socket.fd , rv , len , 0 );
+		close(client_socket.fd);
+		free(rv);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		std::cout << "Moving on...." << std::endl;
+		close(client_socket.fd);
+	}
 }
 
 static void accept_connect(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, size_t &fd_match)	
