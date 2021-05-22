@@ -208,7 +208,7 @@ string	Location::find_file(Header h, int *response_code, size_t *length)
 	// 	*response_code = 404;
 	// 	return ("");
 	// }
-	return ("");
+	return (full_path);
 	/*
 		- see if file or dir
 			- if dir + index_page and try to read
