@@ -6,6 +6,7 @@
 #include <plebception.hpp>
 #include <utilities.hpp>
 #include <iomanip>
+#include <map>
 
 
 using namespace std;
@@ -25,7 +26,7 @@ public:
 	// virtual ~Header();
 
 	string	content_type_switch();
-	string create_header(int response_code, int body_length);
+	string create_header(int response_code, int body_length, map<int, string> &status_text);
 };
 
 std::ostream &operator<<(std::ostream &out, Header const &value);
