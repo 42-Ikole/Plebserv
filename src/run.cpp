@@ -52,10 +52,6 @@ server_data	setup_server(Server &ser, short port, int backlog)
 
 int accept_connection(int server_socket, struct sockaddr_in server_addr)
 {
-	/*
-		hier doen we dingen enzo
-
-	*/
 	struct sockaddr_in client_addr;
 	int addr_size = sizeof(server_addr);
 	int client_socket;
@@ -68,32 +64,21 @@ int accept_connection(int server_socket, struct sockaddr_in server_addr)
 
 void	handle_connection(connect_data client_socket)
 {
-	/*
-		hier doen we dingen enzo
-
-	*/
 	char buffer[1025];
-	std::stringstream returnval;
-	returnval << "HTTP/1.1 200 OK Date: Thu, 08 Apr 2004 18:24:33 GMT Server: Apache/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4 Content-Language: nl Content-Type: text/html; charset=iso-8859-1 X-Cache: MISS from wikipedia.org Connection: close Content-Type: text/html Content-Length: 49\n\n";
 	
-	returnval << *client_socket.ser;
-	std::cout << "We've got an connection!\n" << *client_socket.ser << std::endl;
+	std::cout << "We've got an connection! on server " << client_socket.ser->_server << std::endl;
 
+	// read function so larger request dont get cut off
 	int valread = read( client_socket.fd , buffer, 1024);
-
 	buffer[valread] = 0;
+
 	vector<string> splitted = ft::split(buffer, "\n");
 	std::cout << "Split obtained!" << std::endl;
 	Header incoming_header = Header(splitted);
 	std::cout << incoming_header << std::endl;
 	size_t len = 0;
 	char *rv = client_socket.ser->create_response(incoming_header, &len);
-	std::cout << "TO SEND\n\n" << rv << std::endl;
-	/*
-		- parse incoming header and data
-		- return corresponding data
-	*/
-	// printf("%s\n", buffer);
+
 	send(client_socket.fd , rv , len , 0 );
 	close(client_socket.fd);
 	free(rv);
@@ -132,6 +117,7 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 {
 	fd_set ready_sockets = current_sockets;
 
+	// timeout missing
 	if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0)
 		perror("sockets");
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
