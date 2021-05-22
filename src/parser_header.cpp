@@ -1,6 +1,7 @@
 #include <header.hpp>
 #include <iostream>
 #include <exception>
+#include <map>
 
 using namespace std;
 
@@ -23,22 +24,12 @@ void	Header::Parse_request(string request)
 
 Header::Header(vector<string> in)
 {
+	if (in.size() == 0)
+		throw Plebception(ERR_INVALID_VECTOR, "empty", "");
 	Parse_request(in[0]);
 	in.erase(in.begin());
 	_other_headers = in;
 }
-
-// HTTP/1.1 200 OK
-// Date: Thu, 08 Apr 2004 18:24:33 GMT
-// Server: Apache/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4
-// Content-Language: nl
-// Content-Type: text/html;
-// charset=iso-8859-1
-// X-Cache: MISS from wikipedia.org
-// Connection: close 
-// Content-Type: text/html
-// Content-Length: 49"
-
 inline bool ends_with(std::string const & value, std::string const & ending)
 {
     if (ending.size() > value.size()) return false;
@@ -63,9 +54,9 @@ string	Header::content_type_switch()
 	return ("text/html");
 }
 
-string Header::create_header(int response_code, int body_length)
+string Header::create_header(int response_code, int body_length, map<int, string> &status_text)
 {
-	string res = "HTTP/1.1 " + to_string(response_code) + " OK\n" + \
+	string res = "HTTP/1.1 " + to_string(response_code) + status_text[response_code] +"\n" + \
 	"Date: Thu, 08 Apr 2004 18:24:33 GMT\n" + \
 	"Server: Plebserv/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4\n" + \
 	"Content-Language: nl\n" + \
