@@ -36,6 +36,8 @@
 plebserv
 out
 log.txt
+html/
+test/
 
 # General
 .DS_Store
