@@ -168,6 +168,8 @@ void	read_file(string path)
 string	Location::find_file(Header h, int *response_code, size_t *length)
 {
 	string full_path;
+
+	// remove the ?(parameters) in the uri
 	if (h._path.find("?") != string::npos)
 		full_path = _root + h._path.substr(0, h._path.find("?"));
 	else
@@ -177,40 +179,23 @@ string	Location::find_file(Header h, int *response_code, size_t *length)
 	std::cout << full_path << std::endl;	
 	if (stat(full_path.c_str(), &file_status) == -1)
 		throw Plebception(ERR_NO_LOCATION, "find_file", full_path);
-	*length = file_status.st_size;
 	if (file_status.st_mode & S_IFREG)
 	{
-		try
-		{
-			return (full_path);
-		}
-		catch(const std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			*response_code = 404;
-			return ("");
-		}
+		*length = file_status.st_size;
+		return (full_path);
 	}
-	// else if (file_status.st_mode & S_IFDIR)
-	// {
-	// 	for (size_t i = 0; i < _index_page.size(); i++)
-	// 	{
-	// 		string new_path = full_path + _index_page[i];
-	// 		try
-	// 		{
-	// 			return (read_file(new_path));
-	// 		}
-	// 		catch(const std::exception& e)
-	// 		{
-	// 			std::cerr << e.what() << '\n';
-	// 		}
-	// 	}
-	// 	*response_code = 404;
-	// 	return ("");
-	// }
-	return (full_path);
-	/*
-		- see if file or dir
-			- if dir + index_page and try to read
-	*/
+	else if (file_status.st_mode & S_IFDIR)
+	{
+		for (size_t i = 0; i < _index_page.size(); i++)
+		{
+			string new_path = full_path + _index_page[i];
+			if (stat(new_path.c_str(), &file_status) != -1)
+			{
+				*length = file_status.st_size;
+				return (new_path);
+			}
+		}
+		*response_code = 404;
+	}
+	throw (Plebception(ERR_NO_LOCATION, "find_file", full_path));
 }

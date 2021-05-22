@@ -162,14 +162,19 @@ void	read_file(char *rv, string path)
 
 Location	*Server::match_location(string path)
 {
+	Location *closest_match = 0;
 	for (size_t i = 0; i < _locations.size(); i++)
 	{
 		std::cout << "Matching [" << _locations[i]._location << "] with [" << path << "]\n";
 		if (!strncmp(_locations[i]._location.c_str(), path.c_str(), _locations[i]._location.length()))
 			return (&_locations[i]);
+		{
+			if (!closest_match || _locations[i]._location.length() > closest_match->_location.length())
+				closest_match = &_locations[i];
+		}
 	}
 	//path to 404;
-	return (NULL);
+	return (closest_match);
 }
 
 char	*Server::create_response(Header h, size_t *len)
@@ -195,6 +200,9 @@ char	*Server::create_response(Header h, size_t *len)
 
 	std::cout << "response: " <<  response << "\n\nbody_size: " << file_size << " path: " << file_path << std::endl;
 
+	/*
+		Creating the return value
+	*/
 	char *rval = (char *)malloc(sizeof(char) * (file_size + response.length() + 3));
 	rval[file_size + response.length() + 2] = 0;
 	memcpy(rval, response.c_str(), response.length());
