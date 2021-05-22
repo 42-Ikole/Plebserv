@@ -52,6 +52,9 @@ class Server
 
 		Location		*match_location(string path);
 		char			*create_response(Header h, size_t *len);
+
+		void			err_code_file(char *rv, int response_code);
+		inline size_t 	get_error_file_len(int response_code);
 };
 
 std::ostream &operator<<(std::ostream &out, Server const &value);

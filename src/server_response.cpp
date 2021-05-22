@@ -108,7 +108,25 @@ map<int, string> g_http_errors = create_map();
 
 #define ERROR_PAGE "html/error_page/error.html"
 
-static void	err_code_file(char *rv, int response_code)
+static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Plebbin reeee</title></head><body style='background-color: #f72d49; padding: 50px 10vw 0 10vw; color: #3f3f3f;'><h1>Error: $error_code</h1><p style='size: 15px;'>$error_message</p></body></html>";
+
+inline size_t Server::get_error_file_len(int response_code)
+{
+	for (size_t i = 0; i < _error_pages.size(); i++)
+	{
+		if (_error_pages[i].html_error_code == response_code)
+		{
+			struct stat file_status;
+			// actually needs to break and return default, maybe??
+			if (stat(_error_pages[i].location.c_str(), &file_status) == -1)
+				throw Plebception(ERR_FD, "get_error_file_len", _error_pages[i].location);
+			return (file_status.st_size);
+		}
+	}
+	return (err_default.length() - 8 + g_http_errors[response_code].length() - 14);
+}
+
+void	Server::err_code_file(char *rv, int response_code)
 {
 	int fd;
 	int ret = 1;
@@ -116,24 +134,34 @@ static void	err_code_file(char *rv, int response_code)
 	char *file;
 	size_t i = 0;
 
-	if ((fd = open(ERROR_PAGE, O_RDONLY)) == -1)
-		throw Plebception(ERR_FD, "read_file", ERROR_PAGE);
-	while (ret)
+	std::cout << "Error pages size: "<< _error_pages.size() << std::endl;
+	if (_error_pages.size() == 0)
 	{
-		ret = read(fd, &buf, 1024);
-		if (ret < 0)
-			throw Plebception(ERR_READ, "read_file", ERROR_PAGE);
-		if (ret == 0)
-			break ;
-		buf[ret] = '\0';
-		string tmp = string(buf);
-		tmp.replace(tmp.find("$error_code"), 11, to_string(response_code));			//bigass chance of segfault
-		tmp.replace(tmp.find("$error_message"), 14, g_http_errors[response_code]);
-		std::cout << "ret: " << tmp.length() << "i " << i << std::endl;
-		memcpy(&rv[i], tmp.c_str(), tmp.length());
-		i += ret;
+		string to_push = err_default;
+		to_push.replace(to_push.find("$error_code"), 11, to_string(response_code));
+		to_push.replace(to_push.find("$error_message"), 14, g_http_errors[response_code]);
+		memcpy(rv, to_push.c_str(), to_push.length());
 	}
-	cerr << "wazap" << endl;
+	else
+	{
+		if ((fd = open(ERROR_PAGE, O_RDONLY)) == -1)
+			throw Plebception(ERR_FD, "read_file", ERROR_PAGE);
+		while (ret)
+		{
+			ret = read(fd, &buf, 1024);
+			if (ret < 0)
+				throw Plebception(ERR_READ, "read_file", ERROR_PAGE);
+			if (ret == 0)
+				break ;
+			buf[ret] = '\0';
+			string tmp = string(buf);
+			tmp.replace(tmp.find("$error_code"), 11, to_string(response_code));
+			tmp.replace(tmp.find("$error_message"), 14, g_http_errors[response_code]);
+			std::cout << "ret: " << ret << "i " << i << std::endl;
+			memcpy(&rv[i], tmp.c_str(), ret);
+			i += ret;
+		}
+	}
 }
 
 void	read_file(char *rv, string path)
@@ -189,13 +217,18 @@ char	*Server::create_response(Header h, size_t *len)
 	}
 	catch(const std::exception& e)
 	{
-		struct stat file_status;
+		if (1 || l->_auto_index == off)
+		{
+			struct stat file_status;
 
-		std::cerr << e.what() << '\n';
-		if (stat(ERROR_PAGE, &file_status) == -1)
-			throw Plebception(ERR_NO_LOCATION, "find_file", ERROR_PAGE);
-		response_code = 404;
-		file_size = file_status.st_size - 8 + g_http_errors[response_code].length() - 14; // niet de filesize hardcoden
+			std::cerr << e.what() << '\n';
+			response_code = 404;
+			file_size = get_error_file_len(response_code);
+		}
+		else
+		{
+			// auto index
+		}
 	}
 	
 	string response = h.create_header(response_code, file_size, g_http_errors);
