@@ -12,6 +12,7 @@
 # include <fcntl.h>
 # include <sys/types.h>
 # include <sys/stat.h>
+# include <cgi.hpp>
 
 using namespace std;
 
@@ -47,6 +48,7 @@ class Location
 		string					_root;
 		bool					_auto_index;
 		vector<string>			_index_page;
+		vector<Cgi>				_cgi;
 		string					_location;
 		Location();
 	
@@ -62,9 +64,10 @@ class Location
 		void 	set_auto_index(vector<string> val);
 		void 	set_index_page(vector<string> val);
 		void 	set_limit_except(vector<string> val);
+		void 	set_cgi_pass(vector<string> val);
 
 		char	*read_file(size_t len);
-		string	find_file(Header h, int *response_code, size_t *length);
+		string	find_file(Header h, int &response_code, size_t *length);
 };
 
 std::ostream &operator<<(std::ostream &out, Location const &value);

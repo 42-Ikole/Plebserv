@@ -17,6 +17,7 @@ static map<string, LoadFunction> create_map()
 	m["autoindex"]		= &Location::set_auto_index;
 	m["index"]			= &Location::set_index_page;
 	m["limit_except"]	= &Location::set_limit_except;
+	m["cgi"]			= &Location::set_cgi_pass;
 	return m;
 }
 
@@ -53,6 +54,15 @@ void Location::set_auto_index(vector<string> val)
 		throw Plebception(ERR_INVALID_VALUE, "autoindex", val[0]);
 }
 
+void Location::set_cgi_pass(vector<string> val)
+{
+	if (val.size() > 2)
+		throw Plebception(ERR_TOO_MANY_ARG, "set_cgi_pass", val[0]);
+	if (val.size() < 2)
+		throw Plebception(ERR_TOO_FEW_ARG, "set_cgi_pass", val[0]);
+	_cgi.push_back(Cgi(val[1], val[0]));
+}
+
 void Location::set_index_page(vector<string> val)
 {
 	_index_page.clear();
@@ -87,6 +97,7 @@ Location& Location::operator=(Location const& tba)
 	_root = tba._root;
 	_auto_index = tba._auto_index;
 	_index_page = tba._index_page;
+	_cgi		= tba._cgi;
 	return *this;
 }
 
@@ -107,6 +118,12 @@ std::ostream &operator<<(std::ostream &out, Location const &value)
 		out << value._limit_except[i] << " ";
 	}
 	out << std::endl;
+	out << std::setw(20) << "CGI PASS | ";
+	for (size_t i = 0; i < value._cgi.size(); i++)
+	{
+		out << "{" << value._cgi[i] << "} ";
+	}
+	out << std::endl;
 	out << "------------ DONE ------------" << std::endl;
 
 	return (out);
@@ -120,7 +137,7 @@ int	Location::parse_args(string str)
 	if (!str.size())
 		return (0);
 	tokens = ft::split(str);
-	for (int i = 1; i < tokens.size(); i++)
+	for (size_t i = 1; i < tokens.size(); i++)
 		args.push_back(tokens[i]);
 	call(tokens[0], args);
 	return (1);
@@ -135,7 +152,7 @@ Location::Location(vector<string> val): _root("/html"), _auto_index(off), _locat
 		throw Plebception(ERR_NO_VALUE, "location path", val[0]);
 	for (size_t x = 1; x < val.size(); x++)
 		if (!val[x].empty())
-			parse_args(val[x]);	
+			parse_args(val[x]);
 }
 
 void Location::call(const string& s, vector<string> val)
@@ -146,11 +163,27 @@ void Location::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
-string	Location::find_file(Header h, int *response_code, size_t *length)
+string	Location::find_file(Header h, int &response_code, size_t *length)
 {
 	string full_path;
 
 	// remove the ?(parameters) in the uri
+	if (_limit_except.size())
+	{
+		size_t i = 0;
+		for (; i < _limit_except.size(); i++)
+		{
+			if (h._method == _limit_except[i])
+				break;
+		}
+		if (i == _limit_except.size())
+		{
+			response_code = 405;
+			throw Plebception("405 method not allowed", "find_file", h._path);
+		}
+	}
+
+	
 	if (h._path.find("?") != string::npos)
 		full_path = _root + h._path.substr(0, h._path.find("?"));
 	else
@@ -177,6 +210,6 @@ string	Location::find_file(Header h, int *response_code, size_t *length)
 			}
 		}
 	}
-	*response_code = 404;
+	response_code = 404;
 	throw (Plebception(ERR_NO_LOCATION, "find_file", full_path));
 }
