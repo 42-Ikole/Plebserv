@@ -19,6 +19,7 @@
 # define ERR_READ			"Couldn't read fd"
 # define ERR_NO_LOCATION	"Can't find matching location"
 # define ERR_INVALID_VECTOR	"Vector is invalid"
+# define ERR_FAIL_SYSCL		"Failed System call"
 
 # define COLOR_RED		"\033[31;01m"
 # define COLOR_GREEN	"\033[32m"
