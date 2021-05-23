@@ -56,6 +56,7 @@ int accept_connection(int server_socket, struct sockaddr_in server_addr)
 	int addr_size = sizeof(server_addr);
 	int client_socket;
 
+	(void)client_addr;
 	client_socket = accept(server_socket, (struct sockaddr *)&server_addr, (socklen_t*)&addr_size);
 	if (client_socket < 0)
 		perror("accept failed");
@@ -66,12 +67,13 @@ void	handle_connection(connect_data client_socket)
 {
 	char buffer[1025];
 	
-	std::cout << "We've got an connection! on server " << client_socket.ser->_server << std::endl;
+	// std::cout << "We've got an connection! on server " << client_socket.ser->_server << std::endl;
 
 	// read function so larger request dont get cut off
 	int valread = read( client_socket.fd , buffer, 1024);
 	buffer[valread] = 0;
 
+	std::cout << "Read n splittin" << std::endl;
 	vector<string> splitted = ft::split(buffer, "\n");
 	try
 	{
@@ -88,6 +90,7 @@ void	handle_connection(connect_data client_socket)
 		std::cerr << e.what() << '\n';
 		std::cout << "Moving on...." << std::endl;
 		close(client_socket.fd);
+		exit(0);
 	}
 }
 
@@ -95,7 +98,7 @@ static void accept_connect(fd_set &current_sockets, vector<server_data> &data, v
 {
 	for (size_t i = 0; i < data.size(); i++)
 	{
-		if (data[i].fd == fd_match)
+		if (data[i].fd == (int) fd_match)
 		{
 			connect_data opencon;
 			opencon.fd = accept_connection(data[i].fd, data[i].server_addr);
@@ -109,9 +112,10 @@ static void accept_connect(fd_set &current_sockets, vector<server_data> &data, v
 
 static void	erase_connections(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, size_t &fd_match)
 {
+	(void)data;
 	for (size_t i = 0; i < open_connections.size(); i++)
 	{
-		if (open_connections[i].fd == fd_match)
+		if (open_connections[i].fd == (int) fd_match)
 		{
 			handle_connection(open_connections[i]);
 			FD_CLR(fd_match, &current_sockets);
@@ -123,9 +127,12 @@ static void	erase_connections(fd_set &current_sockets, vector<server_data> &data
 static void	connection_handler(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections)
 {
 	fd_set ready_sockets = current_sockets;
+    struct timeval timeout;      
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
 
 	// timeout missing
-	if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0)
+	if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, &timeout) < 0)
 		perror("sockets");
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
 	{

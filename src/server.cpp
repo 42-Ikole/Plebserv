@@ -128,7 +128,7 @@ void	Server::load_ports(vector<string> val)
 	for (size_t i = 0; i < val.size(); i++)
 	{
 		vector<string> tmp = check_listen(val[i]);
-		for (int j = 0; j < tmp.size(); j++)
+		for (size_t j = 0; j < tmp.size(); j++)
 		{
 			if (tmp[j].find_first_not_of("0123456789") != string::npos)
 				_server = tmp[j];
@@ -200,13 +200,13 @@ void	Server::load_locations(vector<string> val)
 	_locations.push_back(Location(val));
 }
 
-static void check_line(string &s, char delim)
-{
-	if (s.find(delim) != s.size() - 1)
-		throw Plebception(ERR_SEMICOLON, "line", s);
-	else
-		s = ft::trim_char(s, delim);
-}
+// static void check_line(string &s, char delim)
+// {
+// 	if (s.find(delim) != s.size() - 1)
+// 		throw Plebception(ERR_SEMICOLON, "line", s);
+// 	else
+// 		s = ft::trim_char(s, delim);
+// }
 
 static bool verify_line(string s, char delim) {
 	if (count(s.begin(), s.end(), delim) == 1 && s.find(delim) == s.size() - 1)
@@ -222,7 +222,7 @@ static void	validate_line(string token, string s)
 
 static void trim_lines(vector<string> &args)
 {
-	for (int j = 0; j < args.size(); j++)
+	for (size_t j = 0; j < args.size(); j++)
 		if (args[j][args[j].size() - 1] == ';')
 			args[j] = ft::trim_char(args[j], ';');
 }
@@ -260,7 +260,7 @@ int Server::parse_args(vector<string> arr, int index)
 			parse_location_block(args, arr, tokens, i);
 		else
 		{
-			for (int j = 1; j < tokens.size(); j++)
+			for (size_t j = 1; j < tokens.size(); j++)
 				args.push_back(tokens[j]);
 		}
 		trim_lines(args);
