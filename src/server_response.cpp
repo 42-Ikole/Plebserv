@@ -129,11 +129,10 @@ void	Server::err_code_file(char *rv, int response_code)
 	int fd;
 	int ret = 1;
 	char buf[1025];
-	char *file;
 	size_t i = 0;
 
 	std::cout << "Error pages size: "<< _error_pages.size() << std::endl;
-	if (_error_pages.size() == 0)
+	if (_error_pages[response_code].empty())
 	{
 		string to_push = err_default;
 		to_push.replace(to_push.find("$error_code"), 11, to_string(response_code));
@@ -192,7 +191,6 @@ void	read_file(char *rv, string path)
 	int fd;
 	int ret = 1;
 	char buf[1025];
-	char *file;
 	size_t i = 0;
 
 	if ((fd = open(path.c_str(), O_RDONLY)) == -1)
@@ -236,20 +234,19 @@ char	*Server::create_response(Header h, size_t *len)
 	string file_path;
 	try
 	{
-		file_path = l->find_file(h, &response_code, &file_size);
+		file_path = l->find_file(h, response_code, &file_size);
 	}
 	catch(const std::exception& e)
 	{
 		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << "AUTOINDEX " << l->_auto_index << endl;
-		if (ft::ends_with(h._path, "/") && l->_auto_index == on)
+		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == on)
 		{
 			response_code = 200;
 			response_body = create_dirlist(l->_root, h._path, file_size);
 		}
 		else
 		{
-			std::cerr << e.what() << '\n';
-			response_code = 404;
+			std::cerr << e.what() << " response_code: " << response_code << '\n';
 			file_size = get_error_file_len(response_code);
 		}
 	}
