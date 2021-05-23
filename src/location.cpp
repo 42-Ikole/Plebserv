@@ -163,7 +163,7 @@ void Location::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
-string	Location::find_file(Header h, int &response_code, size_t *length)
+string	Location::find_file(Header h, int &response_code)
 {
 	string full_path;
 
@@ -186,10 +186,12 @@ string	Location::find_file(Header h, int &response_code, size_t *length)
 
 	std::cout << full_path << std::endl;	
 	if (stat(full_path.c_str(), &file_status) == -1)
+	{
+		response_code = 404;
 		throw Plebception(ERR_NO_LOCATION, "find_file", full_path);
+	}
 	if (file_status.st_mode & S_IFREG)
 	{
-		*length = file_status.st_size;
 		return (full_path);
 	}
 	else if (file_status.st_mode & S_IFDIR)
@@ -199,7 +201,6 @@ string	Location::find_file(Header h, int &response_code, size_t *length)
 			string new_path = full_path + _index_page[i];
 			if (stat(new_path.c_str(), &file_status) != -1)
 			{
-				*length = file_status.st_size;
 				return (new_path);
 			}
 		}

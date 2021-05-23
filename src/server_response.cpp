@@ -111,20 +111,7 @@ map<int, string> g_http_errors = create_map();
 
 static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Plebbin reeee</title></head><body style='background-color: #f72d49; padding: 50px 10vw 0 10vw; color: #3f3f3f;'><h1>Error: $error_code</h1><p style='size: 15px;'>$error_message</p></body></html>";
 
-inline size_t Server::get_error_file_len(int response_code)
-{
-	if (!_error_pages[response_code].empty())
-	{
-		struct stat file_status;
-		// actually needs to break and return default, maybe??
-		if (stat(_error_pages[response_code].c_str(), &file_status) == -1)
-			throw Plebception(ERR_FD, "get_error_file_len", _error_pages[response_code]);
-		return (file_status.st_size);
-	}
-	return (err_default.length() - 8 + g_http_errors[response_code].length() - 14);
-}
-
-void	Server::err_code_file(char *rv, int response_code)
+void	Server::err_code_file(vector<unsigned char> &body, int response_code)
 {
 	int fd;
 	int ret = 1;
@@ -137,7 +124,8 @@ void	Server::err_code_file(char *rv, int response_code)
 		string to_push = err_default;
 		to_push.replace(to_push.find("$error_code"), 11, to_string(response_code));
 		to_push.replace(to_push.find("$error_message"), 14, g_http_errors[response_code]);
-		memcpy(rv, to_push.c_str(), to_push.length());
+		body.resize(to_push.length());
+		memcpy(&body[0], to_push.c_str(), to_push.length());
 	}
 	else
 	{
@@ -151,13 +139,14 @@ void	Server::err_code_file(char *rv, int response_code)
 			if (ret == 0)
 				break ;
 			buf[ret] = '\0';
-			memcpy(&rv[i], buf, ret);
+			body.resize(body.size() + ret);
+			memcpy(&body[i], buf, ret);
 			i += ret;
 		}
 	}
 }
 
-string inline create_dirlist(string root, string path, size_t &len)
+void inline create_dirlist(string root, string path, vector<unsigned char> &body)
 {
 	string res = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Directory listing of $DIR </title></head><body><h1>Directory listing of $DIR</h1><br><br>";
 	DIR *dir;
@@ -181,12 +170,11 @@ string inline create_dirlist(string root, string path, size_t &len)
 		(void) closedir (dir);
 	}
 	res += "</body></html>";
-	len = res.length();
-	std::cout << res << "LENGTH: " << len << std::endl;
-	return (res);
+	body.resize(res.length());
+	memcpy(&body[0], res.c_str(), res.length());
 }
 
-void	read_file(char *rv, string path)
+void	read_file(vector<unsigned char> &rv, string path)
 {
 	int fd;
 	int ret = 1;
@@ -201,6 +189,7 @@ void	read_file(char *rv, string path)
 		if (ret < 0)
 			throw Plebception(ERR_READ, "read_file", path);
 		buf[ret] = '\0';
+		rv.resize(rv.size() + ret);
 		memcpy(&rv[i], buf, ret);
 		i += ret;
 	}
@@ -223,53 +212,41 @@ Location	*Server::match_location(string path)
 	return (closest_match);
 }
 
-char	*Server::create_response(Header h, size_t *len)
+vector<unsigned char>	Server::create_response(Header h, size_t *len)
 {
+	vector<unsigned char> rval;
+	vector<unsigned char> body;
+	string header;
+	int response_code = 200;
 	Location *l = match_location(h._path);
 	if (l == NULL)
 		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
-	int response_code = 200;
-	string response_body;
-	size_t	file_size = 0;
-	string file_path;
+
 	try
 	{
-		file_path = l->find_file(h, response_code, &file_size);
+		read_file(body, l->find_file(h, response_code));
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << "AUTOINDEX " << l->_auto_index << endl;
+		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
 		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == on)
 		{
 			response_code = 200;
-			response_body = create_dirlist(l->_root, h._path, file_size);
+			create_dirlist(l->_root, h._path, body);
 		}
 		else
 		{
 			std::cerr << e.what() << " response_code: " << response_code << '\n';
-			file_size = get_error_file_len(response_code);
+			err_code_file(body, response_code);
 		}
 	}
-	string response = h.create_header(response_code, file_size, g_http_errors);
+	header = h.create_header(response_code, body.size(), g_http_errors);
 
-	std::cout << "response: " <<  response << "\n\nbody_size: " << file_size << " path: " << file_path << std::endl;
-	std::cout << "Full malloc length: " << (file_size + response.length() + 3) << std::endl;
+	std::cout << "BODY SIZE: " << body.size() << " HEADER " << header.length() << std::endl;
 
-	/*
-		Creating the return value
-	*/
-	char *rval = (char *)malloc(sizeof(char) * (file_size + response.length() + 3));
-	rval[file_size + response.length() + 2] = 0;
-	memcpy(rval, response.c_str(), response.length());
-	memcpy(&rval[response.length()], "\r\n", 2);
-
-	if (response_code == 200 && !file_path.empty())
-		read_file(&rval[response.length() + 2], file_path);
-	else if (response_code == 200 && file_path.empty())
-		memcpy(&rval[response.length() + 2], response_body.c_str(), response_body.length());
-	else
-		err_code_file(&rval[response.length() + 2], response_code);
-	*len = file_size + response.length() + 3;
-	std::cout << "rval len " << *len << std::endl;
+	// creating return value
+	rval.resize(header.length() + body.size());
+	memcpy(&rval[0], header.c_str(), header.length());
+	memcpy(&rval[header.length()], &body[0], body.size());
 	return (rval);
 }

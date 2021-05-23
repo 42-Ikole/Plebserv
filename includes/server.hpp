@@ -51,9 +51,9 @@ class Server
 		void			check_servername(string &val);
 
 		Location		*match_location(string path);
-		char			*create_response(Header h, size_t *len);
+		vector<unsigned char>	create_response(Header h, size_t *len);
 
-		void			err_code_file(char *rv, int response_code);
+		void			err_code_file(vector<unsigned char> &body, int response_code);
 		inline size_t 	get_error_file_len(int response_code);
 };
 

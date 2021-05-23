@@ -67,7 +67,7 @@ class Location
 		void 	set_cgi_pass(vector<string> val);
 
 		char	*read_file(size_t len);
-		string	find_file(Header h, int &response_code, size_t *length);
+		string	find_file(Header h, int &response_code);
 };
 
 std::ostream &operator<<(std::ostream &out, Location const &value);

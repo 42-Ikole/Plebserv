@@ -66,7 +66,7 @@ string Header::create_header(int response_code, int body_length, map<int, string
 	"charset=iso-8859-1\n" + \
 	"Connection: close\n" + \
 	"Content-Type: " + content_type_switch() + "\n" + \
-	"Content-Length: " + to_string(body_length) + "\n";
+	"Content-Length: " + to_string(body_length) + "\n\r\n";
 
 	return (res);
 }
