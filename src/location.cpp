@@ -167,7 +167,6 @@ string	Location::find_file(Header h, int &response_code, size_t *length)
 {
 	string full_path;
 
-	// remove the ?(parameters) in the uri
 	if (_limit_except.size())
 	{
 		size_t i = 0;
@@ -182,12 +181,7 @@ string	Location::find_file(Header h, int &response_code, size_t *length)
 			throw Plebception("405 method not allowed", "find_file", h._path);
 		}
 	}
-
-	
-	if (h._path.find("?") != string::npos)
-		full_path = _root + h._path.substr(0, h._path.find("?"));
-	else
-		full_path = _root + h._path;
+	full_path = _root + h._path;
 	struct stat file_status;
 
 	std::cout << full_path << std::endl;	

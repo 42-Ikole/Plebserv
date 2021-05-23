@@ -10,9 +10,18 @@ void	Header::Parse_request(string request)
 	vector<string> parsed = ft::split(request);
 
 	try
-	{	
-		_method	= parsed[0];
-		_path	= parsed[1];
+	{
+		_method = parsed[0].substr(0, parsed[0].find('?'));
+
+		if (parsed[1].find("?") != string::npos)
+		{
+			_path = parsed[1].substr(0, parsed[1].find('?'));
+			_query = parsed[1].substr(parsed[1].find('?') + 1, string::npos);
+		}
+		else
+			_path = parsed[1];
+		if (_path.find('.') != string::npos)
+			_extension = _path.substr(_path.find('.'), string::npos);
 		_http_version = parsed[2];
 	}
 	catch (exception &e)
@@ -33,18 +42,17 @@ Header::Header(vector<string> in)
 
 string	Header::content_type_switch()
 {
-	string path_to_check = _path.substr(0, _path.find("?"));
-	if (ft::ends_with(path_to_check, ".html"))
+	if (_extension == ".html")
 		return ("text/html");
-	if (ft::ends_with(path_to_check, ".css"))
+	if (_extension == ".css")
 		return ("text/css");
-	if (ft::ends_with(path_to_check, ".jpg"))
+	if (_extension == ".jpg")
 		return ("image/jpeg");
-	if (ft::ends_with(path_to_check, ".js"))
+	if (_extension == ".js")
 		return ("text/javascript");
-	if (ft::ends_with(path_to_check, ".png"))
+	if (_extension == ".png")
 		return ("image/png");
-	if (ft::ends_with(path_to_check, ".json"))
+	if (_extension == ".json")
 		return ("application/json");
 	return ("text/html");
 }
@@ -56,7 +64,6 @@ string Header::create_header(int response_code, int body_length, map<int, string
 	"Server: Plebserv/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4\n" + \
 	"Content-Language: nl\n" + \
 	"charset=iso-8859-1\n" + \
-	"X-Cache: MISS from wikipedia.org\n" + \
 	"Connection: close\n" + \
 	"Content-Type: " + content_type_switch() + "\n" + \
 	"Content-Length: " + to_string(body_length) + "\n";
@@ -69,10 +76,8 @@ std::ostream &operator<<(std::ostream &out, Header const &value)
 	out << "------------ HEADER --------" << std::endl;
 
 	out << std::setw(15) << "REQUEST LINE | " << "[" << value._method << "] [" << value._path << "]" << std::endl;
-	/*
-		implemented headers
-	*/
-	
+	out << std::setw(15) << "QUERY | " << value._query << std::endl;
+	out << std::setw(15) << "EXTENSION | " << value._extension << std::endl;
 	out << std::setw(15) << "OTHER HEADERS:\n";
 	for (size_t i = 0; i < value._other_headers.size(); i++)
 		out << value._other_headers[i] << std::endl;

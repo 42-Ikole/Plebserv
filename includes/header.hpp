@@ -16,6 +16,8 @@ class Header
 public:
 	string	_method;
 	string	_path;
+	string	_query;
+	string	_extension;
 	string	_http_version;
 	string	_host;
 	string	_connection;
