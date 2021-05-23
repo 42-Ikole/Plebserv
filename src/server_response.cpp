@@ -224,7 +224,11 @@ vector<unsigned char>	Server::create_response(Header h, size_t *len)
 
 	try
 	{
-		read_file(body, l->find_file(h, response_code));
+		string file_path = l->find_file(h, response_code);
+		if (l->needs_cgi(h, file_path))
+			l->run_cgi(h, body, file_path);	
+		else
+			read_file(body, file_path);
 	}
 	catch(const std::exception& e)
 	{

@@ -163,6 +163,23 @@ void Location::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
+bool	Location::needs_cgi(Header &h, string file_path)
+{
+	for (size_t i = 0; i < _cgi.size(); i++)
+		if (h._extension == _cgi[i]._match)
+			return (true);
+	return (false);
+}
+
+void	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path)
+{
+	for (size_t i = 0; i < _cgi.size(); i++)
+	{
+		if (h._extension == _cgi[i]._match)
+			_cgi[i].cgi_response(h, body, file_path);
+	}
+}
+
 string	Location::find_file(Header h, int &response_code)
 {
 	string full_path;

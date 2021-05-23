@@ -1,6 +1,7 @@
 #include <cgi.hpp>
 #include <iostream>
 #include <unistd.h>
+#include <string.h>
 #include <sys/wait.h>
 
 Cgi::Cgi(string path, string match)
@@ -30,15 +31,14 @@ std::ostream &operator<<(std::ostream &out, Cgi const &value)
 	return (out);
 }
 
-string Cgi::read_response(const Header &h, char **env, size_t &len)
+void Cgi::read_response(const Header &h, char **env, vector<unsigned char> &body, string file_path)
 {
 	char *args[3];
 	int fd[2];
 	char buff[1025];
-	string res;
 
 	args[0] = (char *)_full_path.c_str();
-	args[1] = (char *)h._path.c_str();
+	args[1] = (char *)file_path.c_str();
 	args[2] = 0;
 
 	if (pipe(fd) == -1)
@@ -64,16 +64,15 @@ string Cgi::read_response(const Header &h, char **env, size_t &len)
 		{
 			ret = read(fd[0], buff, 1024);
 			buff[ret] = 0;
-			len += ret;
-			res += buff;
+			body.resize(body.size() + ret);
+			memcpy(&body[0], buff, ret);
 		}
-		std::cout << res << std::endl;
+		std::cout << "Done with cgi!" << endl;
 		waitpid(id, &status, 0);
 	}
-	return (res);
 }
 
-string Cgi::cgi_response(const Header &h, size_t &len)
+void	Cgi::cgi_response(const Header &h, vector<unsigned char> &body, string file_path)
 {
 	char *env[18];
 
@@ -91,8 +90,9 @@ string Cgi::cgi_response(const Header &h, size_t &len)
 	env[11] = (char *)"SERVER_PORT=8080";
 	env[12] = (char *)"SERVER_PROTOCOL=HTTP/1.1";
 	env[13] = (char *)"SERVER_SOFTWARE=Plebserv (linux)";
-	env[14] = NULL;
+	env[14] = (char *)"REDIRECT_STATUS=200";
+	env[15] = NULL;
 	// en nog wat meer idc
 
-	return (read_response(h, env, len));
+	read_response(h, env, body, file_path);
 }

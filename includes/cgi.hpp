@@ -17,8 +17,8 @@ public:
 	Cgi(const Cgi &tbc);
 	Cgi & operator=(const Cgi &tba);
 
-	string cgi_response(const Header &h, size_t &len);
-	string read_response(const Header &h, char **env, size_t &len);
+	void cgi_response(const Header &h, vector<unsigned char> &body, string file_path);
+	void read_response(const Header &h, char **env, vector<unsigned char> &body, string file_path);
 };
 
 std::ostream &operator<<(std::ostream &out, Cgi const &value);
