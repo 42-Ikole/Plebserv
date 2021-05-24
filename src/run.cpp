@@ -10,6 +10,18 @@
 #include <header.hpp>
 #include <utilities.hpp>
 #include <sstream> //tmp
+#include <sys/ioctl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+
+std::string hello = "HTTP/1.1 200 OK\r\nContent-Type: text/html;\r\ncharset=iso-8859-1\r\nConnection: keep-alive\r\nContent-Type: text/html\r\nContent-Length: 16\r\n\r\nHAHAHAHAHAHHAHAH";
 
 
 struct server_data
@@ -34,14 +46,20 @@ server_data	setup_server(Server &ser, short port, int backlog)
 	if ((res.fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 		perror("socket failed");
 
-    if (setsockopt(res.fd, SOL_SOCKET, SO_REUSEADDR , &opt, sizeof(opt)))
-    {
-        perror("setsockopt");
-        exit(EXIT_FAILURE);
-    }
+	if (setsockopt(res.fd, SOL_SOCKET, SO_REUSEADDR , &opt, sizeof(opt)))
+	{
+		perror("setsockopt");
+		exit(EXIT_FAILURE);
+	}
 	res.server_addr.sin_family = AF_INET; // ipv4
 	res.server_addr.sin_addr.s_addr = INADDR_ANY; // localhost ofzo
 	res.server_addr.sin_port = htons(port);
+
+	if (fcntl(res.fd, F_SETFL, O_NONBLOCK) == -1)
+	{
+		perror("ioctl");
+		exit(0);
+	}
 
 	if (bind(res.fd, (struct sockaddr *)&res.server_addr, sizeof(res.server_addr)) < 0)
 		perror("bind failed");
@@ -50,95 +68,143 @@ server_data	setup_server(Server &ser, short port, int backlog)
 	return (res);
 }
 
-int accept_connection(int server_socket, struct sockaddr_in server_addr)
+static void accept_connect(fd_set &current_sockets, server_data &data, vector<connect_data> &open_connections)	
 {
-	struct sockaddr_in client_addr;
-	int addr_size = sizeof(server_addr);
-	int client_socket;
+	connect_data opencon;
+	do
+	{
+		opencon.fd = accept(data.fd, NULL, NULL);
+		if (opencon.fd < 0)
+		{
+			if (errno != EWOULDBLOCK)
+			{
+				perror("  accept() failed");
+				exit(0);
+			}
+			break;
+		}
+		printf("  New incoming connection - %d\n", opencon.fd);
+		if (fcntl(opencon.fd, F_SETFL, O_NONBLOCK) == -1)
+		{
+			perror("fcntl");
+			exit(0);
+		}
+		opencon.ser = data.ser;
+		FD_SET(opencon.fd, &current_sockets);
+		open_connections.push_back(opencon);
+		// missing max fd resetter
 
-	(void)client_addr;
-	client_socket = accept(server_socket, (struct sockaddr *)&server_addr, (socklen_t*)&addr_size);
-	if (client_socket < 0)
-		perror("accept failed");
-	return (client_socket);
+	} while(opencon.fd != -1);
 }
 
-void	handle_connection(connect_data client_socket)
+static void	handle_connection(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, size_t &fd)
 {
+	bool close_conn = false;
+	int rc;
 	char buffer[1025];
-	
-	// std::cout << "We've got an connection! on server " << client_socket.ser->_server << std::endl;
+	bzero(buffer, 1025);
+	connect_data *current_connection;
+	size_t i = 0;
 
-	// read function so larger request dont get cut off
-	int valread = read( client_socket.fd , buffer, 1024);
-	buffer[valread] = 0;
-
-	std::cout << "Read n splittin" << std::endl;
-	vector<string> splitted = ft::split(buffer, "\n");
-	try
+	for (; i < open_connections.size(); i++)
+		if (open_connections[i].fd == fd)
+		{
+			current_connection = &open_connections[i];
+			break;
+		}
+	if (!current_connection)
 	{
-		Header incoming_header = Header(splitted);
-		std::cout << incoming_header << std::endl;
-		vector<unsigned char> rv = client_socket.ser->create_response(incoming_header);
-		cout << "TOTAL SIZE " << rv.size() << std::endl;
-		send(client_socket.fd , &rv[0] , rv.size() , 0 );
-		close(client_socket.fd);
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		std::cout << "Moving on...." << std::endl;
-		close(client_socket.fd);
+		std::cout << "Connection not found! " << endl;
 		exit(0);
 	}
-}
-
-static void accept_connect(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, size_t &fd_match)	
-{
-	for (size_t i = 0; i < data.size(); i++)
+	do
 	{
-		if (data[i].fd == (int) fd_match)
-		{
-			connect_data opencon;
-			opencon.fd = accept_connection(data[i].fd, data[i].server_addr);
-			opencon.ser = data[i].ser;
-			FD_SET(opencon.fd, &current_sockets);	// add to select to watch
-			open_connections.push_back(opencon);
-		}
-	}
-			
-}
+		bzero(buffer, 1024);
+		std::cout << "Waiting for recv.." << std::endl;
+		rc = recv(fd, buffer, 1024, 0);
 
-static void	erase_connections(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, size_t &fd_match)
-{
-	(void)data;
-	for (size_t i = 0; i < open_connections.size(); i++)
-	{
-		if (open_connections[i].fd == (int) fd_match)
+		if (rc < 0)
 		{
-			handle_connection(open_connections[i]);
-			FD_CLR(fd_match, &current_sockets);
-			open_connections.erase(open_connections.begin() + i);
+			std::cout << "Recv rval: " << rc <<endl;
+			if (errno != EWOULDBLOCK)
+			{
+				perror("  recv() failed");
+				close_conn = true;
+			}
+			break;
 		}
+		if (rc == 0)
+		{
+			std::cout << "Connection closed" << endl;
+			close_conn = true;
+			break;
+		}
+		std::cout << "Bytes recieved " << rc << std::endl;
+		vector<string> splitted = ft::split(buffer, "\n");
+		try
+		{
+			Header incoming_header = Header(splitted);
+			std::cout << incoming_header << std::endl;
+			vector<unsigned char> rv = current_connection->ser->create_response(incoming_header);
+			cout << "TOTAL SIZE " << rv.size() << std::endl;
+			send(fd , &rv[0] , rv.size() , 0 );
+			cout << "Bytes send!" << std::endl;
+			if (rc < 0)
+			{
+				std::cout << "send failed!" << endl;
+				close_conn = true;
+				break;
+			}
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+		if (rc < 0)
+		{
+			std::cout << "send failed!" << endl;
+			close_conn = true;
+			break;
+		}
+	} while (1);
+
+	if (close_conn)
+	{
+		close(fd);
+		FD_CLR(fd, &current_sockets);
+		open_connections.erase(open_connections.begin() + i);
 	}
 }
 
 static void	connection_handler(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections)
 {
 	fd_set ready_sockets = current_sockets;
-    struct timeval timeout;      
-    timeout.tv_sec = 10;
-    timeout.tv_usec = 0;
 
-	// timeout missing
-	if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, &timeout) < 0)
-		perror("sockets");
+	/*
+		- todo: select returns the count of fd's to be accepted. we can save cycles by not testing all fd's
+	*/
+	std::cout << "Waiting on select.." << endl;
+	if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) <= 0)
+	{
+		perror("exiting due to select");
+		exit(0);
+	}
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
 	{
 		if (FD_ISSET(fd_match, &ready_sockets))
-			accept_connect(current_sockets, data, open_connections, fd_match);
-		else
-			erase_connections(current_sockets, data, open_connections, fd_match);
+		{
+			for (size_t i = 0; i < data.size(); i++)
+				if (fd_match == data[i].fd)
+				{
+					std::cout << "Listening socket is available!" << endl;
+					accept_connect(current_sockets, data[i], open_connections);
+				}
+			else
+			{
+				std::cout << "FD " << fd_match << " is readable!" << std::endl;
+				handle_connection(current_sockets, data, open_connections, fd_match);
+			}
+		}
 	}
 }
 
@@ -152,7 +218,7 @@ void	host_servers(vector<Server> serv)
 		for (size_t x = 0; x < serv[i]._port.size(); x++)
 		{
 			std::cout << "Server " << serv[i]._server << " port: " << serv[i]._port[x] << std::endl;
-			data.push_back(setup_server(serv[i], serv[i]._port[x] , 3));
+			data.push_back(setup_server(serv[i], serv[i]._port[x] , 32));
 		}
 	}
 	fd_set current_sockets;
