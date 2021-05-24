@@ -72,26 +72,37 @@ void Cgi::read_response(const Header &h, char **env, vector<unsigned char> &body
 	}
 }
 
+char	*Cgi::create_env_var(string key, string value)
+{
+	string *res = new string;
+	*res = key + "=\"" + value + "\"";
+	return ((char *)res->c_str());
+}
+
 void	Cgi::cgi_response(const Header &h, vector<unsigned char> &body, string file_path)
 {
-	char *env[18];
+	char *env[19];
 
-	env[0] = (char *)"AUTH_TYPE=BASIC";
-	env[1] = (char *)"CONTENT_LENGTH=-1"; // h.content-length
-	env[2] = (char *)"CONTENT_TYPE=text/html"; // h.content-type
-	env[3] = (char *)"GATEWAY_INTERFACE=CGI / 1.1";
-	env[4] = (char *)string("PATH_INFO=" + h._path).c_str();
-	env[5] = (char *)string("PATH_TRANSLATED=" + h._path).c_str();
-	env[6] = (char *)"QUERY_STRING=";
-	env[7] = (char *)"localhost";
-	env[8] = (char *)string("REQUEST_METHOD=" + h._method).c_str();
-	env[9] = (char *)string("REQUEST_URI=" + h._path).c_str();
-	env[10] = (char *)"SERVER_NAME=test";
-	env[11] = (char *)"SERVER_PORT=8080";
-	env[12] = (char *)"SERVER_PROTOCOL=HTTP/1.1";
-	env[13] = (char *)"SERVER_SOFTWARE=Plebserv (linux)";
-	env[14] = (char *)"REDIRECT_STATUS=200";
-	env[15] = NULL;
+
+	env[0]	= create_env_var("AUTH_TYPE", "BASIC");
+	env[1]	= create_env_var("CONTENT_LENGTH", "-1");
+	env[2]	= create_env_var("CONTENT_TYPE", "text/html");
+	env[3]	= create_env_var("GATEWAY_INTERFACE", "CGI / 1.1"); 
+	env[4]	= create_env_var("PATH_INFO", h._path);
+	env[5]	= create_env_var("PATH_TRANSLATED", h._path);
+	env[6]	= create_env_var("QUERY_STRING", h._query);
+	env[7]	= create_env_var("REMOTE_ADDR", "localhost");
+	env[8]	= create_env_var("REMOTE_IDENT", "");
+	env[9]	= create_env_var("REMOTE_USER", "");
+	env[10]	= create_env_var("REQUEST_METHOD", h._method);
+	env[11]	= create_env_var("REQUEST_URI", h._path);
+	env[12]	= create_env_var("SCRIPT_NAME", "");
+	env[13]	= create_env_var("SERVER_NAME", "localhost");
+	env[14]	= create_env_var("SERVER_PORT", "8080");
+	env[15]	= create_env_var("SERVER_PROTOCOL", "HTTP/1.1");
+	env[16]	= create_env_var("SERVER_SOFTWARE", "Plebserv (linux)");
+	env[17]	= create_env_var("REDIRECT_STATUS", "200");
+	env[18] = NULL;
 	// en nog wat meer idc
 
 	read_response(h, env, body, file_path);

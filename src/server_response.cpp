@@ -130,12 +130,12 @@ void	Server::err_code_file(vector<unsigned char> &body, int response_code)
 	else
 	{
 		if ((fd = open(_error_pages[response_code].c_str(), O_RDONLY)) == -1)
-			throw Plebception(ERR_FD, "err_read_file", ERROR_PAGE);
+			throw Plebception(ERR_FD, "err_read_file", _error_pages[response_code]);
 		while (ret)
 		{
 			ret = read(fd, &buf, 1024);
 			if (ret < 0)
-				throw Plebception(ERR_READ, "err_read_file", ERROR_PAGE);
+				throw Plebception(ERR_READ, "err_read_file", _error_pages[response_code]);
 			if (ret == 0)
 				break ;
 			buf[ret] = '\0';
@@ -202,32 +202,28 @@ Location	*Server::match_location(string path)
 	{
 		std::cout << "Matching [" << _locations[i]._location << "] with [" << path << "]\n";
 		if (!strncmp(_locations[i]._location.c_str(), path.c_str(), _locations[i]._location.length()))
-			return (&_locations[i]);
 		{
 			if (!closest_match || _locations[i]._location.length() > closest_match->_location.length())
 				closest_match = &_locations[i];
 		}
 	}
-	//path to 404;
 	return (closest_match);
 }
 
-vector<unsigned char>	Server::create_response(Header h, size_t *len)
+vector<unsigned char>	Server::create_response(Header h)
 {
 	vector<unsigned char> rval;
 	vector<unsigned char> body;
 	string header;
 	int response_code = 200;
 	Location *l = match_location(h._path);
+
 	if (l == NULL)
 		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
-
 	try
 	{
 		string file_path = l->find_file(h, response_code);
-		if (l->needs_cgi(h, file_path))
-			l->run_cgi(h, body, file_path);	
-		else
+		if (!l->run_cgi(h, body, file_path))
 			read_file(body, file_path);
 	}
 	catch(const std::exception& e)

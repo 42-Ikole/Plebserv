@@ -163,42 +163,32 @@ void Location::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
-bool	Location::needs_cgi(Header &h, string file_path)
-{
-	for (size_t i = 0; i < _cgi.size(); i++)
-		if (h._extension == _cgi[i]._match)
-			return (true);
-	return (false);
-}
-
-void	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path)
+bool	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path)
 {
 	for (size_t i = 0; i < _cgi.size(); i++)
 	{
 		if (h._extension == _cgi[i]._match)
+		{
 			_cgi[i].cgi_response(h, body, file_path);
+			return (true);
+		}
 	}
+	return (false);
 }
 
 string	Location::find_file(Header h, int &response_code)
 {
-	string full_path;
-
 	if (_limit_except.size())
 	{
 		size_t i = 0;
-		for (; i < _limit_except.size(); i++)
-		{
-			if (h._method == _limit_except[i])
-				break;
-		}
+		for (; i < _limit_except.size() && h._method != _limit_except[i]; i++);
 		if (i == _limit_except.size())
 		{
 			response_code = 405;
 			throw Plebception("405 method not allowed", "find_file", h._path);
 		}
 	}
-	full_path = _root + h._path;
+	string full_path = _root + h._path;
 	struct stat file_status;
 
 	std::cout << full_path << std::endl;	

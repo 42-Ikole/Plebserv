@@ -61,5 +61,4 @@ namespace ft
 		if (ending.size() > value.size()) return false;
 		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 	}
-
 }

@@ -79,8 +79,7 @@ void	handle_connection(connect_data client_socket)
 	{
 		Header incoming_header = Header(splitted);
 		std::cout << incoming_header << std::endl;
-		size_t len = 0;
-		vector<unsigned char> rv = client_socket.ser->create_response(incoming_header, &len);
+		vector<unsigned char> rv = client_socket.ser->create_response(incoming_header);
 		cout << "TOTAL SIZE " << rv.size() << std::endl;
 		send(client_socket.fd , &rv[0] , rv.size() , 0 );
 		close(client_socket.fd);

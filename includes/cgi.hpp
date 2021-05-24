@@ -19,6 +19,7 @@ public:
 
 	void cgi_response(const Header &h, vector<unsigned char> &body, string file_path);
 	void read_response(const Header &h, char **env, vector<unsigned char> &body, string file_path);
+	char *create_env_var(string key, string value);
 };
 
 std::ostream &operator<<(std::ostream &out, Cgi const &value);

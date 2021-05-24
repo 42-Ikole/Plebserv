@@ -55,7 +55,7 @@ std::ostream &operator<<(std::ostream &out, Server const &value)
 		out << "{" << value._server_identifier[i] << "} ";
 
 	out << std::endl << std::setw(15) << "ERROR PAGES | ";
-	for (auto i = value._error_pages.begin(); i != value._error_pages.end(); ++i)
+	for (std::map<int, std::string>::const_iterator i = value._error_pages.begin(); i != value._error_pages.end(); ++i)
 		out << "{" << i->first << ' ' << i->second << "} ";
 	
 	out << std::endl << std::setw(15) << "LOCATIONS | " << endl;
