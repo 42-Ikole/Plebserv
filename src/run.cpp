@@ -70,7 +70,9 @@ void	handle_connection(connect_data client_socket)
 	// std::cout << "We've got an connection! on server " << client_socket.ser->_server << std::endl;
 
 	// read function so larger request dont get cut off
-	int valread = read( client_socket.fd , buffer, 1024);
+	int valread = recv( client_socket.fd , buffer, 1024, 0);
+	if (valread < 0)
+		return;
 	buffer[valread] = 0;
 
 	std::cout << "Read n splittin" << std::endl;
