@@ -14,6 +14,8 @@
 # include <sys/stat.h>
 # include <cgi.hpp>
 
+
+class Server;
 using namespace std;
 
 enum http_methods
@@ -65,7 +67,7 @@ class Location
 		void 	set_index_page(vector<string> val);
 		void 	set_limit_except(vector<string> val);
 		void 	set_cgi_pass(vector<string> val);
-		bool	run_cgi(Header &h, vector<unsigned char> &body, string file_path);
+		bool	run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser);
 
 
 

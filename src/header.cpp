@@ -15,8 +15,9 @@ void	Header::Parse_request(string request)
 
 		if (parsed[1].find("?") != string::npos)
 		{
-			_path = parsed[1].substr(0, parsed[1].find('?'));
-			_query = parsed[1].substr(parsed[1].find('?') + 1, string::npos);
+			vector<string> tmp = ft::split(parsed[1], "?");
+			_path = tmp[0];
+			_query = tmp[1];
 		}
 		else
 			_path = parsed[1];
@@ -31,13 +32,20 @@ void	Header::Parse_request(string request)
 	}
 }
 
+void	Header::load_headers(vector<string> in)
+{
+	for (size_t i = 0; i < in.size() - 1; i++)
+		_headers[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
+}
+
 Header::Header(vector<string> in)
 {
 	if (in.size() == 0)
 		throw Plebception(ERR_INVALID_VECTOR, "empty", "");
 	Parse_request(in[0]);
 	in.erase(in.begin());
-	_other_headers = in;
+
+	load_headers(in);
 }
 
 string	Header::content_type_switch()
@@ -79,54 +87,9 @@ std::ostream &operator<<(std::ostream &out, Header const &value)
 	out << std::setw(15) << "QUERY | " << value._query << std::endl;
 	out << std::setw(15) << "EXTENSION | " << value._extension << std::endl;
 	out << std::setw(15) << "OTHER HEADERS:\n";
-	for (size_t i = 0; i < value._other_headers.size(); i++)
-		out << value._other_headers[i] << std::endl;
+	for (map<string, string>::const_iterator i = value._headers.begin(); i != value._headers.end(); i++)
+		out << i->first << ": " <<  i->second << std::endl;
 
 	out << "------------ DONE ----------" << std::endl;
 	return (out);
 }
-
-// /*
-
-
-
-// GET /buy.html HTTP/1.1
-// Host: localhost:8080
-// Connection: keep-alive
-// Pragma: no-cache
-// Cache-Control: no-cache
-// sec-ch-ua: " Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"
-// sec-ch-ua-mobile: ?0
-// DNT: 1
-// Upgrade-Insecure-Requests: 1
-// User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36
-// Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
-// Sec-Fetch-Site: none
-// Sec-Fetch-Mode: navigate
-// Sec-Fetch-User: ?1
-// Sec-Fetch-Dest: document
-// Accept-Encoding: gzip, deflate, br
-// Accept-Language: nl-NL,nl;q=0.9,ru-RU;q=0.8,ru;q=0.7,en-US;q=0.6,en;q=0.5
-
-
-// HTTP/1.1 200 OK
-// Date: Thu, 08 Apr 2004 18:24:33 GMT
-// Server: Apache/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4
-// Content-Language: nl
-// Content-Type: text/html;
-// charset=iso-8859-1
-// X-Cache: MISS from wikipedia.org
-// Connection: close 
-// Content-Type: text/html
-// Content-Length: 49"
-//
-//
-// data
-
-
-
-
-
-
-
-// */

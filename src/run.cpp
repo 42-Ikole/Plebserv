@@ -193,12 +193,11 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 	{
 		if (FD_ISSET(fd_match, &ready_sockets))
 		{
-			for (size_t i = 0; i < data.size(); i++)
-				if (fd_match == data[i].fd)
-				{
-					std::cout << "Listening socket is available!" << endl;
-					accept_connect(current_sockets, data[i], open_connections);
-				}
+			if (fd_match == data[0].fd)
+			{
+				std::cout << "Listening socket is available!" << endl;
+				accept_connect(current_sockets, data[0], open_connections);
+			}
 			else
 			{
 				std::cout << "FD " << fd_match << " is readable!" << std::endl;
