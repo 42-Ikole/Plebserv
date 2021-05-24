@@ -19,16 +19,15 @@ public:
 	string	_query;
 	string	_extension;
 	string	_http_version;
-	string	_host;
-	string	_connection;
-	vector<string> _other_headers;
+	map<string, string> _headers;
 public:
 	Header(vector<std::string> in);
-	void	Parse_request(string request);
 	// virtual ~Header();
 
+	void	Parse_request(string request);
 	string	content_type_switch();
-	string create_header(int response_code, int body_length, map<int, string> &status_text);
+	string	create_header(int response_code, int body_length, map<int, string> &status_text);
+	void	load_headers(vector<string> in);
 };
 
 std::ostream &operator<<(std::ostream &out, Header const &value);

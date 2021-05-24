@@ -4,6 +4,8 @@
 #include <string>
 #include <header.hpp>
 
+class Server;
+
 using namespace std;
 
 class Cgi
@@ -17,8 +19,8 @@ public:
 	Cgi(const Cgi &tbc);
 	Cgi & operator=(const Cgi &tba);
 
-	void cgi_response(const Header &h, vector<unsigned char> &body, string file_path);
-	void read_response(const Header &h, char **env, vector<unsigned char> &body, string file_path);
+	void cgi_response(Header &h, vector<unsigned char> &body, string file_path, Server &ser);
+	void read_response(const Header &h, char** env, vector<unsigned char> &body, string file_path);
 	char *create_env_var(string key, string value);
 };
 

@@ -223,7 +223,7 @@ vector<unsigned char>	Server::create_response(Header h)
 	try
 	{
 		string file_path = l->find_file(h, response_code);
-		if (!l->run_cgi(h, body, file_path))
+		if (!l->run_cgi(h, body, file_path, *this))
 			read_file(body, file_path);
 	}
 	catch(const std::exception& e)

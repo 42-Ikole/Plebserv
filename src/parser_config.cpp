@@ -1,42 +1,10 @@
 #include <algorithm>
-#include <fcntl.h>
 #include <iostream>
-#include <string>
-#include <unistd.h>
-#include <vector>
 
 #include <server.hpp>
 #include <utilities.hpp>
-#include <plebception.hpp>
 
 using namespace std;
-#define BUFFER 128
-
-vector<string> get_lines(string file)
-{
-	int 			fd	= open(file.c_str(), O_RDONLY);
-	char			incoming[BUFFER + 1];
-	string			str_buff = "";
-	vector<string>	res;
-
-	if (fd == -1)
-		throw Plebception(ERR_FD, "FD", file);
-	for (int ret = 1; ret > 0;)
-	{
-		ret = read(fd, incoming, BUFFER);
-		if (ret < 1)
-			break ;
-		incoming[ret] = '\0';
-		str_buff += incoming;
-		for (size_t pos = str_buff.find("\n"); pos != string::npos; pos = str_buff.find("\n"))
-		{
-			res.push_back(str_buff.substr(0, pos));
-			str_buff = str_buff.substr(pos + 1, str_buff.size());
-		}
-	}
-	res.push_back(str_buff.substr(0, str_buff.size()));
-	return (res);
-}
 
 vector<Server>	get_servers(vector<string> lines)
 {
@@ -86,7 +54,7 @@ void	depth_check(vector<string> lines, string filename)
 */
 vector<Server> load_config(string filename)
 {
-	vector<string> lines = get_lines(filename);
+	vector<string> lines = ft::get_lines(filename);
 	depth_check(lines, filename);
 	vector<Server> res = get_servers(lines);
 
