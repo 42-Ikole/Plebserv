@@ -68,7 +68,7 @@ https://helpx.adobe.com/coldfusion/cfml-reference/reserved-words-and-variables/c
 https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
 https://www.whoishostingthis.com/compare/cgi-access/variables/
 https://datatracker.ietf.org/doc/html/rfc3875#section-4.1
-
+https://linux.die.net/man/5/cgi
 
 
 ##	CGI Meta Variables
