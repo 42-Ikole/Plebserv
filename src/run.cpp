@@ -24,6 +24,8 @@ struct	connect_data
 {
 	int fd;		// client fd
 	Server *ser;
+	vector<unsigned char> buf;
+	int i = 0;
 };
 
 server_data	setup_server(Server &ser, short port, int backlog)
@@ -88,18 +90,18 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 	int rc;
 	char buffer[1025];
 	bzero(buffer, 1025);
-	connect_data *current_connection;
+	connect_data *cur_conn;
 	size_t i = 0;
 
 	for (; i < open_connections.size(); i++)
 	{
 		if (open_connections[i].fd == fd)
 		{
-			current_connection = &open_connections[i];
+			cur_conn = &open_connections[i];
 			break;
 		}
 	}
-	if (!current_connection)
+	if (!cur_conn)
 	{
 		std::cout << "Connection not found! " << endl;
 		exit(0); // moet hier wel exit?
@@ -125,32 +127,35 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 			close_conn = true;
 			break;
 		}
+		cur_conn->buf.resize(cur_conn->buf.size() + rc);
+		memcpy(&cur_conn->buf[cur_conn->i], buffer, rc);
+		i += rc;
 		std::cout << "Bytes recieved " << rc << std::endl;
-		vector<string> splitted = ft::split(buffer, "\n");
-		try
+
+		if (rc != 1024)
 		{
-			Header incoming_header = Header(splitted);
-			std::cout << incoming_header << std::endl;
-			vector<unsigned char> rv = current_connection->ser->create_response(incoming_header);
-			cout << "TOTAL SIZE " << rv.size() << std::endl;
-			send(fd, &rv[0], rv.size(), 0);
-			cout << "Bytes send!" << std::endl;
-			if (rc < 0)
+			try
 			{
-				std::cout << "send failed!" << endl;
-				close_conn = true;
-				break;
+				vector<string> splitted = ft::split(string((char *)&cur_conn->buf[0]), "\n");
+				Header incoming_header = Header(splitted);
+				vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header);
+				cout << "TOTAL SIZE " << rv.size() << std::endl;
+				send(fd, &rv[0], rv.size(), 0);
+				cout << "Bytes send!" << std::endl;
+				cur_conn->i = 0;
+				cur_conn->buf.resize(0);
+				if (rc < 0)
+				{
+					std::cout << "send failed!" << endl;
+					close_conn = true;
+					break;
+				}
 			}
-		}
-		catch(const std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-		}
-		if (rc < 0)
-		{
-			std::cout << "send failed!" << endl;
-			close_conn = true;
-			break;
+			catch(const std::exception& e)
+			{
+				std::cerr << e.what() << '\n';
+				exit(0);
+			}
 		}
 	} while (1);
 	if (close_conn)
