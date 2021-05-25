@@ -32,11 +32,14 @@ std::ostream &operator<<(std::ostream &out, Cgi const &value)
 	return (out);
 }
 
-void	Cgi::cgi_child(int fd[2], char *args[3], char **env)
+void	Cgi::cgi_child(int fdin[2], int fdout[2], char *args[3], char **env)
 {
-	dup2 (fd[1], 1);
-	close(fd[0]);
-	close(fd[1]);
+	dup2 (fdout[1], 1);
+	dup2 (fdin[0], 0);
+	close(fdin[0]);
+    close(fdin[1]);
+    close(fdout[0]);
+    close(fdout[1]); 
 	if (execve(_full_path.c_str(), args, env) == -1)
 	{
 		perror("exeve");
@@ -45,21 +48,26 @@ void	Cgi::cgi_child(int fd[2], char *args[3], char **env)
 	exit(0);
 }
 
-void	Cgi::cgi_parent(int fd[2], pid_t id, Header &h, vector<unsigned char> &body)
+void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, vector<unsigned char> &body)
 {
 	char buff[1025];
 
 	int status = 0;
 	int	i = 0;
-	close(fd[1]);
+	close(fdin[0]);
+	close(fdout[1]);
+
+	write(fdin[1], &body[0], body.size());
+	close(fdin[1]);
 	for (int ret = 1; ret > 0;)
 	{
-		ret = read(fd[0], buff, 1024);
+		ret = read(fdout[0], buff, 1024);
 		buff[ret] = 0;
 		body.resize(body.size() + ret);
 		memcpy(&body[i], buff, ret);
 		i += ret;
 	}
+	close(fdout[0]);
 	std::cout << "Done with cgi!" << endl;
 	waitpid(id, &status, 0);
 }
@@ -67,22 +75,25 @@ void	Cgi::cgi_parent(int fd[2], pid_t id, Header &h, vector<unsigned char> &body
 void Cgi::read_response(Header &h, char** env, vector<unsigned char> &body, string file_path)
 {
 	char *args[3];
-	int fd[2];
+	int fdin[2];
+	int	fdout[2];
 
 	args[0] = (char *)_full_path.c_str();
 	args[1] = (char *)file_path.c_str();
 	args[2] = 0;
 
-	if (pipe(fd) == -1)
+	if (pipe(fdin) == -1)
+		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "pipe");
+	if (pipe(fdout) == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "pipe");
 
 	pid_t id = fork();
 	if (id == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "fork");
 	if (id == 0)
-		cgi_child(fd, args, env);
+		cgi_child(fdin, fdout, args, env);
 	else
-		cgi_parent(fd, id, h, body);
+		cgi_parent(fdin, fdout, id, body);
 }
 
 char	*Cgi::create_env_var(string key, string value)

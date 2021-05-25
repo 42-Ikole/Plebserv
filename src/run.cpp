@@ -137,6 +137,7 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 			try
 			{
 				vector<string> splitted = ft::split(string((char *)&cur_conn->buf[0]), "\n");
+				string body = ""; // restant van header split
 				Header incoming_header = Header(splitted);
 				vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header);
 				cout << "TOTAL SIZE " << rv.size() << std::endl;
