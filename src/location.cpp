@@ -47,19 +47,17 @@ void Location::set_auto_index(vector<string> val)
 	if (val.size() > 1)
 		throw Plebception(ERR_TOO_MANY_ARG, "autoindex", val[1]);
 	if (val[0] == "on")
-		_auto_index = on;
+		_auto_index = ON;
 	else if (val[0] == "off")
-		_auto_index = off;
+		_auto_index = OFF;
 	else
 		throw Plebception(ERR_INVALID_VALUE, "autoindex", val[0]);
 }
 
 void Location::set_cgi_pass(vector<string> val)
 {
-	if (val.size() > 2)
-		throw Plebception(ERR_TOO_MANY_ARG, "set_cgi_pass", val[0]);
-	if (val.size() < 2)
-		throw Plebception(ERR_TOO_FEW_ARG, "set_cgi_pass", val[0]);
+	if (val.size() != 2)
+		throw Plebception(ERR_INVALID_AMOUNT_ARG, "set_cgi_pass", val[0]);
 	_cgi.push_back(Cgi(val[1], val[0]));
 }
 
@@ -72,11 +70,9 @@ void Location::set_index_page(vector<string> val)
 
 void Location::set_limit_except(vector<string> val)
 {
-	size_t x = 0;
-
 	for (size_t i = 0; i < val.size(); i++)
 	{
-		for (x = 0; x < 8; x++)
+		for (size_t x = 0; x < 8; x++)
 		{
 			if (val[i] == methods[x])
 			{
@@ -143,7 +139,7 @@ int	Location::parse_args(string str)
 	return (1);
 }
 
-Location::Location(vector<string> val): _root("/html"), _auto_index(off), _location(val[0])
+Location::Location(vector<string> val): _root("/html"), _auto_index(OFF), _location(val[0])
 {
 	_index_page.push_back("index.html");
 	_index_page.push_back("index");
@@ -159,7 +155,7 @@ void Location::call(const string& s, vector<string> val)
 {
 	LoadFunction func = g_location_load_map[s];
 	if (func == 0)
-		return;
+		throw Plebception(ERR_UNKNOWN_IDENT, s, val[0]);
 	(this->*func)(val);
 }
 
@@ -178,6 +174,9 @@ bool	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path,
 
 string	Location::find_file(Header h, int &response_code)
 {
+	struct stat file_status;
+	string full_path = _root + h._path;
+	
 	if (_limit_except.size())
 	{
 		size_t i = 0;
@@ -188,9 +187,6 @@ string	Location::find_file(Header h, int &response_code)
 			throw Plebception("405 method not allowed", "find_file", h._path);
 		}
 	}
-	string full_path = _root + h._path;
-	struct stat file_status;
-
 	std::cout << full_path << std::endl;	
 	if (stat(full_path.c_str(), &file_status) == -1)
 	{
@@ -198,18 +194,14 @@ string	Location::find_file(Header h, int &response_code)
 		throw Plebception(ERR_NO_LOCATION, "find_file", full_path);
 	}
 	if (file_status.st_mode & S_IFREG)
-	{
 		return (full_path);
-	}
 	else if (file_status.st_mode & S_IFDIR)
 	{
 		for (size_t i = 0; i < _index_page.size(); i++)
 		{
 			string new_path = full_path + _index_page[i];
 			if (stat(new_path.c_str(), &file_status) != -1)
-			{
 				return (new_path);
-			}
 		}
 	}
 	response_code = 404;
