@@ -118,7 +118,6 @@ void	Server::err_code_file(vector<unsigned char> &body, int response_code)
 	char buf[1025];
 	size_t i = 0;
 
-	std::cout << "Error pages size: "<< _error_pages.size() << std::endl;
 	if (_error_pages[response_code].empty())
 	{
 		string to_push = err_default;
@@ -239,6 +238,12 @@ vector<unsigned char>	Server::create_response(Header h)
 			err_code_file(body, response_code);
 		}
 	}
+	/*
+		head = only the header
+	*/
+	if (h._method == "HEAD")
+		body.resize(0);
+
 	if (h._end_header)
 		header = h.create_header(response_code, body.size(), g_http_errors);
 	else
