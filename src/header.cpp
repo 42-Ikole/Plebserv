@@ -37,7 +37,7 @@ void	Header::load_headers(vector<string> in)
 		_headers[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
 }
 
-Header::Header(vector<string> in)
+Header::Header(vector<string> in): _end_header(true)
 {
 	if (in.size() == 0)
 		throw Plebception(ERR_INVALID_VECTOR, "empty", "");
@@ -72,8 +72,10 @@ string Header::create_header(int response_code, int body_length, map<int, string
 	"charset=iso-8859-1\r\n" + \
 	"Connection: keep-alive\r\n" + \
 	"Content-Type: " + content_type_switch() + "\r\n" + \
-	"Content-Length: " + to_string(body_length) + "\r\n\r\n";
+	"Content-Length: " + to_string(body_length) + "\r\n";
 
+	if (_end_header)
+		res += "\r\n";
 	return (res);
 }
 

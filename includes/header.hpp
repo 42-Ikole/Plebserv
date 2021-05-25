@@ -19,6 +19,7 @@ public:
 	string	_query;
 	string	_extension;
 	string	_http_version;
+	bool	_end_header;
 	map<string, string> _headers;
 public:
 	Header(vector<std::string> in);

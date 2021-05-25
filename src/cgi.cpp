@@ -45,24 +45,26 @@ void	Cgi::cgi_child(int fd[2], char *args[3], char **env)
 	exit(0);
 }
 
-void	Cgi::cgi_parent(int fd[2], pid_t id, vector<unsigned char> &body)
+void	Cgi::cgi_parent(int fd[2], pid_t id, Header &h, vector<unsigned char> &body)
 {
 	char buff[1025];
 
 	int status = 0;
+	int	i = 0;
 	close(fd[1]);
 	for (int ret = 1; ret > 0;)
 	{
 		ret = read(fd[0], buff, 1024);
 		buff[ret] = 0;
 		body.resize(body.size() + ret);
-		memcpy(&body[0], buff, ret);
+		memcpy(&body[i], buff, ret);
+		i += ret;
 	}
 	std::cout << "Done with cgi!" << endl;
 	waitpid(id, &status, 0);
 }
 
-void Cgi::read_response(const Header &h, char** env, vector<unsigned char> &body, string file_path)
+void Cgi::read_response(Header &h, char** env, vector<unsigned char> &body, string file_path)
 {
 	char *args[3];
 	int fd[2];
@@ -80,7 +82,7 @@ void Cgi::read_response(const Header &h, char** env, vector<unsigned char> &body
 	if (id == 0)
 		cgi_child(fd, args, env);
 	else
-		cgi_parent(fd, id, body);
+		cgi_parent(fd, id, h, body);
 }
 
 char	*Cgi::create_env_var(string key, string value)
@@ -93,7 +95,7 @@ char	*Cgi::create_env_var(string key, string value)
 	DOCUMENT_ROOT - This reflects the document root directory of the webserver.
 */
 
-void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path, Server &ser)
+void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path, Server &ser, size_t &size)
 {
 	char *env[19];
 	string cwd = string(getcwd(NULL, 0));
@@ -118,7 +120,17 @@ void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path,
 	env[16]	= create_env_var("SERVER_SOFTWARE", "Plebserv (linux)");
 	env[17]	= create_env_var("REDIRECT_STATUS", "200");
 	env[18]	= NULL;
-	for (size_t i = 0; i < 18; i++)
-		cout << env[i] << endl;
+	// for (size_t i = 0; i < 18; i++)
+	// 	cout << env[i] << endl;
 	read_response(h, env, body, cwd + '/' + file_path);
+
+	const char *crlf2 = "\r\n\r\n";
+	auto it = std::search(body.begin(), body.end(), crlf2, crlf2 + strlen(crlf2));
+
+	if (it != body.end())
+	{
+		std::cout << "Found Header!!! end: " << distance(body.begin(), it) << endl;
+		h._end_header = false;
+		size = body.size() - distance(body.begin(), it) - 4;
+	}
 }

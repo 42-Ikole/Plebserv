@@ -215,13 +215,14 @@ vector<unsigned char>	Server::create_response(Header h)
 	string header;
 	int response_code = 200;
 	Location *l = match_location(h._path);
+	size_t body_size = 0;
 
 	if (l == NULL)
 		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
 	try
 	{
 		string file_path = l->find_file(h, response_code);
-		if (!l->run_cgi(h, body, file_path, *this))
+		if (!l->run_cgi(h, body, file_path, *this, body_size))
 			read_file(body, file_path);
 	}
 	catch(const std::exception& e)
@@ -238,7 +239,10 @@ vector<unsigned char>	Server::create_response(Header h)
 			err_code_file(body, response_code);
 		}
 	}
-	header = h.create_header(response_code, body.size(), g_http_errors);
+	if (h._end_header)
+		header = h.create_header(response_code, body.size(), g_http_errors);
+	else
+		header = h.create_header(response_code, body_size, g_http_errors);
 	std::cout << "BODY SIZE: " << body.size() << " HEADER " << header.length() << std::endl;
 	// creating return value
 	rval.resize(header.length() + body.size());

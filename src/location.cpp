@@ -172,13 +172,13 @@ void Location::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
-bool	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser)
+bool	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser, size_t &size)
 {
 	for (size_t i = 0; i < _cgi.size(); i++)
 	{
 		if (h._extension == _cgi[i]._match)
 		{
-			_cgi[i].cgi_response(h, body, file_path, ser);
+			_cgi[i].cgi_response(h, body, file_path, ser, size);
 			return (true);
 		}
 	}

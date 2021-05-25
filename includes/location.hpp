@@ -69,7 +69,7 @@ class Location
 		void 	set_limit_except(vector<string> val);
 		void 	set_cgi_pass(vector<string> val);
 		void	set_upload_store(vector<string> val);
-		bool	run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser);
+		bool	run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser, size_t &size);
 
 
 
