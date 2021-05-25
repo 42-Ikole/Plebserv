@@ -4,6 +4,7 @@
 # include <exception>
 # include <string>
 
+# define ERR_SERVER			
 # define ERR_SEMICOLON			"WHOA, looks like you forgot a semicolon"
 # define ERR_INVALID_TOKEN		"Invalid token found in"
 # define ERR_INVALID_VALUE		"Invalid value"

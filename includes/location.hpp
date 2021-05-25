@@ -48,6 +48,7 @@ class Location
 		vector<http_methods>	_methods;
 		vector<string>			_limit_except;
 		string					_root;
+		string					_upload_store;
 		bool					_auto_index;
 		vector<string>			_index_page;
 		vector<Cgi>				_cgi;
@@ -67,6 +68,7 @@ class Location
 		void 	set_index_page(vector<string> val);
 		void 	set_limit_except(vector<string> val);
 		void 	set_cgi_pass(vector<string> val);
+		void	set_upload_store(vector<string> val);
 		bool	run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser);
 
 

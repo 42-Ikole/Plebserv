@@ -55,6 +55,8 @@ void	depth_check(vector<string> lines, string filename)
 vector<Server> load_config(string filename)
 {
 	vector<string> lines = ft::get_lines(filename);
+	if (lines.size() < 3)
+		throw Plebception(ERR_INVALID_CONFIG, filename, "missing config"); 
 	depth_check(lines, filename);
 	vector<Server> res = get_servers(lines);
 	return (res);

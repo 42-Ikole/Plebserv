@@ -5,8 +5,6 @@
 #include <sys/wait.h>
 #include <server.hpp>
 
-#define PATH "/Users/victor/Documents/Code/codam/42cursus/Webserv/html/Website/test.php"
-
 Cgi::Cgi(string path, string match)
 {
 	_match = match;
@@ -70,7 +68,7 @@ void Cgi::read_response(const Header &h, char** env, vector<unsigned char> &body
 	int fd[2];
 
 	args[0] = (char *)_full_path.c_str();
-	args[1] = (char *)PATH;
+	args[1] = (char *)file_path.c_str();
 	args[2] = 0;
 
 	if (pipe(fd) == -1)
@@ -87,7 +85,7 @@ void Cgi::read_response(const Header &h, char** env, vector<unsigned char> &body
 
 char	*Cgi::create_env_var(string key, string value)
 {
-	return(ft::strdup((char *)string(key + "=\"" + value + "\"").c_str()));
+	return(ft::strdup((char *)string(key + "=" + value).c_str()));
 }
 
 /*
@@ -98,56 +96,29 @@ char	*Cgi::create_env_var(string key, string value)
 void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path, Server &ser)
 {
 	char *env[19];
+	string cwd = string(getcwd(NULL, 0));
 
-	// env[0]	= create_env_var("AUTH_TYPE", "BASIC");
-	env[0]	= create_env_var("AUTH_TYPE", ""); // in header
-	// env[1]	= create_env_var("CONTENT_LENGTH", "-1");	// is alleen voor POST
+	std::cout << cwd << "\n" << file_path << endl;
+	env[0]	= create_env_var("AUTH_TYPE", h._headers["Authorization"]); // in header
 	env[1]	= create_env_var("CONTENT_LENGTH", h._headers["content-length"]);	// is alleen voor POST // in header
 	env[2]	= create_env_var("CONTENT_TYPE", "text/html"); // in header
 	env[3]	= create_env_var("GATEWAY_INTERFACE", "CGI/1.1"); 
-	env[4]	= create_env_var("PATH_INFO", h._path + "?" + h._query);
-	env[5]	= create_env_var("PATH_TRANSLATED", h._path);	// bugged
+	env[4]	= create_env_var("PATH_INFO", h._path);
+	env[5]	= create_env_var("PATH_TRANSLATED", cwd + '/' + file_path);	// bugged
 	env[6]	= create_env_var("QUERY_STRING", h._query);
 	env[7]	= create_env_var("REMOTE_ADDR", "localhost");
-	env[8]	= create_env_var("REMOTE_HOST", "");
-	// env[8]	= create_env_var("REMOTE_IDENT", "");
+	env[8]	= create_env_var("REMOTE_IDENT", "");
 	env[9]	= create_env_var("REMOTE_USER", ""); // if auth type == Basic use provided else undefined
 	env[10]	= create_env_var("REQUEST_METHOD", h._method);
-	env[11]	= create_env_var("REQUEST_URI", "");
-	env[12]	= create_env_var("SCRIPT_NAME", PATH); // leading part of path component
+	env[11]	= create_env_var("REQUEST_URI", h._path);
+	env[12]	= create_env_var("SCRIPT_NAME", "http://" + ser._server + h._path); // leading part of path component
 	env[13]	= create_env_var("SERVER_NAME", ser._server);
 	env[14]	= create_env_var("SERVER_PORT", to_string(ser._port[0]));
 	env[15]	= create_env_var("SERVER_PROTOCOL", "HTTP/1.1");
 	env[16]	= create_env_var("SERVER_SOFTWARE", "Plebserv (linux)");
 	env[17]	= create_env_var("REDIRECT_STATUS", "200");
 	env[18]	= NULL;
-
 	for (size_t i = 0; i < 18; i++)
 		cout << env[i] << endl;
-
-	read_response(h, env, body, file_path);
+	read_response(h, env, body, cwd + '/' + file_path);
 }
-/*
-	this->_m["AUTH_TYPE"] = req.headers[AUTHORIZATION];
-	this->_m["CONTENT_LENGTH"] = ft::inttostring(req.body.size());
-	this->_m["CONTENT_TYPE"] = req.headers[CONTENT_TYPE];
-	this->_m["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_m["PATH_INFO"] = OriginalUri + req.cgiparams;
-	this->_m["PATH_TRANSLATED"] = realpath + this->_m["PATH_INFO"];
-	this->_m["QUERY_STRING"] = req.cgiparams;
-	this->_m["REMOTE_ADDR"] = req.server->gethost();
-	this->_m["REMOTE_IDENT"] = "";
-	this->_m["REMOTE_USER"] = req.headers[REMOTE_USER];
-	this->_m["REQUEST_METHOD"] = req.MethodToSTring();
-	this->_m["REQUEST_URI"] = OriginalUri;
-	this->_m["REQUEST_FILENAME"] = OriginalUri;
-	this->_m["SCRIPT_FILENAME"] = scriptpath;
-	this->_m["SCRIPT_NAME"] = scriptpath;
-	this->_m["SERVER_NAME"] = req.server->getservername();
-	this->_m["SERVER_PORT"] = std::string(ft::inttostring(req.server->getport()));
-	this->_m["SERVER_PROTOCOL"] = "HTTP/1.1";
-	this->_m["SERVER_SOFTWARE"] = "HTTP 1.1";
-	if (redirect_status)
-		this->_m["REDIRECT_STATUS"] = "true";
-
-*/

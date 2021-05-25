@@ -18,6 +18,7 @@ static map<string, LoadFunction> create_map()
 	m["index"]			= &Location::set_index_page;
 	m["limit_except"]	= &Location::set_limit_except;
 	m["cgi"]			= &Location::set_cgi_pass;
+	m["upload_store"]	= &Location::set_upload_store;
 	return m;
 }
 
@@ -40,6 +41,18 @@ void Location::set_root(vector<string> val)
 	if (val.size() > 1)
 		throw Plebception(ERR_TOO_MANY_ARG, "root", val[1]);
 	_root = val[0];
+}
+
+void Location::set_upload_store(vector<string> val)
+{
+	if (val.size() > 1)
+		throw Plebception(ERR_TOO_MANY_ARG, "upload_store", val[1]);
+
+	struct stat dir;
+	if (stat(val[0].c_str(), &dir) == 0)
+		_upload_store = val[0];
+	else
+		throw Plebception(ERR_NO_LOCATION, "upload_store", val[0]);
 }
 
 void Location::set_auto_index(vector<string> val)
@@ -139,7 +152,7 @@ int	Location::parse_args(string str)
 	return (1);
 }
 
-Location::Location(vector<string> val): _root("/html"), _auto_index(OFF), _location(val[0])
+Location::Location(vector<string> val): _root("/html"), _auto_index(OFF), _location(val[0]), _upload_store("/html/uploads")
 {
 	_index_page.push_back("index.html");
 	_index_page.push_back("index");
