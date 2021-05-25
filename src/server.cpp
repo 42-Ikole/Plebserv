@@ -44,24 +44,19 @@ Server	&Server::operator=(Server const &tba)
 std::ostream &operator<<(std::ostream &out, Server const &value)
 {
 	out << "------------ SERVER " << value._server << "--------" << std::endl;
-
 	out << std::setw(15) << "BODY SIZE | " << value._max_body_size << std::endl;
 	out << std::setw(15) << "LISTEN | ";
 	for (size_t i = 0; i < value._port.size(); i++)
 		out << value._port[i] << " ";
-
 	out << std::endl << std::setw(15) << "IDENTIFERS | ";
 	for (size_t i = 0; i < value._server_identifier.size(); i++)
 		out << "{" << value._server_identifier[i] << "} ";
-
 	out << std::endl << std::setw(15) << "ERROR PAGES | ";
 	for (std::map<int, std::string>::const_iterator i = value._error_pages.begin(); i != value._error_pages.end(); ++i)
 		out << "{" << i->first << ' ' << i->second << "} ";
-	
 	out << std::endl << std::setw(15) << "LOCATIONS | " << endl;
 	for (size_t i = 0; i < value._locations.size(); i++)
 		out << value._locations[i] << " ";
-
 	out << std::endl << "---------------- DONE ----------------" << std::endl;
 	return (out);
 }
@@ -158,7 +153,6 @@ void	Server::load_error_page(vector<string> val)
 		Plebception(ERR_TOO_FEW_ARG, "error_page", val[0]);
 	else if (val[0].find_first_not_of("0123456789") != string::npos)
 		Plebception(ERR_INVALID_VALUE, "error_page", val[0]);
-
 	int code = ft::stoi(val[0]);
 	if (code < 100 && code >= 600)
 		Plebception(ERR_OUT_OF_RANGE, "error_page", val[0]);
@@ -180,14 +174,11 @@ void	Server::load_client_max_body_size(vector<string> val)
 		switch (c)
 		{
 			case 'k':
-				mul = 1000;
-				break;
+				mul = 1000; break;
 			case 'm':
-				mul = 1000000;
-				break;
+				mul = 1000000; break;
 			case 'g':
-				mul = 1000000000;
-				break;
+				mul = 1000000000; break;
 			default:
 				throw Plebception(ERR_INVALID_VALUE, "client_max_body_size", val[0]);
 		}
@@ -199,14 +190,6 @@ void	Server::load_locations(vector<string> val)
 {
 	_locations.push_back(Location(val));
 }
-
-// static void check_line(string &s, char delim)
-// {
-// 	if (s.find(delim) != s.size() - 1)
-// 		throw Plebception(ERR_SEMICOLON, "line", s);
-// 	else
-// 		s = ft::trim_char(s, delim);
-// }
 
 static bool verify_line(string s, char delim) {
 	if (count(s.begin(), s.end(), delim) == 1 && s.find(delim) == s.size() - 1)
@@ -243,8 +226,8 @@ int Server::parse_args(vector<string> arr, int index)
 {
 	std::vector<string> tokens;
 	std::vector<string> args;
-
 	size_t i;
+
 	for (i = index; i < arr.size(); i++)
 	{
 		string s = arr[i];
@@ -259,10 +242,8 @@ int Server::parse_args(vector<string> arr, int index)
 		if (tokens[tokens.size() - 1] == "{")
 			parse_location_block(args, arr, tokens, i);
 		else
-		{
 			for (size_t j = 1; j < tokens.size(); j++)
 				args.push_back(tokens[j]);
-		}
 		trim_lines(args);
 		call(tokens[0], args);
 		args.clear();

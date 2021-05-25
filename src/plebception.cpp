@@ -11,7 +11,7 @@ Plebception::Plebception(string msg, string type, string val)
 	Plebception::~Plebception()
 	{}
 #else
-	Plebception::~Plebception() _NOEXCEPT
+	Plebception::~Plebception() throw()
 	{}
 #endif
 
@@ -23,7 +23,6 @@ Plebception::Plebception(const Plebception &tbc)
 Plebception	&Plebception::operator=(const Plebception &tba)
 {
 	this->_msg = tba._msg;
-
 	return (*this);
 }
 

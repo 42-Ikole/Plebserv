@@ -57,6 +57,5 @@ vector<Server> load_config(string filename)
 	vector<string> lines = ft::get_lines(filename);
 	depth_check(lines, filename);
 	vector<Server> res = get_servers(lines);
-
 	return (res);
 }

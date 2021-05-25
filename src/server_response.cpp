@@ -153,8 +153,8 @@ void inline create_dirlist(string root, string path, vector<unsigned char> &body
 	struct dirent *cur_file;
 	dir = opendir(string((root + path)).c_str());
 
-	res.replace(res.find("$DIR"), 4, path);
-	res.replace(res.find("$DIR"), 4, path);
+	for (size_t pos = res.find("$DIR"); pos != string::npos; pos = res.find("$DIR"))
+		res.replace(pos, 4, path);
 	if (dir != NULL)
 	{
 		while ((cur_file = readdir(dir)))
@@ -167,7 +167,7 @@ void inline create_dirlist(string root, string path, vector<unsigned char> &body
 			else
 				res += "<a href='" + string(cur_file->d_name) + "'>" + string(cur_file->d_name) + "</a> <br>";
 		}
-		(void) closedir (dir);
+		(void)closedir(dir);
 	}
 	res += "</body></html>";
 	body.resize(res.length());
@@ -202,10 +202,8 @@ Location	*Server::match_location(string path)
 	{
 		std::cout << "Matching [" << _locations[i]._location << "] with [" << path << "]\n";
 		if (!strncmp(_locations[i]._location.c_str(), path.c_str(), _locations[i]._location.length()))
-		{
 			if (!closest_match || _locations[i]._location.length() > closest_match->_location.length())
 				closest_match = &_locations[i];
-		}
 	}
 	return (closest_match);
 }
@@ -229,7 +227,7 @@ vector<unsigned char>	Server::create_response(Header h)
 	catch(const std::exception& e)
 	{
 		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
-		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == on)
+		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == ON)
 		{
 			response_code = 200;
 			create_dirlist(l->_root, h._path, body);
@@ -241,9 +239,7 @@ vector<unsigned char>	Server::create_response(Header h)
 		}
 	}
 	header = h.create_header(response_code, body.size(), g_http_errors);
-
 	std::cout << "BODY SIZE: " << body.size() << " HEADER " << header.length() << std::endl;
-
 	// creating return value
 	rval.resize(header.length() + body.size());
 	memcpy(&rval[0], header.c_str(), header.length());

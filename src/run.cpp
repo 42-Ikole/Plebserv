@@ -11,22 +11,11 @@
 #include <utilities.hpp>
 #include <sstream> //tmp
 #include <sys/ioctl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <sys/time.h>
-#include <netinet/in.h>
 #include <errno.h>
-#include <string.h>
-#include <unistd.h>
-
-std::string hello = "HTTP/1.1 200 OK\r\nContent-Type: text/html;\r\ncharset=iso-8859-1\r\nConnection: keep-alive\r\nContent-Type: text/html\r\nContent-Length: 16\r\n\r\nHAHAHAHAHAHHAHAH";
-
-
 struct server_data
 {
-	int fd;		// sever fd
+	int fd;		// server fd
 	struct sockaddr_in server_addr;
 	Server	*ser;
 };
@@ -45,7 +34,6 @@ server_data	setup_server(Server &ser, short port, int backlog)
 	res.ser = &ser;	
 	if ((res.fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 		perror("socket failed");
-
 	if (setsockopt(res.fd, SOL_SOCKET, SO_REUSEADDR , &opt, sizeof(opt)))
 	{
 		perror("setsockopt");
@@ -54,13 +42,11 @@ server_data	setup_server(Server &ser, short port, int backlog)
 	res.server_addr.sin_family = AF_INET; // ipv4
 	res.server_addr.sin_addr.s_addr = INADDR_ANY; // localhost ofzo
 	res.server_addr.sin_port = htons(port);
-
 	if (fcntl(res.fd, F_SETFL, O_NONBLOCK) == -1)
 	{
 		perror("ioctl");
 		exit(0);
 	}
-
 	if (bind(res.fd, (struct sockaddr *)&res.server_addr, sizeof(res.server_addr)) < 0)
 		perror("bind failed");
 	if (listen(res.fd, backlog) < 0)
@@ -93,7 +79,6 @@ static void accept_connect(fd_set &current_sockets, server_data &data, vector<co
 		FD_SET(opencon.fd, &current_sockets);
 		open_connections.push_back(opencon);
 		// missing max fd resetter
-
 	} while(opencon.fd != -1);
 }
 
@@ -107,22 +92,23 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 	size_t i = 0;
 
 	for (; i < open_connections.size(); i++)
+	{
 		if (open_connections[i].fd == fd)
 		{
 			current_connection = &open_connections[i];
 			break;
 		}
+	}
 	if (!current_connection)
 	{
 		std::cout << "Connection not found! " << endl;
-		exit(0);
+		exit(0); // moet hier wel exit?
 	}
 	do
 	{
 		bzero(buffer, 1024);
 		std::cout << "Waiting for recv.." << std::endl;
 		rc = recv(fd, buffer, 1024, 0);
-
 		if (rc < 0)
 		{
 			std::cout << "Recv rval: " << rc <<endl;
@@ -147,7 +133,7 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 			std::cout << incoming_header << std::endl;
 			vector<unsigned char> rv = current_connection->ser->create_response(incoming_header);
 			cout << "TOTAL SIZE " << rv.size() << std::endl;
-			send(fd , &rv[0] , rv.size() , 0 );
+			send(fd, &rv[0], rv.size(), 0);
 			cout << "Bytes send!" << std::endl;
 			if (rc < 0)
 			{
@@ -167,7 +153,6 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 			break;
 		}
 	} while (1);
-
 	if (close_conn)
 	{
 		close(fd);
@@ -211,6 +196,7 @@ void	host_servers(vector<Server> serv)
 {
 	vector<server_data> data;
 	vector<connect_data> open_connections;
+	fd_set current_sockets;
 
 	for (size_t i = 0; i < serv.size(); i++)
 	{
@@ -220,13 +206,9 @@ void	host_servers(vector<Server> serv)
 			data.push_back(setup_server(serv[i], serv[i]._port[x] , 32));
 		}
 	}
-	fd_set current_sockets;
-
 	FD_ZERO(&current_sockets);
 	for (size_t i = 0; i < data.size(); i++)
-	{
 		FD_SET(data[i].fd, &current_sockets);
-	}
 	while (true)
 		connection_handler(current_sockets, data, open_connections);
 }

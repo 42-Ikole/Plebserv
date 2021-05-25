@@ -32,8 +32,8 @@ enum http_methods
 
 enum auto_index
 {
-	off,
-	on
+	OFF,
+	ON
 };
 
 typedef struct	s_lim_except

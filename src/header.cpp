@@ -12,7 +12,6 @@ void	Header::Parse_request(string request)
 	try
 	{
 		_method = parsed[0].substr(0, parsed[0].find('?'));
-
 		if (parsed[1].find("?") != string::npos)
 		{
 			vector<string> tmp = ft::split(parsed[1], "?");
@@ -44,7 +43,6 @@ Header::Header(vector<string> in)
 		throw Plebception(ERR_INVALID_VECTOR, "empty", "");
 	Parse_request(in[0]);
 	in.erase(in.begin());
-
 	load_headers(in);
 }
 
