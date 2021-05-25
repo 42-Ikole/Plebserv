@@ -5,7 +5,7 @@
 #include <sys/wait.h>
 #include <server.hpp>
 
-#define PATH "LOCAL PATH TO TEST.PHP"
+#define PATH "/Users/victor/Documents/Code/codam/42cursus/Webserv/html/Website/test.php"
 
 Cgi::Cgi(string path, string match)
 {
@@ -34,11 +34,40 @@ std::ostream &operator<<(std::ostream &out, Cgi const &value)
 	return (out);
 }
 
+void	Cgi::cgi_child(int fd[2], char *args[3], char **env)
+{
+	dup2 (fd[1], 1);
+	close(fd[0]);
+	close(fd[1]);
+	if (execve(_full_path.c_str(), args, env) == -1)
+	{
+		perror("exeve");
+		throw Plebception(ERR_FAIL_SYSCL, "read_response", "execve");
+	}
+	exit(0);
+}
+
+void	Cgi::cgi_parent(int fd[2], pid_t id, vector<unsigned char> &body)
+{
+	char buff[1025];
+
+	int status = 0;
+	close(fd[1]);
+	for (int ret = 1; ret > 0;)
+	{
+		ret = read(fd[0], buff, 1024);
+		buff[ret] = 0;
+		body.resize(body.size() + ret);
+		memcpy(&body[0], buff, ret);
+	}
+	std::cout << "Done with cgi!" << endl;
+	waitpid(id, &status, 0);
+}
+
 void Cgi::read_response(const Header &h, char** env, vector<unsigned char> &body, string file_path)
 {
 	char *args[3];
 	int fd[2];
-	char buff[1025];
 
 	args[0] = (char *)_full_path.c_str();
 	args[1] = (char *)PATH;
@@ -51,32 +80,9 @@ void Cgi::read_response(const Header &h, char** env, vector<unsigned char> &body
 	if (id == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "fork");
 	if (id == 0)
-	{
-		dup2 (fd[1], 1);
-		close(fd[0]);
-		close(fd[1]);
-		if (execve(_full_path.c_str(), args, env) == -1)
-		{
-			perror("exeve");
-			throw Plebception(ERR_FAIL_SYSCL, "read_response", "execve");
-		}
-		exit(0);
-	}
+		cgi_child(fd, args, env);
 	else
-	{
-		int status = 0;
-		close(fd[1]);
-
-		for (int ret = 1; ret > 0;)
-		{
-			ret = read(fd[0], buff, 1024);
-			buff[ret] = 0;
-			body.resize(body.size() + ret);
-			memcpy(&body[0], buff, ret);
-		}
-		std::cout << "Done with cgi!" << endl;
-		waitpid(id, &status, 0);
-	}
+		cgi_parent(fd, id, body);
 }
 
 char	*Cgi::create_env_var(string key, string value)
