@@ -8,7 +8,6 @@ using namespace std;
 void	Header::Parse_request(string request)
 {
 	vector<string> parsed = ft::split(request);
-
 	try
 	{
 		_method = parsed[0].substr(0, parsed[0].find('?'));
@@ -21,7 +20,7 @@ void	Header::Parse_request(string request)
 		else
 			_path = parsed[1];
 		if (_path.find('.') != string::npos)
-			_extension = _path.substr(_path.find('.'), string::npos);
+			_extension = _path.substr(_path.find_last_of('.'), string::npos);
 		_http_version = parsed[2];
 	}
 	catch (exception &e)
@@ -43,6 +42,7 @@ Header::Header(vector<string> in): _end_header(true)
 		throw Plebception(ERR_INVALID_VECTOR, "empty", "");
 	Parse_request(in[0]);
 	in.erase(in.begin());
+	in.shrink_to_fit();
 	load_headers(in);
 }
 
@@ -60,6 +60,8 @@ string	Header::content_type_switch()
 		return ("image/png");
 	if (_extension == ".json")
 		return ("application/json");
+	if (_extension == ".svg")
+		return ("image/svg+xml");
 	return ("text/html");
 }
 
