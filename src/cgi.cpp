@@ -58,6 +58,7 @@ void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, vector<unsigned char> 
 	close(fdout[1]);
 
 	write(fdin[1], &body[0], body.size());
+	body.resize(0);
 	close(fdin[1]);
 	for (int ret = 1; ret > 0;)
 	{
@@ -119,7 +120,7 @@ void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path,
 	env[4]	= create_env_var("PATH_INFO", h._path);
 	env[5]	= create_env_var("PATH_TRANSLATED", cwd + '/' + file_path);	// bugged
 	env[6]	= create_env_var("QUERY_STRING", h._query);
-	env[7]	= create_env_var("REMOTE_ADDR", "localhost");
+	env[7]	= create_env_var("REMOTE_ADDR", "127.0.0.1");
 	env[8]	= create_env_var("REMOTE_IDENT", "");
 	env[9]	= create_env_var("REMOTE_USER", ""); // if auth type == Basic use provided else undefined
 	env[10]	= create_env_var("REQUEST_METHOD", h._method);
