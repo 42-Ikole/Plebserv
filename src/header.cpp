@@ -63,9 +63,14 @@ string	Header::content_type_switch()
 	return ("text/html");
 }
 
+void	Header::add_to_header(string s)
+{
+	_header_to_add += s + "\r\n";
+}
+
 string Header::create_header(int response_code, int body_length, map<int, string> &status_text)
 {
-	string res = "HTTP/1.1 " + to_string(response_code) + status_text[response_code] +"\r\n" + \
+	string res = "HTTP/1.1 " + to_string(response_code) + " " + status_text[response_code] +"\r\n" + \
 	"Date: Thu, 08 Apr 2004 18:24:33 GMT\r\n" + \
 	"Server: Plebserv/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4\r\n" + \
 	"Content-Language: nl\r\n" + \
@@ -73,6 +78,8 @@ string Header::create_header(int response_code, int body_length, map<int, string
 	"Connection: keep-alive\r\n" + \
 	"Content-Type: " + content_type_switch() + "\r\n" + \
 	"Content-Length: " + to_string(body_length) + "\r\n";
+
+	res += _header_to_add;
 
 	if (_end_header)
 		res += "\r\n";
