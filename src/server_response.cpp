@@ -250,8 +250,36 @@ vector<unsigned char>	Server::return_post(Header &h, Location *l, vector<unsigne
 	vector<unsigned char> rval;
 	string header;
 	int response_code = 200;
+	size_t body_size = 0;
 
-
+	try
+	{
+		string file_path = l->find_file(h, response_code);
+		if (!l->run_cgi(h, body, file_path, *this, body_size))
+			read_file(body, file_path);
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
+		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == ON)
+		{
+			response_code = 200;
+			create_dirlist(l->_root, h._path, body);
+		}
+		else
+		{
+			std::cerr << e.what() << " response_code: " << response_code << '\n';
+			err_code_file(body, response_code);
+		}
+	}
+	if (h._end_header)
+		header = h.create_header(response_code, body.size(), g_http_errors);
+	else
+		header = h.create_header(response_code, body_size, g_http_errors);
+	rval.resize(header.length() + body.size());
+	memcpy(&rval[0], header.c_str(), header.length());
+	memcpy(&rval[header.length()], &body[0], body.size());
+	return (rval);
 }
 
 vector<unsigned char>	Server::return_delete(Header &h, Location *l)
@@ -367,4 +395,5 @@ vector<unsigned char>	Server::create_response(Header &h, vector<unsigned char> &
 		return (return_connect(h, l));
 	if (h._method == "TRACE")
 		return (return_trace(h, l));
+	return (return_post(h, l, body));
 }
