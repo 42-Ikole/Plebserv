@@ -109,7 +109,6 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 	do
 	{
 		bzero(buffer, 1024);
-		std::cout << "Waiting for recv.." << std::endl;
 		rc = recv(fd, buffer, 1024, 0);
 		if (rc < 0)
 		{
@@ -136,11 +135,13 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 		{
 			try
 			{
-				vector<string> splitted = ft::split(string((char *)&cur_conn->buf[0]), "\n");
-				vector<unsigned char> body; // restant van header split
-				Header incoming_header = Header(splitted);
-				vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header, body);
-				cout << "TOTAL SIZE " << rv.size() << std::endl;
+				const char *crlf2 = "\r\n\r\n";
+				auto it = std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2));
+				vector<unsigned char> header_part(cur_conn->buf.begin(), it);
+				vector<unsigned char> body_part(it, cur_conn->buf.end());
+				vector<string> split_header = ft::split(string((char *)&header_part[0]), "\n");
+				Header incoming_header = Header(split_header);
+				vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header, body_part);
 				send(fd, &rv[0], rv.size(), 0);
 				cout << "Bytes send!" << std::endl;
 				cur_conn->i = 0;
@@ -154,7 +155,7 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 			}
 			catch(const std::exception& e)
 			{
-				std::cerr << e.what() << '\n';
+				std::cerr << "Error!" << e.what() << '\n';
 				exit(0);
 			}
 		}
