@@ -207,17 +207,14 @@ Location	*Server::match_location(string path)
 	return (closest_match);
 }
 
-vector<unsigned char>	Server::create_response(Header h)
+vector<unsigned char>	Server::return_get(Header &h, Location *l)
 {
 	vector<unsigned char> rval;
 	vector<unsigned char> body;
-	string header;
 	int response_code = 200;
-	Location *l = match_location(h._path);
 	size_t body_size = 0;
+	string header;
 
-	if (l == NULL)
-		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
 	try
 	{
 		string file_path = l->find_file(h, response_code);
@@ -238,20 +235,136 @@ vector<unsigned char>	Server::create_response(Header h)
 			err_code_file(body, response_code);
 		}
 	}
-	/*
-		head = only the header
-	*/
-	if (h._method == "HEAD")
-		body.resize(0);
-
 	if (h._end_header)
 		header = h.create_header(response_code, body.size(), g_http_errors);
 	else
 		header = h.create_header(response_code, body_size, g_http_errors);
-	std::cout << "BODY SIZE: " << body.size() << " HEADER " << header.length() << std::endl;
-	// creating return value
 	rval.resize(header.length() + body.size());
 	memcpy(&rval[0], header.c_str(), header.length());
 	memcpy(&rval[header.length()], &body[0], body.size());
 	return (rval);
+}
+
+vector<unsigned char>	Server::return_post(Header &h, Location *l, vector<unsigned char> &body)
+{
+	vector<unsigned char> rval;
+	string header;
+	int response_code = 200;
+
+
+}
+
+vector<unsigned char>	Server::return_delete(Header &h, Location *l)
+{
+	vector<unsigned char> rval;
+	string header;
+	int response_code = 200;	
+}
+
+vector<unsigned char>	Server::return_put(Header &h, Location *l, vector<unsigned char> &body)
+{
+	vector<unsigned char> rval;
+	string header;
+	int response_code = 200;
+}
+
+
+vector<unsigned char>	Server::return_options(Header &h, Location *l)
+{
+	vector<unsigned char> rval;
+	string header;
+	string allowed = "Allow: ";
+
+	if (l->_limit_except.size() == 0)
+		allowed = "OPTIONS, GET, HEAD, POST, PUT, DELETE, CONNECT, TRACE";
+	else
+		for (size_t i = 0; i < l->_limit_except.size(); i++)
+		{
+			if (i + 1 == l->_limit_except.size())
+				allowed += l->_limit_except[i];
+			else
+				allowed += l->_limit_except[i] + ", ";
+		}
+	std::cout << "Allowed: " << allowed << endl;
+	h.add_to_header(allowed);
+	header = h.create_header(204, 0, g_http_errors);
+
+	rval.resize(header.length());
+	memcpy(&rval[0], header.c_str(), header.length());
+
+	return (rval);
+}
+
+vector<unsigned char>	Server::return_head(Header &h, Location *l)
+{
+	vector<unsigned char> rval;
+	vector<unsigned char> body;
+	size_t body_size = 0;
+	string header;
+	int response_code = 200;
+
+	try
+	{
+		string file_path = l->find_file(h, response_code);
+		if (!l->run_cgi(h, body, file_path, *this, body_size))
+			read_file(body, file_path);
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
+		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == ON)
+		{
+			response_code = 200;
+			create_dirlist(l->_root, h._path, body);
+		}
+		else
+		{
+			std::cerr << e.what() << " response_code: " << response_code << '\n';
+			err_code_file(body, response_code);
+		}
+	}
+	if (h._end_header)
+		header = h.create_header(response_code, body.size(), g_http_errors);
+	else
+		header = h.create_header(response_code, body_size, g_http_errors);
+	rval.resize(header.length());
+	memcpy(&rval[0], header.c_str(), header.length());
+	return (rval);
+}
+
+vector<unsigned char>	Server::return_connect(Header &h, Location *l)
+{
+	vector<unsigned char> rval;
+	string header;
+	int response_code = 200;	
+}
+
+vector<unsigned char>	Server::return_trace(Header &h, Location *l)
+{
+	vector<unsigned char> rval;
+	string header;
+	int response_code = 200;
+}
+
+vector<unsigned char>	Server::create_response(Header &h, vector<unsigned char> &body)
+{
+	Location *l = match_location(h._path);
+	if (l == NULL)
+		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
+	if (h._method == "GET")
+		return (return_get(h, l));
+	if (h._method == "POST")
+		return (return_post(h, l, body));
+	if (h._method == "DELETE")
+		return (return_delete(h, l));
+	if (h._method == "PUT")
+		return (return_put(h, l, body));
+	if (h._method == "OPTIONS")
+		return (return_options(h, l));
+	if (h._method == "HEAD")
+		return (return_head(h, l));
+	if (h._method == "CONNECT")
+		return (return_connect(h, l));
+	if (h._method == "TRACE")
+		return (return_trace(h, l));
 }
