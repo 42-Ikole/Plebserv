@@ -136,14 +136,24 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 			try
 			{
 				const char *crlf2 = "\r\n\r\n";
+				write(STDOUT_FILENO, &cur_conn->buf[0], cur_conn->buf.size());
+				std::cout << "Starting to split header and body" << std::endl;
 				auto it = std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2));
 				vector<unsigned char> header_part(cur_conn->buf.begin(), it);
-				vector<unsigned char> body_part(it + 4, cur_conn->buf.end());
+				vector<unsigned char> body_part;
+				if (it != cur_conn->buf.end())
+					vector<unsigned char> body_part(it + 4, cur_conn->buf.end());
+
+
+				std::cout << "Starting to split header" << std::endl;
 				vector<string> split_header = ft::split(string((char *)&header_part[0]), "\n");
+				std::cout << "Setting header" << std::endl;
 				Header incoming_header = Header(split_header);
+				std::cout << "Creating Response" << std::endl;
 				vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header, body_part);
+				std::cout << "Writing out.." << std::endl;
 				send(fd, &rv[0], rv.size(), 0);
-				cout << "Bytes send!" << std::endl;
+				cout << "Bytes send!\n\n" << std::endl;
 				cur_conn->i = 0;
 				cur_conn->buf.resize(0);
 				if (rc < 0)
@@ -156,7 +166,9 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 			catch(const std::exception& e)
 			{
 				std::cerr << "Error!" << e.what() << '\n';
-				exit(0);
+				cur_conn->i = 0;
+				cur_conn->buf.resize(0);
+				break;
 			}
 		}
 	} while (1);
