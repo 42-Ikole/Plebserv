@@ -286,14 +286,42 @@ vector<unsigned char>	Server::return_delete(Header &h, Location *l)
 {
 	vector<unsigned char> rval;
 	string header;
-	int response_code = 200;	
+	int response_code = 204;
+	string fullpath = l->_root + h._path;
+
+
+	if (unlink(fullpath.c_str()) == -1)
+		response_code = 403;
+	header = h.create_header(response_code, 0, g_http_errors);
+	rval.resize(header.size());
+	memcpy(&rval[0], header.c_str(), header.length());
+	return (rval);
 }
 
 vector<unsigned char>	Server::return_put(Header &h, Location *l, vector<unsigned char> &body)
 {
 	vector<unsigned char> rval;
 	string header;
-	int response_code = 200;
+	int response_code = 201;
+	string fullpath = l->_root + h._path;
+	struct stat file_status;
+	int fd;
+
+	if (stat(fullpath.c_str(), &file_status) == -1)
+	{
+		fd = open(fullpath.c_str(), O_CREAT | O_WRONLY, 0777);
+		write(fd, &body[0], body.size());
+	}
+	else
+	{
+		fd = open(fullpath.c_str(), O_TRUNC | O_WRONLY, 0777);
+		write(fd, &body[0], body.size());
+		response_code = 204;
+	}
+	header = h.create_header(response_code, 0, g_http_errors);
+	rval.resize(header.size());
+	memcpy(&rval[0], header.c_str(), header.length());
+	return (rval);
 }
 
 

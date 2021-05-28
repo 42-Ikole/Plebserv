@@ -138,7 +138,7 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 				const char *crlf2 = "\r\n\r\n";
 				auto it = std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2));
 				vector<unsigned char> header_part(cur_conn->buf.begin(), it);
-				vector<unsigned char> body_part(it, cur_conn->buf.end());
+				vector<unsigned char> body_part(it + 4, cur_conn->buf.end());
 				vector<string> split_header = ft::split(string((char *)&header_part[0]), "\n");
 				Header incoming_header = Header(split_header);
 				vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header, body_part);
