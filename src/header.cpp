@@ -2,6 +2,7 @@
 #include <iostream>
 #include <exception>
 #include <map>
+#include <ctime>
 
 using namespace std;
 
@@ -49,20 +50,20 @@ Header::Header(vector<string> in): _end_header(true)
 string	Header::content_type_switch()
 {
 	if (_extension == ".html")
-		return ("text/html");
+		return ("text/html; charset=utf-8");
 	if (_extension == ".css")
-		return ("text/css");
+		return ("text/css; charset=utf-8");
 	if (_extension == ".jpg")
 		return ("image/jpeg");
 	if (_extension == ".js")
-		return ("text/javascript");
+		return ("text/javascript; charset=utf-8");
 	if (_extension == ".png")
 		return ("image/png");
 	if (_extension == ".json")
-		return ("application/json");
+		return ("application/json; charset=utf-8");
 	if (_extension == ".svg")
 		return ("image/svg+xml");
-	return ("text/html");
+	return ("text/html; charset=utf-8");
 }
 
 void	Header::add_to_header(string s)
@@ -70,13 +71,25 @@ void	Header::add_to_header(string s)
 	_header_to_add += s + "\r\n";
 }
 
+inline string create_date()
+{
+	time_t rawtime;
+	struct tm * timeinfo;
+	char buf[100];
+
+	time (&rawtime);
+	timeinfo = gmtime(&rawtime);
+
+	strftime(buf, 100, "%a, %d %b %G %H:%M:%S GMT", timeinfo);
+	return (string(buf));
+}
+
 string Header::create_header(int response_code, int body_length, map<int, string> &status_text)
 {
 	string res = "HTTP/1.1 " + to_string(response_code) + " " + status_text[response_code] +"\r\n" + \
-	"Date: Thu, 08 Apr 2004 18:24:33 GMT\r\n" + \
-	"Server: Plebserv/1.3.29 (Unix) PHP/4.3.4 X-Powered-By: PHP/4.3.4\r\n" + \
+	"Date: " + create_date() +"\r\n" + \
+	"Server: Plebserv/1.3.29 (Unix)\r\n" + \
 	"Content-Language: nl\r\n" + \
-	"charset=iso-8859-1\r\n" + \
 	"Connection: keep-alive\r\n" + \
 	"Content-Type: " + content_type_switch() + "\r\n" + \
 	"Content-Length: " + to_string(body_length) + "\r\n";
