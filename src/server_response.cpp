@@ -111,6 +111,16 @@ map<int, string> g_http_errors = create_map();
 
 static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Plebbin reeee</title></head><body style='background-color: #f72d49; padding: 50px 10vw 0 10vw; color: #3f3f3f;'><h1>Error: $error_code</h1><p style='size: 15px;'>$error_message</p></body></html>";
 
+static void		default_error_page(vector<unsigned char> &body, int response_code)
+{
+	string to_push = err_default;
+
+	to_push.replace(to_push.find("$error_code"), 11, to_string(response_code));
+	to_push.replace(to_push.find("$error_message"), 14, g_http_errors[response_code]);
+	body.resize(to_push.length());
+	memcpy(&body[0], to_push.c_str(), to_push.length());
+}
+
 void	Server::err_code_file(vector<unsigned char> &body, int response_code)
 {
 	int fd;
@@ -119,17 +129,20 @@ void	Server::err_code_file(vector<unsigned char> &body, int response_code)
 	size_t i = 0;
 
 	if (_error_pages[response_code].empty())
-	{
-		string to_push = err_default;
-		to_push.replace(to_push.find("$error_code"), 11, to_string(response_code));
-		to_push.replace(to_push.find("$error_message"), 14, g_http_errors[response_code]);
-		body.resize(to_push.length());
-		memcpy(&body[0], to_push.c_str(), to_push.length());
-	}
+		default_error_page(body, response_code);
 	else
 	{
-		if ((fd = open(_error_pages[response_code].c_str(), O_RDONLY)) == -1)
-			throw Plebception(ERR_FD, "err_read_file", _error_pages[response_code]);
+		try 
+		{
+			if ((fd = open(_error_pages[response_code].c_str(), O_RDONLY)) == -1)
+				throw Plebception(ERR_FD, "err_read_file", _error_pages[response_code]);
+		}
+		catch (Plebception &msg)
+		{
+			cerr << msg.what() << " Falling back to server default!" << endl;
+			default_error_page(body, response_code);
+			return ;
+		}
 		while (ret)
 		{
 			ret = read(fd, &buf, 1024);
