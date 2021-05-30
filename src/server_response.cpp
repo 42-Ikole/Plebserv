@@ -392,7 +392,8 @@ vector<unsigned char>	Server::return_connect(Header &h, Location *l)
 {
 	vector<unsigned char> rval;
 	string header;
-	int response_code = 200;	
+	int response_code = 200;
+	return rval;
 }
 
 vector<unsigned char>	Server::return_trace(Header &h, Location *l)
@@ -400,6 +401,7 @@ vector<unsigned char>	Server::return_trace(Header &h, Location *l)
 	vector<unsigned char> rval;
 	string header;
 	int response_code = 200;
+	return rval;
 }
 
 vector<unsigned char>	Server::create_response(Header &h, vector<unsigned char> &body)
