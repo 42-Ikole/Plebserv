@@ -137,7 +137,7 @@ void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path,
 	read_response(h, env, body, cwd + '/' + file_path);
 
 	const char *crlf2 = "\r\n\r\n";
-	auto it = std::search(body.begin(), body.end(), crlf2, crlf2 + strlen(crlf2));
+	vector<unsigned char>::iterator it = std::search(body.begin(), body.end(), crlf2, crlf2 + strlen(crlf2));
 
 	if (it != body.end())
 	{
