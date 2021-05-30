@@ -25,8 +25,13 @@ struct	connect_data
 	int fd;		// client fd
 	Server *ser;
 	vector<unsigned char> buf;
-	int i = 0;
+	int i;
+
+	connect_data();
 };
+
+connect_data::connect_data() : i(0)
+{}
 
 server_data	setup_server(Server &ser, short port, int backlog)
 {
@@ -58,7 +63,7 @@ server_data	setup_server(Server &ser, short port, int backlog)
 
 static void accept_connect(fd_set &current_sockets, server_data &data, vector<connect_data> &open_connections)	
 {
-	connect_data opencon;
+	connect_data opencon = connect_data();
 	do
 	{
 		opencon.fd = accept(data.fd, NULL, NULL);
@@ -138,7 +143,7 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 				const char *crlf2 = "\r\n\r\n";
 				write(STDOUT_FILENO, &cur_conn->buf[0], cur_conn->buf.size());
 				std::cout << "Starting to split header and body" << std::endl;
-				auto it = std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2));
+				vector<unsigned char>::iterator it = std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2));
 				vector<unsigned char> header_part(cur_conn->buf.begin(), it);
 				vector<unsigned char> body_part;
 				if (it != cur_conn->buf.end())
