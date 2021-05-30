@@ -9,10 +9,10 @@
 #include <iostream>     // std::cout
 #include <header.hpp>
 #include <utilities.hpp>
-#include <sstream> //tmp
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <errno.h>
+
 struct server_data
 {
 	int fd;		// server fd
