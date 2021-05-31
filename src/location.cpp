@@ -221,7 +221,7 @@ bool	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path,
 string	Location::find_file(Header h, int &response_code)
 {
 	struct stat file_status;
-	string full_path = _root + h._path.replace(h._path.find(_location), _location.size(), "");
+	string full_path = _root + "/" + h._path.replace(h._path.find(_location), _location.size(), "");
 
 	std::cout << full_path << std::endl;
 	if (_limit_except.size())
