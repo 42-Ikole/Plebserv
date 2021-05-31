@@ -15,7 +15,6 @@ static map<string, LoadFunction> create_map()
 	map<string, LoadFunction> m;
 	m["location"] 				= &Server::load_locations;
 	m["server_name"] 			= &Server::load_server_identifier;
-	m["client_max_body_size"]	= &Server::load_client_max_body_size;
 	m["listen"]					= &Server::load_ports;
 	m["error_page"]				= &Server::load_error_page;
 	return m;
@@ -36,7 +35,6 @@ Server	&Server::operator=(Server const &tba)
 	_server = tba._server;
 	_server_identifier = tba._server_identifier;
 	_error_pages = tba._error_pages;
-	_max_body_size = tba._max_body_size;
 	_locations = tba._locations;
 	return (*this);
 }
@@ -44,7 +42,6 @@ Server	&Server::operator=(Server const &tba)
 std::ostream &operator<<(std::ostream &out, Server const &value)
 {
 	out << "------------ SERVER " << value._server << "--------" << std::endl;
-	out << std::setw(15) << "BODY SIZE | " << value._max_body_size << std::endl;
 	out << std::setw(15) << "LISTEN | ";
 	for (size_t i = 0; i < value._port.size(); i++)
 		out << value._port[i] << " ";
@@ -62,7 +59,7 @@ std::ostream &operator<<(std::ostream &out, Server const &value)
 }
 
 Server::Server(vector<string> input) :
-	_server(""), _server_identifier(), _max_body_size(160000)
+	_server(""), _server_identifier()
 {
 	_server_identifier.push_back("");
 	_port.push_back(80);
@@ -157,33 +154,6 @@ void	Server::load_error_page(vector<string> val)
 	if (code < 100 && code >= 600)
 		Plebception(ERR_OUT_OF_RANGE, "error_page", val[0]);
 	_error_pages[code] = val[1];
-}
-
-void	Server::load_client_max_body_size(vector<string> val)
-{
-	if (val.size() == 0)
-		throw Plebception(ERR_NO_VALUE, "client_max_body_size", "");
-	size_t	pos = val[0].find_first_not_of("0123456789");
-	size_t	mul = 1;
-
-	if (pos != string::npos)
-	{
-		if (val[0][pos] != *(val[0].end() - 1))
-			throw Plebception(ERR_INVALID_VALUE, "client_max_body_size", val[0]);
-		char c = val[0][pos];
-		switch (c)
-		{
-			case 'k':
-				mul = 1000; break;
-			case 'm':
-				mul = 1000000; break;
-			case 'g':
-				mul = 1000000000; break;
-			default:
-				throw Plebception(ERR_INVALID_VALUE, "client_max_body_size", val[0]);
-		}
-	}
-	_max_body_size = ft::stoi(val[0]) * mul;
 }
 
 void	Server::load_locations(vector<string> val)

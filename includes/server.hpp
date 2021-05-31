@@ -27,7 +27,6 @@ class Server
 		string						_server;
 		vector<string>				_server_identifier;
 		map<int, string>			_error_pages;
-		size_t						_max_body_size;
 		vector<Location>			_locations;
 		
 		Server();
@@ -42,7 +41,6 @@ class Server
 		int		parse_args(vector<string> arr, int i);
 		void 	load_ports(vector<string> val);
 		void 	load_server_identifier(vector<string> val);
-		void 	load_client_max_body_size(vector<string> val);
 		void	load_locations(vector<string> val);
 		void	load_error_page(vector<string> val);
 		
