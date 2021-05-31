@@ -108,6 +108,7 @@ Location& Location::operator=(Location const& tba)
 	_auto_index		= tba._auto_index;
 	_index_page		= tba._index_page;
 	_cgi			= tba._cgi;
+	_upload_store	= tba._upload_store;
 	_max_body_size	= tba._max_body_size;
 	return *this;
 }
@@ -117,6 +118,7 @@ std::ostream &operator<<(std::ostream &out, Location const &value)
 	out << "------------ LOCATION " << value._location << " --------" << std::endl;
 	out << std::setw(20) << "ROOT | " << value._root << std::endl;
 	out << std::setw(20) << "MAX_BODY | " << value._max_body_size << std::endl;
+	out << std::setw(20) << "UPLOAD STORE | " << value._upload_store << std::endl;
 	out << std::setw(20) << "AUTO INDEX | " << (value._auto_index == false ? COLOR_RED : COLOR_GREEN) << value._auto_index << COLOR_RESET << std::endl;
 	out << std::setw(20) << "INDEX PAGE | ";
 	for (size_t i = 0; i < value._index_page.size(); i++)
@@ -244,9 +246,12 @@ string	Location::find_file(Header h, int &response_code)
 		return (full_path);
 	else if (file_status.st_mode & S_IFDIR)
 	{
+		if (full_path[full_path.size() - 1] != '/')
+			full_path += '/';
 		for (size_t i = 0; i < _index_page.size(); i++)
 		{
 			string new_path = full_path + _index_page[i];
+			std::cout << "Testing path " << new_path << std::endl;
 			if (stat(new_path.c_str(), &file_status) != -1)
 				return (new_path);
 		}
