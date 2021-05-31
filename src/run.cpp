@@ -96,13 +96,13 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 	char buffer[1025];
 	bzero(buffer, 1025);
 	connect_data *cur_conn;
-	size_t i = 0;
+	size_t i = 0, x = 0;
 
-	for (; i < open_connections.size(); i++)
+	for (; x < open_connections.size(); x++)
 	{
-		if (open_connections[i].fd == fd)
+		if (open_connections[x].fd == fd)
 		{
-			cur_conn = &open_connections[i];
+			cur_conn = &open_connections[x];
 			break;
 		}
 	}
@@ -117,7 +117,8 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 		rc = recv(fd, buffer, 1024, 0);
 		if (rc < 0)
 		{
-			std::cout << "Recv rval: " << rc <<endl;
+			std::cout << "Recv rval: " << rc << endl;
+			cerr << "errno = " << errno << endl;
 			if (errno != EWOULDBLOCK)
 			{
 				perror("  recv() failed");
@@ -133,55 +134,54 @@ static void	handle_connection(fd_set &current_sockets, vector<server_data> &data
 		}
 		cur_conn->buf.resize(cur_conn->buf.size() + rc);
 		memcpy(&cur_conn->buf[cur_conn->i], buffer, rc);
-		i += rc;
+		cur_conn->i += rc;
 		std::cout << "Bytes recieved " << rc << std::endl;
 
-		if (rc != 1024)
-		{
-			try
-			{
-				const char *crlf2 = "\r\n\r\n";
-				write(STDOUT_FILENO, &cur_conn->buf[0], cur_conn->buf.size());
-				std::cout << "Starting to split header and body" << std::endl;
-				vector<unsigned char>::iterator it = std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2));
-				vector<unsigned char> header_part(cur_conn->buf.begin(), it);
-				vector<unsigned char> body_part;
-				if (it != cur_conn->buf.end())
-					vector<unsigned char> body_part(it + 4, cur_conn->buf.end());
-
-
-				std::cout << "Starting to split header" << std::endl;
-				vector<string> split_header = ft::split(string((char *)&header_part[0]), "\n");
-				std::cout << "Setting header" << std::endl;
-				Header incoming_header = Header(split_header);
-				std::cout << "Creating Response" << std::endl;
-				vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header, body_part);
-				std::cout << "Writing out.." << std::endl;
-				send(fd, &rv[0], rv.size(), 0);
-				cout << "Bytes send!\n\n" << std::endl;
-				cur_conn->i = 0;
-				cur_conn->buf.resize(0);
-				if (rc < 0)
-				{
-					std::cout << "send failed!" << endl;
-					close_conn = true;
-					break;
-				}
-			}
-			catch(const std::exception& e)
-			{
-				std::cerr << "Error!" << e.what() << '\n';
-				cur_conn->i = 0;
-				cur_conn->buf.resize(0);
-				break;
-			}
-		}
 	} while (1);
+	const char *crlf2 = "\r\n\r\n";
+
+	if (cur_conn->buf.size() != 0 && std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2)) != cur_conn->buf.end())
+	{
+	try
+	{
+		write(STDOUT_FILENO, &cur_conn->buf[0], cur_conn->buf.size());
+		vector<unsigned char>::iterator it = std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2));
+		std::cout << "Starting to split header and body" << std::endl;
+		vector<unsigned char> header_part(cur_conn->buf.begin(), it);
+		vector<unsigned char> body_part;
+		if (it != cur_conn->buf.end())
+			vector<unsigned char> body_part(it + 4, cur_conn->buf.end());
+
+
+		std::cout << "Starting to split header" << std::endl;
+		vector<string> split_header = ft::split(string((char *)&header_part[0]), "\n");
+		std::cout << "Setting header" << std::endl;
+		Header incoming_header = Header(split_header);
+		std::cout << "Creating Response" << std::endl;
+		vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header, body_part);
+		std::cout << "Writing out.." << std::endl;
+		rc = send(fd, &rv[0], rv.size(), 0);
+		cout << "Bytes send!\n\n" << std::endl;
+		cur_conn->i = 0;
+		cur_conn->buf.resize(0);
+		if (rc < 0)
+		{
+			std::cout << "send failed!" << endl;
+			close_conn = true;
+		}
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << "Error!" << e.what() << '\n';
+		cur_conn->i = 0;
+		cur_conn->buf.resize(0);
+	}
+	}
 	if (close_conn)
 	{
 		close(fd);
 		FD_CLR(fd, &current_sockets);
-		open_connections.erase(open_connections.begin() + i);
+		open_connections.erase(open_connections.begin() + x);
 	}
 }
 
