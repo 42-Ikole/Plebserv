@@ -9,9 +9,12 @@ using namespace std;
 void	Header::Parse_request(string request)
 {
 	vector<string> parsed = ft::split(request);
+
+	if (parsed.size() != 3)
+		throw Plebception(ERR_INVALID_VALUE, "parsing request", "");
 	try
 	{
-		_method = parsed[0].substr(0, parsed[0].find('?'));
+		_method = parsed[0];
 		if (parsed[1].find("?") != string::npos)
 		{
 			vector<string> tmp = ft::split(parsed[1], "?");
@@ -31,10 +34,10 @@ void	Header::Parse_request(string request)
 	}
 }
 
-void	Header::load_headers(vector<string> in)
+void	Header::load_headers_in(vector<string> in)
 {
 	for (size_t i = 0; i < in.size() - 1; i++)
-		_headers[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
+		_headers_in[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
 }
 
 Header::Header(vector<string> in): _end_header(true)
@@ -44,7 +47,7 @@ Header::Header(vector<string> in): _end_header(true)
 	Parse_request(in[0]);
 	in.erase(in.begin());
 	in.shrink_to_fit();
-	load_headers(in);
+	load_headers_in(in);
 }
 
 string	Header::content_type_switch()
@@ -66,11 +69,6 @@ string	Header::content_type_switch()
 	return ("text/html; charset=utf-8");
 }
 
-void	Header::add_to_header(string s)
-{
-	_header_to_add += s + "\r\n";
-}
-
 inline string create_date()
 {
 	time_t rawtime;
@@ -84,18 +82,26 @@ inline string create_date()
 	return (string(buf));
 }
 
+void	Header::add_to_header_out(string val, string key)
+{
+	// if (!_headers_out[val].empty())
+	// 	_headers_out_len -= _headers_out[val].size() - val.size() - 3;
+	_headers_out[val] = key;
+	// _headers_out_len += val.size() + key.size() + 3;
+}
+
 string Header::create_header(int response_code, int body_length, map<int, string> &status_text)
 {
-	string res = "HTTP/1.1 " + to_string(response_code) + " " + status_text[response_code] +"\r\n" + \
-	"Date: " + create_date() +"\r\n" + \
-	"Server: Plebserv/1.3.29 (Unix)\r\n" + \
-	"Content-Language: nl\r\n" + \
-	"Connection: keep-alive\r\n" + \
-	"Content-Type: " + content_type_switch() + "\r\n" + \
-	"Content-Length: " + to_string(body_length) + "\r\n";
+	string res = "HTTP/1.1 " + to_string(response_code) + " " + status_text[response_code] +"\r\n";
 
-	res += _header_to_add;
+	add_to_header_out("Date", create_date());
+	add_to_header_out("Server", "Plebserv/1.3.29 (Unix)");
+	add_to_header_out("Connection", "keep-alive");
+	add_to_header_out("Content-Type", content_type_switch());
+	add_to_header_out("Content-Length", to_string(body_length));
 
+	for (map<string, string>::const_iterator i = _headers_out.begin(); i != _headers_out.end(); i++)
+		res += i->first + ": " + i->second + "\r\n";
 	if (_end_header)
 		res += "\r\n";
 	return (res);
@@ -109,7 +115,7 @@ std::ostream &operator<<(std::ostream &out, Header const &value)
 	out << std::setw(15) << "QUERY | " << value._query << std::endl;
 	out << std::setw(15) << "EXTENSION | " << value._extension << std::endl;
 	out << std::setw(15) << "OTHER HEADERS:\n";
-	for (map<string, string>::const_iterator i = value._headers.begin(); i != value._headers.end(); i++)
+	for (map<string, string>::const_iterator i = value._headers_in.begin(); i != value._headers_in.end(); i++)
 		out << i->first << ": " <<  i->second << std::endl;
 
 	out << "------------ DONE ----------" << std::endl;
