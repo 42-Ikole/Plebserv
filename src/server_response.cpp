@@ -316,9 +316,11 @@ vector<unsigned char>	Server::return_put(Header &h, Location *l, vector<unsigned
 	vector<unsigned char> rval;
 	string header;
 	int response_code = 201;
-	string fullpath = l->_root + h._path;
+	string fullpath = l->_upload_store + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
 	struct stat file_status;
 	int fd;
+
+	cout << "Path to save to: " << fullpath << endl;
 
 	if (stat(fullpath.c_str(), &file_status) == -1)
 	{
