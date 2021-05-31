@@ -29,5 +29,7 @@ touch not_happy.bad_extension
 
 cd ../../../
 
+chmod 777 tester
+
 sh -c "./plebserv configs/42-tester.conf" &
 printf "\n\n\n\n\n" | sh -c "./tester http://localhost:5000"
