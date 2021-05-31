@@ -13,12 +13,13 @@ string methods[] = {"GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "TRACE", 
 static map<string, LoadFunction> create_map()
 {
 	map<string, LoadFunction> m;
-	m["root"]			= &Location::set_root;
-	m["autoindex"]		= &Location::set_auto_index;
-	m["index"]			= &Location::set_index_page;
-	m["limit_except"]	= &Location::set_limit_except;
-	m["cgi"]			= &Location::set_cgi_pass;
-	m["upload_store"]	= &Location::set_upload_store;
+	m["root"]					= &Location::set_root;
+	m["autoindex"]				= &Location::set_auto_index;
+	m["index"]					= &Location::set_index_page;
+	m["limit_except"]			= &Location::set_limit_except;
+	m["cgi"]					= &Location::set_cgi_pass;
+	m["upload_store"]			= &Location::set_upload_store;
+	m["client_max_body_size"]	= &Location::load_client_max_body_size;
 	return m;
 }
 
@@ -100,13 +101,14 @@ void Location::set_limit_except(vector<string> val)
 
 Location& Location::operator=(Location const& tba)
 {
-	_location = tba._location;
-	_methods = tba._methods;
-	_limit_except = tba._limit_except;
-	_root = tba._root;
-	_auto_index = tba._auto_index;
-	_index_page = tba._index_page;
-	_cgi		= tba._cgi;
+	_location		= tba._location;
+	_methods		= tba._methods;
+	_limit_except	= tba._limit_except;
+	_root			= tba._root;
+	_auto_index		= tba._auto_index;
+	_index_page		= tba._index_page;
+	_cgi			= tba._cgi;
+	_max_body_size	= tba._max_body_size;
 	return *this;
 }
 
@@ -114,6 +116,7 @@ std::ostream &operator<<(std::ostream &out, Location const &value)
 {
 	out << "------------ LOCATION " << value._location << " --------" << std::endl;
 	out << std::setw(20) << "ROOT | " << value._root << std::endl;
+	out << std::setw(20) << "MAX_BODY | " << value._max_body_size << std::endl;
 	out << std::setw(20) << "AUTO INDEX | " << (value._auto_index == false ? COLOR_RED : COLOR_GREEN) << value._auto_index << COLOR_RESET << std::endl;
 	out << std::setw(20) << "INDEX PAGE | ";
 	for (size_t i = 0; i < value._index_page.size(); i++)
@@ -152,7 +155,7 @@ int	Location::parse_args(string str)
 	return (1);
 }
 
-Location::Location(vector<string> val): _root("/html"), _auto_index(OFF), _location(val[0]), _upload_store("/html/uploads")
+Location::Location(vector<string> val): _root("/html"), _auto_index(OFF), _location(val[0]), _upload_store("/html/uploads"), _max_body_size(16000)
 {
 	_index_page.push_back("index.html");
 	_index_page.push_back("index");
@@ -172,6 +175,33 @@ void Location::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
+void	Location::load_client_max_body_size(vector<string> val)
+{
+	if (val.size() == 0)
+		throw Plebception(ERR_NO_VALUE, "client_max_body_size", "");
+	size_t	pos = val[0].find_first_not_of("0123456789");
+	size_t	mul = 1;
+
+	if (pos != string::npos)
+	{
+		if (val[0][pos] != *(val[0].end() - 1))
+			throw Plebception(ERR_INVALID_VALUE, "client_max_body_size", val[0]);
+		char c = val[0][pos];
+		switch (c)
+		{
+			case 'k':
+				mul = 1000; break;
+			case 'm':
+				mul = 1000000; break;
+			case 'g':
+				mul = 1000000000; break;
+			default:
+				throw Plebception(ERR_INVALID_VALUE, "client_max_body_size", val[0]);
+		}
+	}
+	_max_body_size = ft::stoi(val[0]) * mul;
+}
+
 bool	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser, size_t &size)
 {
 	for (size_t i = 0; i < _cgi.size(); i++)
@@ -184,12 +214,16 @@ bool	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path,
 	}
 	return (false);
 }
+// /dir/hoi/jaja.txt
+
+// /jaja.txt
 
 string	Location::find_file(Header h, int &response_code)
 {
 	struct stat file_status;
-	string full_path = _root + h._path;
-	
+	string full_path = _root + h._path.replace(h._path.find(_location), _location.size(), "");
+
+	std::cout << full_path << std::endl;
 	if (_limit_except.size())
 	{
 		size_t i = 0;

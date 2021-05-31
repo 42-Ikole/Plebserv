@@ -52,6 +52,7 @@ class Location
 		bool					_auto_index;
 		vector<string>			_index_page;
 		vector<Cgi>				_cgi;
+		size_t					_max_body_size;
 		string					_location;
 		Location();
 	
@@ -69,6 +70,7 @@ class Location
 		void 	set_limit_except(vector<string> val);
 		void 	set_cgi_pass(vector<string> val);
 		void	set_upload_store(vector<string> val);
+		void	load_client_max_body_size(vector<string> val);
 		bool	run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser, size_t &size);
 
 
