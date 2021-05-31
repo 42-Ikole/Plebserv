@@ -113,8 +113,8 @@ void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path,
 	string cwd = string(getcwd(NULL, 0));
 
 	std::cout << cwd << "\n" << file_path << endl;
-	env[0]	= create_env_var("AUTH_TYPE", h._headers["Authorization"]); // in header
-	env[1]	= create_env_var("CONTENT_LENGTH", h._headers["content-length"]);	// is alleen voor POST // in header
+	env[0]	= create_env_var("AUTH_TYPE", h._headers_in["Authorization"]); // in header
+	env[1]	= create_env_var("CONTENT_LENGTH", h._headers_in["content-length"]);	// is alleen voor POST // in header
 	env[2]	= create_env_var("CONTENT_TYPE", "text/html"); // in header
 	env[3]	= create_env_var("GATEWAY_INTERFACE", "CGI/1.1"); 
 	env[4]	= create_env_var("PATH_INFO", h._path);

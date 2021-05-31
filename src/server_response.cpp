@@ -342,7 +342,7 @@ vector<unsigned char>	Server::return_options(Header &h, Location *l)
 {
 	vector<unsigned char> rval;
 	string header;
-	string allowed = "Allow: ";
+	string allowed;
 
 	if (l->_limit_except.size() == 0)
 		allowed = "OPTIONS, GET, HEAD, POST, PUT, DELETE, CONNECT, TRACE";
@@ -355,7 +355,7 @@ vector<unsigned char>	Server::return_options(Header &h, Location *l)
 				allowed += l->_limit_except[i] + ", ";
 		}
 	std::cout << "Allowed: " << allowed << endl;
-	h.add_to_header(allowed);
+	h.add_to_header_out("Allow", allowed);
 	header = h.create_header(204, 0, g_http_errors);
 
 	rval.resize(header.length());
@@ -422,6 +422,7 @@ vector<unsigned char>	Server::create_response(Header &h, vector<unsigned char> &
 	Location *l = match_location(h._path);
 	if (l == NULL)
 		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
+	std::cout << "The match is " << l->_location << std::endl;
 	if (h._method == "GET")
 		return (return_get(h, l));
 	if (h._method == "POST")
