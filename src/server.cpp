@@ -151,7 +151,7 @@ void	Server::load_error_page(vector<string> val)
 	else if (val[0].find_first_not_of("0123456789") != string::npos)
 		Plebception(ERR_INVALID_VALUE, "error_page", val[0]);
 	int code = ft::stoi(val[0]);
-	if (code < 100 && code >= 600)
+	if (code < 100 || code >= 600)
 		Plebception(ERR_OUT_OF_RANGE, "error_page", val[0]);
 	_error_pages[code] = val[1];
 }

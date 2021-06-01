@@ -119,7 +119,7 @@ namespace ft
 			val *= -1;
 		while (val != 0)
 		{
-			rval.insert(0, 1, (val % 10) + 48);
+			rval.insert(rval.begin(), 1, (val % 10) + 48);
 			val /= 10;
 		}
 		if (isneg)
