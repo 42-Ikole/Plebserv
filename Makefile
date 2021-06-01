@@ -1,7 +1,7 @@
 NAME		=	plebserv
 
 CC			=	clang++
-FLAGS		=	# -std=c++98 # -pedantic -Wall -Werror -Wextra 
+FLAGS		=	-std=c++98 -pedantic -Wall -Werror -Wextra 
 DEBUG_FLAGS	=	-g -fsanitize=address
 SRC			=	src/*.cpp
 # SRC			=	src/main.cpp \
@@ -10,7 +10,7 @@ SRC			=	src/*.cpp
 # 				src/server.cpp
 LIBS		=	
 OBJ			=	
-RM 			=	rm -f
+RM 			=	rm -rf
 
 # OS detection for libs and headers
 UNAME_S			:=	$(shell uname -s)
@@ -41,6 +41,9 @@ run: re
 
 debug: fclean
 	$(CC) $(FLAGS) $(DEBUG_FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME)
+
+superclean:
+	$(RM) $(NAME) html/* tester
 
 release:
 	@clear
