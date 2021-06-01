@@ -44,7 +44,7 @@ void	depth_check(vector<string> lines, string filename)
 		depth -= count(lines[i].begin(), lines[i].end(), '}');
 	}
 	if (depth != 0)
-		throw Plebception(ERR_BLOCK, filename, "go to dentist, missing brackets: " + to_string(depth));
+		throw Plebception(ERR_BLOCK, filename, "go to dentist, missing brackets: " + ft::to_string(depth));
 }
 
 /*

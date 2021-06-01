@@ -39,7 +39,7 @@ using namespace std;
 			Plebception();
 		public:
 			Plebception(string msg, string type, string val);
-			virtual ~Plebception();
+			virtual ~Plebception() _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_USE_NOEXCEPT;
 			Plebception(const Plebception &tbc);
 			Plebception & operator=(const Plebception &tba);
 			const char *what() const throw();

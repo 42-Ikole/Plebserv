@@ -11,6 +11,7 @@ namespace ft
 	bool ends_with(std::string const & value, std::string const & ending);
 	std::vector<std::string> get_lines(std::string file);
 	char *strdup(char *str);
+	std::string to_string(int val);
 }
 
 #endif

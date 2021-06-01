@@ -89,15 +89,16 @@ static void accept_connect(fd_set &current_sockets, server_data &data, vector<co
 	} while(opencon.fd != -1);
 }
 
-static void	handle_connection(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, size_t &fd)
+static void	handle_connection(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, int &fd)
 {
 	bool close_conn = false;
 	int rc;
 	char buffer[1025];
 	bzero(buffer, 1025);
-	connect_data *cur_conn;
-	size_t i = 0, x = 0;
+	connect_data *cur_conn = NULL;
+	size_t x = 0;
 
+	(void)data;
 	for (; x < open_connections.size(); x++)
 	{
 		if (open_connections[x].fd == fd)
@@ -198,7 +199,7 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 		perror("exiting due to select");
 		exit(0);
 	}
-	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
+	for (int fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
 	{
 		if (FD_ISSET(fd_match, &ready_sockets))
 		{

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <server.hpp>
+#include <stdio.h>
 
 Cgi::Cgi(string path, string match)
 {
@@ -78,6 +79,7 @@ void Cgi::read_response(Header &h, char** env, vector<unsigned char> &body, stri
 	char *args[3];
 	int fdin[2];
 	int	fdout[2];
+	(void)h;
 
 	args[0] = (char *)_full_path.c_str();
 	args[1] = (char *)file_path.c_str();
@@ -127,7 +129,7 @@ void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path,
 	env[11]	= create_env_var("REQUEST_URI", h._path);
 	env[12]	= create_env_var("SCRIPT_NAME", "http://" + ser._server + h._path); // leading part of path component
 	env[13]	= create_env_var("SERVER_NAME", ser._server);
-	env[14]	= create_env_var("SERVER_PORT", to_string(ser._port[0]));
+	env[14]	= create_env_var("SERVER_PORT", ft::to_string(ser._port[0]));
 	env[15]	= create_env_var("SERVER_PROTOCOL", "HTTP/1.1");
 	env[16]	= create_env_var("SERVER_SOFTWARE", "Plebserv (linux)");
 	env[17]	= create_env_var("REDIRECT_STATUS", "200");

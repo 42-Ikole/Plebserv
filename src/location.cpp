@@ -157,7 +157,7 @@ int	Location::parse_args(string str)
 	return (1);
 }
 
-Location::Location(vector<string> val): _root("/html"), _auto_index(OFF), _location(val[0]), _upload_store("/html/uploads"), _max_body_size(16000)
+Location::Location(vector<string> val): _root("/html"), _upload_store("/html/uploads"), _auto_index(OFF), _max_body_size(16000), _location(val[0])
 {
 	_index_page.push_back("index.html");
 	_index_page.push_back("index");

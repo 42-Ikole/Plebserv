@@ -6,6 +6,7 @@
 #include <string.h>
 #include <map>
 #include <dirent.h>
+#include <string>
 
 /*
 	- de path matchen met een location
@@ -115,7 +116,7 @@ static void		default_error_page(vector<unsigned char> &body, int response_code)
 {
 	string to_push = err_default;
 
-	to_push.replace(to_push.find("$error_code"), 11, to_string(response_code));
+	to_push.replace(to_push.find("$error_code"), 11, ft::to_string(response_code));
 	to_push.replace(to_push.find("$error_message"), 14, g_http_errors[response_code]);
 	body.resize(to_push.length());
 	memcpy(&body[0], to_push.c_str(), to_push.length());
@@ -403,22 +404,6 @@ vector<unsigned char>	Server::return_head(Header &h, Location *l)
 	return (rval);
 }
 
-vector<unsigned char>	Server::return_connect(Header &h, Location *l)
-{
-	vector<unsigned char> rval;
-	string header;
-	int response_code = 200;
-	return rval;
-}
-
-vector<unsigned char>	Server::return_trace(Header &h, Location *l)
-{
-	vector<unsigned char> rval;
-	string header;
-	int response_code = 200;
-	return rval;
-}
-
 vector<unsigned char>	Server::create_response(Header &h, vector<unsigned char> &body)
 {
 	Location *l = match_location(h._path);
@@ -437,9 +422,5 @@ vector<unsigned char>	Server::create_response(Header &h, vector<unsigned char> &
 		return (return_options(h, l));
 	if (h._method == "HEAD")
 		return (return_head(h, l));
-	if (h._method == "CONNECT")
-		return (return_connect(h, l));
-	if (h._method == "TRACE")
-		return (return_trace(h, l));
 	return (return_post(h, l, body));
 }

@@ -8,7 +8,7 @@ Plebception::Plebception(string msg, string type, string val)
 }
 
 #ifdef LINUX
-	Plebception::~Plebception()
+	Plebception::~Plebception() throw()
 	{}
 #else
 	Plebception::~Plebception() throw()

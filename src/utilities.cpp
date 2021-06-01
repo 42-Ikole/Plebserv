@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <cstring>
-
+#include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -105,4 +105,26 @@ namespace ft
             strcpy(dup, str);
         return(dup);
     }
+
+	std::string to_string(int val)
+	{
+		std::string rval;
+		bool isneg = val < 0 ? true : false;
+
+		if (val == 0)
+			return (std::string("0"));
+		if (val == -2147483648)
+			return (std::string("-2147483648"));
+		if (val < 0)
+			val *= -1;
+		while (val != 0)
+		{
+			rval.insert(0, 1, (val % 10) + 48);
+			val /= 10;
+		}
+		if (isneg)
+			rval.insert(0, 1, '-');
+
+		return (rval);
+	}
 }
