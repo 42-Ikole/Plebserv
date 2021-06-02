@@ -12,6 +12,9 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <plebception.hpp>
+
+#define HEADER_END "\r\n\r\n"
 
 struct server_data
 {
@@ -24,14 +27,10 @@ struct	connect_data
 {
 	int fd;		// client fd
 	Server *ser;
-	vector<unsigned char> buf;
-	int i;
-
-	connect_data();
+	Header h;
+	string buf;
+	string header_raw;
 };
-
-connect_data::connect_data() : i(0)
-{}
 
 server_data	setup_server(Server &ser, short port, int backlog)
 {
@@ -89,121 +88,100 @@ static void accept_connect(fd_set &current_sockets, server_data &data, vector<co
 	} while(opencon.fd != -1);
 }
 
-static void	handle_connection(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, int &fd)
+static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
+{
+	char	*buffer;
+	int		rc;
+	string	ret;
+	
+	buffer = (char *)malloc(sizeof(char) * (buff_size + 1));
+	if (buffer == NULL)
+		throw Plebception("BAD ALLOC", "malloc", "region size " + ft::to_string(buff_size));
+	rc = recv(fd, buffer, buff_size, 0);
+	if (rc < 0)
+	{
+		close_conn = true;
+		throw Plebception(ERR_READ_SOCK, "recv", ft::to_string(fd));
+	}
+	if (rc == 0)
+	{
+		std::cout << "Connection closed" << endl;
+		close_conn = true;
+		return "";
+	}
+	buffer[rc] = 0;
+	std::cout << "Bytes recieved " << rc << std::endl;
+	ret = string(buffer);
+	free(buffer);
+	return (ret);
+}
+
+static void	read_header(bool & close_conn, size_t & fd, connect_data * cur_conn)
+{
+	while(cur_conn->buf.find(HEADER_END) == string::npos)
+		cur_conn->buf += read_sok(1024, close_conn, fd);
+	int	pos = cur_conn->buf.find(HEADER_END);
+	cur_conn->header_raw = cur_conn->buf.substr(0, pos);
+	cur_conn->buf		 = cur_conn->buf.substr(pos, cur_conn->buf.size() - pos);
+}
+
+static void	respond(fd_set &current_sockets, size_t fd, bool & close_conn, connect_data *cur_conn)
+{
+	size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
+
+	if (body_size > cur_conn->buf.size())
+		cur_conn->buf += read_sok(body_size - cur_conn->buf.size(), close_conn, fd);
+
+	string rv = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
+	send(fd, rv.c_str(), rv.size(), 0);
+	close(fd);
+	FD_CLR(fd, &current_sockets);
+}
+
+// static void respond_chunk(fd_set &current_sockets, size_t fd, bool & close_conn, connect_data *cur_conn)
+// {
+
+// }
+
+static void	handle_connection(fd_set &current_sockets, vector<connect_data> &open_connections, size_t &fd)
 {
 	bool close_conn = false;
-	int rc;
-	char buffer[1025];
-	bzero(buffer, 1025);
-	connect_data *cur_conn = NULL;
+	connect_data *cur_conn;
 	size_t x = 0;
 
-	(void)data;
-	for (; x < open_connections.size(); x++)
-	{
-		if (open_connections[x].fd == fd)
-		{
-			cur_conn = &open_connections[x];
-			break;
-		}
-	}
+	for (; x < open_connections.size() && static_cast<size_t>(open_connections[x].fd) != fd; x++);
+	cur_conn = &open_connections[x];
 	if (!cur_conn)
-	{
-		std::cout << "Connection not found! " << endl;
-		exit(0); // moet hier wel exit?
-	}
-	do
-	{
-		bzero(buffer, 1024);
-		rc = recv(fd, buffer, 1024, 0);
-		if (rc < 0)
-		{
-			std::cout << "Recv rval: " << rc << endl;
-			cerr << "errno = " << errno << endl;
-			if (errno != EWOULDBLOCK)
-			{
-				perror("  recv() failed");
-				close_conn = true;
-			}
-			break;
-		}
-		if (rc == 0)
-		{
-			std::cout << "Connection closed" << endl;
-			close_conn = true;
-			break;
-		}
-		cur_conn->buf.resize(cur_conn->buf.size() + rc);
-		memcpy(&cur_conn->buf[cur_conn->i], buffer, rc);
-		cur_conn->i += rc;
-		std::cout << "Bytes recieved " << rc << std::endl;
-
-	} while (1);
-	const char *crlf2 = "\r\n\r\n";
-
-	if (cur_conn->buf.size() != 0 && std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2)) != cur_conn->buf.end())
-	{
-	try
-	{
-		write(STDOUT_FILENO, &cur_conn->buf[0], cur_conn->buf.size());
-		vector<unsigned char>::iterator it = std::search(cur_conn->buf.begin(), cur_conn->buf.end(), crlf2, crlf2 + strlen(crlf2));
-		std::cout << "Starting to split header and body" << std::endl;
-		vector<unsigned char> header_part(cur_conn->buf.begin(), it);
-		vector<unsigned char> body_part;
-		if (it != cur_conn->buf.end())
-			vector<unsigned char> body_part(it + 4, cur_conn->buf.end());
-
-
-		std::cout << "Starting to split header" << std::endl;
-		vector<string> split_header = ft::split(string((char *)&header_part[0]), "\n");
-		std::cout << "Setting header" << std::endl;
-		Header incoming_header = Header(split_header);
-		std::cout << "Creating Response" << std::endl;
-		vector<unsigned char> rv = cur_conn->ser->create_response(incoming_header, body_part);
-		std::cout << "Writing out.." << std::endl;
-		rc = send(fd, &rv[0], rv.size(), 0);
-		cout << "Bytes send!\n\n" << std::endl;
-		cur_conn->i = 0;
-		cur_conn->buf.resize(0);
-		if (rc < 0)
-		{
-			std::cout << "send failed!" << endl;
-			close_conn = true;
-		}
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << "Error!" << e.what() << '\n';
-		cur_conn->i = 0;
-		cur_conn->buf.resize(0);
-	}
-	}
-	if (close_conn)
-	{
-		close(fd);
-		FD_CLR(fd, &current_sockets);
-		open_connections.erase(open_connections.begin() + x);
-	}
+		throw Plebception(ERR_NO_CONNECT, "handle_connection", ft::to_string(x));
+	// if (cur_conn->h._chonky == true)
+	// 	return respond_chunck();
+	read_header(close_conn, fd, cur_conn);
+	if (close_conn == true)
+		return ;
+	std::cout << "Setting header" << std::endl;
+	cur_conn->h = Header(ft::split(cur_conn->header_raw, "\n"));
+	cout << cur_conn->header_raw << endl;
+	cout << cur_conn->h << endl;
+	if (cur_conn->h._chonky == false)
+		respond(current_sockets, fd, close_conn, cur_conn);
+	open_connections.erase(open_connections.begin() + x);
 }
 
 static void	connection_handler(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections)
 {
 	fd_set ready_sockets = current_sockets;
 
-	/*
-		- todo: select returns the count of fd's to be accepted. we can save cycles by not testing all fd's
-	*/
 	std::cout << "Waiting on select.." << endl;
 	if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) <= 0)
 	{
 		perror("exiting due to select");
 		exit(0);
 	}
-	for (int fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
+	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
 	{
 		if (FD_ISSET(fd_match, &ready_sockets))
 		{
-			if (fd_match == data[0].fd)
+			if (fd_match == static_cast<size_t>(data[0].fd))
 			{
 				std::cout << "Listening socket is available!" << endl;
 				accept_connect(current_sockets, data[0], open_connections);
@@ -211,7 +189,7 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 			else
 			{
 				std::cout << "FD " << fd_match << " is readable!" << std::endl;
-				handle_connection(current_sockets, data, open_connections, fd_match);
+				handle_connection(current_sockets, open_connections, fd_match);
 			}
 		}
 	}
