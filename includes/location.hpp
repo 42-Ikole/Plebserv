@@ -71,7 +71,7 @@ class Location
 		void 	set_cgi_pass(vector<string> val);
 		void	set_upload_store(vector<string> val);
 		void	load_client_max_body_size(vector<string> val);
-		bool	run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser, size_t &size);
+		bool	run_cgi(Header &h, string &body, string file_path, Server &ser, size_t &size);
 
 
 

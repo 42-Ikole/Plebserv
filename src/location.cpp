@@ -204,7 +204,7 @@ void	Location::load_client_max_body_size(vector<string> val)
 	_max_body_size = ft::stoi(val[0]) * mul;
 }
 
-bool	Location::run_cgi(Header &h, vector<unsigned char> &body, string file_path, Server &ser, size_t &size)
+bool	Location::run_cgi(Header &h, string &body, string file_path, Server &ser, size_t &size)
 {
 	for (size_t i = 0; i < _cgi.size(); i++)
 	{
