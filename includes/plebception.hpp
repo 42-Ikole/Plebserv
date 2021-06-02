@@ -22,6 +22,9 @@
 # define ERR_NO_LOCATION		"Can't find matching location"
 # define ERR_INVALID_VECTOR		"Vector is invalid"
 # define ERR_FAIL_SYSCL			"Failed System call"
+# define ERR_NO_CONNECT			"No connection found"
+# define ERR_READ_SOCK			"An error occured while reading from socket"
+# define ERR_BAD_ALLOC			"Something went wrong when allocating memory"
 
 # define COLOR_RED				"\033[31;01m"
 # define COLOR_GREEN			"\033[32m"
