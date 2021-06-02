@@ -19,11 +19,13 @@ public:
 	string	_query;
 	string	_extension;
 	string	_http_version;
+	bool	_chonky;
 	bool	_end_header;
 	map<string, string> _headers_in;
 	// size_t _headers_out_len;
 	map<string, string> _headers_out;
 public:
+	Header();
 	Header(vector<std::string> in);
 	// virtual ~Header();
 

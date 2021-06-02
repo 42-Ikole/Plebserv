@@ -40,6 +40,8 @@ void	Header::load_headers_in(vector<string> in)
 		_headers_in[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
 }
 
+Header::Header() {}
+
 Header::Header(vector<string> in): _end_header(true)
 {
 	if (in.size() == 0)
@@ -47,6 +49,7 @@ Header::Header(vector<string> in): _end_header(true)
 	Parse_request(in[0]);
 	in.erase(in.begin());
 	load_headers_in(in);
+	_chonky = (_headers_in["Transfer-Encoding"] == "chunked") ? true : false; 
 }
 
 string	Header::content_type_switch()
@@ -113,6 +116,7 @@ std::ostream &operator<<(std::ostream &out, Header const &value)
 	out << std::setw(15) << "REQUEST LINE | " << "[" << value._method << "] [" << value._path << "]" << std::endl;
 	out << std::setw(15) << "QUERY | " << value._query << std::endl;
 	out << std::setw(15) << "EXTENSION | " << value._extension << std::endl;
+	out << std::setw(15) << "CHONKY | " << value._chonky << std::endl;
 	out << std::setw(15) << "OTHER HEADERS:\n";
 	for (map<string, string>::const_iterator i = value._headers_in.begin(); i != value._headers_in.end(); i++)
 		out << i->first << ": " <<  i->second << std::endl;
