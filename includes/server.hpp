@@ -49,19 +49,19 @@ class Server
 		void			check_servername(string &val);
 
 		Location		*match_location(string path);
-		vector<unsigned char>	create_response(Header &h, vector<unsigned char> &body);
+		string	create_response(Header &h, string &body);
 
-		void			err_code_file(vector<unsigned char> &body, int response_code);
+		void			err_code_file(string &body, int response_code);
 		inline size_t 	get_error_file_len(int response_code);
 
-		vector<unsigned char>	return_get(Header &h, Location *l);
-		vector<unsigned char>	return_post(Header &h, Location *l, vector<unsigned char> &body);
-		vector<unsigned char>	return_delete(Header &h, Location *l);
-		vector<unsigned char>	return_options(Header &h, Location *l);
-		vector<unsigned char>	return_put(Header &h, Location *l, vector<unsigned char> &body);
-		vector<unsigned char>	return_head(Header &h, Location *l);
-		vector<unsigned char>	return_connect(Header &h, Location *l);
-		vector<unsigned char>	return_trace(Header &h, Location *l);
+		string	return_get(Header &h, Location *l);
+		string	return_post(Header &h, Location *l, string &body);
+		string	return_delete(Header &h, Location *l);
+		string	return_options(Header &h, Location *l);
+		string	return_put(Header &h, Location *l, string &body);
+		string	return_head(Header &h, Location *l);
+		string	return_connect(Header &h, Location *l);
+		string	return_trace(Header &h, Location *l);
 
 };
 

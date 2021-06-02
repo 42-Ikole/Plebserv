@@ -14,6 +14,9 @@
 	- response header maken
 */
 
+#define HYPERLINK_OPEN	"<a href='"
+#define HYPERLINK_CLOSE	"</a> <br>"
+
 map<int, string> create_map()
 {
 	map<int, string> m;
@@ -112,17 +115,15 @@ map<int, string> g_http_errors = create_map();
 
 static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Plebbin reeee</title></head><body style='background-color: #f72d49; padding: 50px 10vw 0 10vw; color: #3f3f3f;'><h1>Error: $error_code</h1><p style='size: 15px;'>$error_message</p></body></html>";
 
-static void		default_error_page(vector<unsigned char> &body, int response_code)
+static void		default_error_page(string &body, int response_code)
 {
 	string to_push = err_default;
-
 	to_push.replace(to_push.find("$error_code"), 11, ft::to_string(response_code));
 	to_push.replace(to_push.find("$error_message"), 14, g_http_errors[response_code]);
-	body.resize(to_push.length());
-	memcpy(&body[0], to_push.c_str(), to_push.length());
+	ft::str_add(body, to_push);
 }
 
-void	Server::err_code_file(vector<unsigned char> &body, int response_code)
+void	Server::err_code_file(string &body, int response_code)
 {
 	int fd;
 	int ret = 1;
@@ -133,7 +134,7 @@ void	Server::err_code_file(vector<unsigned char> &body, int response_code)
 		default_error_page(body, response_code);
 	else
 	{
-		try 
+		try
 		{
 			if ((fd = open(_error_pages[response_code].c_str(), O_RDONLY)) == -1)
 				throw Plebception(ERR_FD, "err_read_file", _error_pages[response_code]);
@@ -159,13 +160,13 @@ void	Server::err_code_file(vector<unsigned char> &body, int response_code)
 	}
 }
 
-void inline create_dirlist(string root, string path, vector<unsigned char> &body)
+void inline create_dirlist(string root, string path, string &body)
 {
 	string res = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Directory listing of $DIR </title></head><body><h1>Directory listing of $DIR</h1><br><br>";
 	DIR *dir;
 	struct dirent *cur_file;
+	
 	dir = opendir(string((root + path)).c_str());
-
 	for (size_t pos = res.find("$DIR"); pos != string::npos; pos = res.find("$DIR"))
 		res.replace(pos, 4, path);
 	if (dir != NULL)
@@ -173,21 +174,17 @@ void inline create_dirlist(string root, string path, vector<unsigned char> &body
 		while ((cur_file = readdir(dir)))
 		{
 			if (cur_file->d_type == DT_DIR)
-			{
-				// icoontje idk idc idgaf
-				res += "<a href='" + string(cur_file->d_name) + "/'>" + string(cur_file->d_name) + "</a> <br>";
-			}
+				res += HYPERLINK_OPEN + string(cur_file->d_name) + "/'>" + string(cur_file->d_name) + HYPERLINK_CLOSE;
 			else
-				res += "<a href='" + string(cur_file->d_name) + "'>" + string(cur_file->d_name) + "</a> <br>";
+				res += HYPERLINK_OPEN + string(cur_file->d_name) + "'>" + string(cur_file->d_name) + HYPERLINK_CLOSE;
 		}
 		(void)closedir(dir);
 	}
 	res += "</body></html>";
-	body.resize(res.length());
-	memcpy(&body[0], res.c_str(), res.length());
+	ft::str_add(body, res);
 }
 
-void	read_file(vector<unsigned char> &rv, string path)
+void	read_file(string &rv, string path)
 {
 	int fd;
 	int ret = 1;
@@ -211,6 +208,7 @@ void	read_file(vector<unsigned char> &rv, string path)
 Location	*Server::match_location(string path)
 {
 	Location *closest_match = 0;
+
 	for (size_t i = 0; i < _locations.size(); i++)
 	{
 		std::cout << "Matching [" << _locations[i]._location << "] with [" << path << "]\n";
@@ -221,13 +219,11 @@ Location	*Server::match_location(string path)
 	return (closest_match);
 }
 
-vector<unsigned char>	Server::return_get(Header &h, Location *l)
+string	Server::return_get(Header &h, Location *l)
 {
-	vector<unsigned char> rval;
-	vector<unsigned char> body;
 	int response_code = 200;
 	size_t body_size = 0;
-	string header;
+	string body;
 
 	try
 	{
@@ -250,22 +246,15 @@ vector<unsigned char>	Server::return_get(Header &h, Location *l)
 		}
 	}
 	if (h._end_header)
-		header = h.create_header(response_code, body.size(), g_http_errors);
-	else
-		header = h.create_header(response_code, body_size, g_http_errors);
-	rval.resize(header.length() + body.size());
-	memcpy(&rval[0], header.c_str(), header.length());
-	memcpy(&rval[header.length()], &body[0], body.size());
-	return (rval);
+		body_size = body.size();
+	return (h.create_header(response_code, body_size, g_http_errors) + string(body));
 }
 
-vector<unsigned char>	Server::return_post(Header &h, Location *l, vector<unsigned char> &body)
+string	Server::return_post(Header &h, Location *l, string &body)
 {
-	vector<unsigned char> rval;
-	string header;
 	int response_code = 200;
 	size_t body_size = 0;
-
+	
 	try
 	{
 		string file_path = l->find_file(h, response_code);
@@ -274,7 +263,7 @@ vector<unsigned char>	Server::return_post(Header &h, Location *l, vector<unsigne
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
+		// std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
 		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == ON)
 		{
 			response_code = 200;
@@ -287,38 +276,25 @@ vector<unsigned char>	Server::return_post(Header &h, Location *l, vector<unsigne
 		}
 	}
 	if (h._end_header)
-		header = h.create_header(response_code, body.size(), g_http_errors);
-	else
-		header = h.create_header(response_code, body_size, g_http_errors);
-	rval.resize(header.length() + body.size());
-	memcpy(&rval[0], header.c_str(), header.length());
-	memcpy(&rval[header.length()], &body[0], body.size());
-	return (rval);
+		body_size = body.size();
+	return (h.create_header(response_code, body_size, g_http_errors) + string(body));
 }
 
-vector<unsigned char>	Server::return_delete(Header &h, Location *l)
+string	Server::return_delete(Header &h, Location *l)
 {
-	vector<unsigned char> rval;
-	string header;
 	int response_code = 204;
 	string fullpath = l->_root + h._path;
 
-
 	if (unlink(fullpath.c_str()) == -1)
 		response_code = 403;
-	header = h.create_header(response_code, 0, g_http_errors);
-	rval.resize(header.size());
-	memcpy(&rval[0], header.c_str(), header.length());
-	return (rval);
+	return (h.create_header(response_code, 0, g_http_errors));
 }
 
-vector<unsigned char>	Server::return_put(Header &h, Location *l, vector<unsigned char> &body)
+string	Server::return_put(Header &h, Location *l, string &body)
 {
-	vector<unsigned char> rval;
-	string header;
-	int response_code = 201;
 	string fullpath = l->_upload_store + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
 	struct stat file_status;
+	int response_code = 201;
 	int fd;
 
 	cout << "Path to save to: " << fullpath << endl;
@@ -326,24 +302,20 @@ vector<unsigned char>	Server::return_put(Header &h, Location *l, vector<unsigned
 	if (stat(fullpath.c_str(), &file_status) == -1)
 	{
 		fd = open(fullpath.c_str(), O_CREAT | O_WRONLY, 0777);
-		write(fd, &body[0], body.size());
+		write(fd, body.c_str(), body.size());
 	}
 	else
 	{
 		fd = open(fullpath.c_str(), O_TRUNC | O_WRONLY, 0777);
-		write(fd, &body[0], body.size());
+		write(fd, body.c_str(), body.size());
 		response_code = 204;
 	}
-	header = h.create_header(response_code, 0, g_http_errors);
-	rval.resize(header.size());
-	memcpy(&rval[0], header.c_str(), header.length());
-	return (rval);
+	return(h.create_header(response_code, 0, g_http_errors));
 }
 
 
-vector<unsigned char>	Server::return_options(Header &h, Location *l)
+string	Server::return_options(Header &h, Location *l)
 {
-	vector<unsigned char> rval;
 	string header;
 	string allowed;
 
@@ -360,19 +332,13 @@ vector<unsigned char>	Server::return_options(Header &h, Location *l)
 	std::cout << "Allowed: " << allowed << endl;
 	h.add_to_header_out("Allow", allowed);
 	header = h.create_header(204, 0, g_http_errors);
-
-	rval.resize(header.length());
-	memcpy(&rval[0], header.c_str(), header.length());
-
-	return (rval);
+	return (header);
 }
 
-vector<unsigned char>	Server::return_head(Header &h, Location *l)
+string	Server::return_head(Header &h, Location *l)
 {
-	vector<unsigned char> rval;
-	vector<unsigned char> body;
+	string body;
 	size_t body_size = 0;
-	string header;
 	int response_code = 200;
 
 	try
@@ -381,9 +347,9 @@ vector<unsigned char>	Server::return_head(Header &h, Location *l)
 		if (!l->run_cgi(h, body, file_path, *this, body_size))
 			read_file(body, file_path);
 	}
-	catch(const std::exception& e)
+	catch(const exception& e)
 	{
-		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
+		// std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
 		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == ON)
 		{
 			response_code = 200;
@@ -391,20 +357,16 @@ vector<unsigned char>	Server::return_head(Header &h, Location *l)
 		}
 		else
 		{
-			std::cerr << e.what() << " response_code: " << response_code << '\n';
+			cerr << e.what() << " response_code: " << response_code << '\n';
 			err_code_file(body, response_code);
 		}
 	}
 	if (h._end_header)
-		header = h.create_header(response_code, body.size(), g_http_errors);
-	else
-		header = h.create_header(response_code, body_size, g_http_errors);
-	rval.resize(header.length());
-	memcpy(&rval[0], header.c_str(), header.length());
-	return (rval);
+		body_size = body.size();
+	return (h.create_header(response_code, body_size, g_http_errors));
 }
 
-vector<unsigned char>	Server::create_response(Header &h, vector<unsigned char> &body)
+string	Server::create_response(Header &h, string &body)
 {
 	Location *l = match_location(h._path);
 	if (l == NULL)
