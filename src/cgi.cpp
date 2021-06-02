@@ -6,6 +6,8 @@
 #include <server.hpp>
 #include <stdio.h>
 
+#define HEADER_END "\r\n\r\n"
+
 Cgi::Cgi(string path, string match)
 {
 	_match = match;
@@ -49,7 +51,7 @@ void	Cgi::cgi_child(int fdin[2], int fdout[2], char *args[3], char **env)
 	exit(0);
 }
 
-void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, vector<unsigned char> &body)
+void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string &body)
 {
 	char buff[1025];
 
@@ -58,7 +60,7 @@ void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, vector<unsigned char> 
 	close(fdin[0]);
 	close(fdout[1]);
 
-	write(fdin[1], &body[0], body.size());
+	write(fdin[1], body.c_str(), body.size());
 	body.resize(0);
 	close(fdin[1]);
 	for (int ret = 1; ret > 0;)
@@ -74,12 +76,11 @@ void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, vector<unsigned char> 
 	waitpid(id, &status, 0);
 }
 
-void Cgi::read_response(Header &h, char** env, vector<unsigned char> &body, string file_path)
+void Cgi::read_response(char** env, string &body, string file_path)
 {
 	char *args[3];
 	int fdin[2];
 	int	fdout[2];
-	(void)h;
 
 	args[0] = (char *)_full_path.c_str();
 	args[1] = (char *)file_path.c_str();
@@ -109,7 +110,7 @@ char	*Cgi::create_env_var(string key, string value)
 	DOCUMENT_ROOT - This reflects the document root directory of the webserver.
 */
 
-void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path, Server &ser, size_t &size)
+void	Cgi::cgi_response(Header &h, string &body, string file_path, Server &ser, size_t &size)
 {
 	char *env[19];
 	string cwd = string(getcwd(NULL, 0));
@@ -134,17 +135,14 @@ void	Cgi::cgi_response(Header &h, vector<unsigned char> &body, string file_path,
 	env[16]	= create_env_var("SERVER_SOFTWARE", "Plebserv (linux)");
 	env[17]	= create_env_var("REDIRECT_STATUS", "200");
 	env[18]	= NULL;
-	// for (size_t i = 0; i < 18; i++)
-	// 	cout << env[i] << endl;
-	read_response(h, env, body, cwd + '/' + file_path);
+	read_response(env, body, cwd + '/' + file_path);
 
-	const char *crlf2 = "\r\n\r\n";
-	vector<unsigned char>::iterator it = std::search(body.begin(), body.end(), crlf2, crlf2 + strlen(crlf2));
+	size_t pos = body.find(HEADER_END);
 
-	if (it != body.end())
+	if (pos != body.size())
 	{
-		std::cout << "Found Header!!! end: " << distance(body.begin(), it) << endl;
+		std::cout << "Found Header!!! end: " << pos << endl;
 		h._end_header = false;
-		size = body.size() - distance(body.begin(), it) - 4;
+		size = body.size() - pos - 4;
 	}
 }
