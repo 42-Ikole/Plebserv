@@ -12,7 +12,7 @@ namespace ft
 	std::vector<std::string> get_lines(std::string file);
 	char *strdup(char *str);
 	std::string to_string(int val);
-	void str_add(string &res, string to_push);
+	void str_set(string &res, string to_push);
 }
 
 #endif

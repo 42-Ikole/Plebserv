@@ -96,7 +96,7 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	
 	buffer = (char *)malloc(sizeof(char) * (buff_size + 1));
 	if (buffer == NULL)
-		throw Plebception("BAD ALLOC", "malloc", "region size " + ft::to_string(buff_size));
+		throw Plebception(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
 	rc = recv(fd, buffer, buff_size, 0);
 	if (rc < 0)
 	{

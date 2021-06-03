@@ -128,7 +128,7 @@ namespace ft
 		return (rval);
 	}
 
-    void str_add(string &res, string to_push)
+    void str_set(string &res, string to_push)
     {
         res.resize(to_push.size());
         memcpy(&res[0], to_push.c_str(), to_push.size());
