@@ -6,7 +6,8 @@
 #include <server.hpp>
 #include <stdio.h>
 
-#define HEADER_END "\r\n\r\n"
+#define HEADER_END	"\r\n\r\n"
+#define GET_REKT	"Solve deze merge dan Oscar"
 
 Cgi::Cgi(string path, string match)
 {
