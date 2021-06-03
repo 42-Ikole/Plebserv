@@ -25,11 +25,13 @@ struct server_data
 
 struct	connect_data
 {
-	int fd;		// client fd
-	Server *ser;
-	Header h;
-	string buf;
-	string header_raw;
+	int		fd;		// client fd
+	Server	*ser;
+	Header	h;
+	string	buf;
+	string	header_raw;
+	string	response;
+	bool	ready;
 };
 
 server_data	setup_server(Server &ser, short port, int backlog)
@@ -99,10 +101,7 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 		throw Plebception(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
 	rc = recv(fd, buffer, buff_size, 0);
 	if (rc < 0)
-	{
-		close_conn = true;
-		throw Plebception(ERR_READ_SOCK, "recv", ft::to_string(fd));
-	}
+		return "";
 	if (rc == 0)
 	{
 		std::cout << "Connection closed" << endl;
@@ -111,32 +110,61 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	}
 	buffer[rc] = 0;
 	std::cout << "Bytes recieved " << rc << std::endl;
-	ret = string(buffer);
+	// cout << buffer << endl;
+	ret = string(buffer);			// dit is fout sukkel
 	free(buffer);
 	return (ret);
 }
 
-static void	read_header(bool & close_conn, size_t & fd, connect_data * cur_conn)
+static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn)
 {
-	while(cur_conn->buf.find(HEADER_END) == string::npos)
-		cur_conn->buf += read_sok(1024, close_conn, fd);
-	int	pos = cur_conn->buf.find(HEADER_END);
-	cur_conn->header_raw = cur_conn->buf.substr(0, pos);
-	cur_conn->buf		 = cur_conn->buf.substr(pos, cur_conn->buf.size() - pos);
+	string ret;
+
+	while((ret = read_sok(128, close_conn, fd)) != "" && !close_conn)
+			cur_conn->buf += ret;
+
+	if (close_conn == true)
+		return ;
+	size_t	pos = cur_conn->buf.find(HEADER_END);
+
+	std::cout << "pos: " << pos << std::endl;
+	if (pos == string::npos && cur_conn->header_raw.empty())
+		return ;
+	if (cur_conn->header_raw.empty() == true)
+	{
+		cur_conn->header_raw = cur_conn->buf.substr(0, pos);
+		cur_conn->buf		 = cur_conn->buf.substr(pos + 4, cur_conn->buf.size() - pos);
+		std::cout << "Setting header" << std::endl;
+		cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
+		// cout << cur_conn->header_raw << endl;
+		// cout << cur_conn->h << endl;
+	}
+	if (cur_conn->h._method == "GET" || cur_conn->h._chonky == false)
+	{
+		size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
+		cerr << "buf.size() = " << cur_conn->buf.size() <<  " cl = " << body_size << endl;
+		if (cur_conn->buf.size() < body_size)
+			return ;
+		cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
+		cur_conn->ready = true;
+		std::cout << "Response is ready!" << std::endl;
+	}
+	
+	
 }
 
-static void	respond(fd_set &current_sockets, size_t fd, bool & close_conn, connect_data *cur_conn)
-{
-	size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
+// static void	respond(size_t fd, bool & close_conn, connect_data *cur_conn)
+// {
+// 	size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
 
-	if (body_size > cur_conn->buf.size())
-		cur_conn->buf += read_sok(body_size - cur_conn->buf.size(), close_conn, fd);
+// 	if (body_size > cur_conn->buf.size())
+// 		cur_conn->buf += read_sok(body_size - cur_conn->buf.size(), close_conn, fd);
 
-	string rv = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
-	send(fd, rv.c_str(), rv.size(), 0);
-	close(fd);
-	FD_CLR(fd, &current_sockets);
-}
+// 	// string rv = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
+// 	// send(fd, rv.c_str(), rv.size(), 0);
+// 	//	dit moet ergens anders, wann recv 0 returned
+
+// }
 
 // static void respond_chunk(fd_set &current_sockets, size_t fd, bool & close_conn, connect_data *cur_conn)
 // {
@@ -149,37 +177,62 @@ static void	handle_connection(fd_set &current_sockets, vector<connect_data> &ope
 	connect_data *cur_conn;
 	size_t x = 0;
 
+	(void)current_sockets;
 	for (; x < open_connections.size() && static_cast<size_t>(open_connections[x].fd) != fd; x++);
 	cur_conn = &open_connections[x];
 	if (!cur_conn)
 		throw Plebception(ERR_NO_CONNECT, "handle_connection", ft::to_string(x));
-	// if (cur_conn->h._chonky == true)
-	// 	return respond_chunck();
-	read_header(close_conn, fd, cur_conn);
-	if (close_conn == true)
+	read_request(close_conn, fd, cur_conn);
+	if (close_conn == true) {
+		close(fd);
+		FD_CLR(fd, &current_sockets);
+		open_connections.erase(open_connections.begin() + x);
 		return ;
-	std::cout << "Setting header" << std::endl;
-	cur_conn->h = Header(ft::split(cur_conn->header_raw, "\n"));
-	cout << cur_conn->header_raw << endl;
-	cout << cur_conn->h << endl;
-	if (cur_conn->h._chonky == false)
-		respond(current_sockets, fd, close_conn, cur_conn);
-	open_connections.erase(open_connections.begin() + x);
+	}
+	if (cur_conn->ready)
+	{
+		// sture die hap
+		send(fd, cur_conn->response.c_str(), cur_conn->response.size(), 0);
+		cur_conn->response.clear();
+		cur_conn->buf.clear();
+		cur_conn->header_raw.clear();
+		cur_conn->ready = false;
+	}
 }
+
+// static void	send_data(size_t &fd, vector<connect_data> &open_connections)
+// {
+// 	connect_data *cur_conn;
+// 	size_t x = 0;
+// 	size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
+
+// 	for (; x < open_connections.size() && static_cast<size_t>(open_connections[x].fd) != fd; x++);
+// 	cur_conn = &open_connections[x];
+// 	if (cur_conn->h._chonky == false && cur_conn->buf.size() == body_size)
+// 	{
+// 		string rv = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
+// 		send(fd, rv.c_str(), rv.size(), 0);
+// 		cur_conn->buf.clear();
+// 	}
+// 	else
+// 		cerr << "Body not complete yet" << endl;
+// }
 
 static void	connection_handler(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections)
 {
-	fd_set ready_sockets = current_sockets;
+	fd_set	read_sok  = current_sockets,
+			write_sok = current_sockets;
 
 	std::cout << "Waiting on select.." << endl;
-	if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) <= 0)
+	(void)write_sok;
+	if (select(FD_SETSIZE, &read_sok, NULL, NULL, NULL) <= 0)
 	{
 		perror("exiting due to select");
 		exit(0);
 	}
-	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
+	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
 	{
-		if (FD_ISSET(fd_match, &ready_sockets))
+		if (FD_ISSET(fd_match, &read_sok))
 		{
 			if (fd_match == static_cast<size_t>(data[0].fd))
 			{
@@ -192,6 +245,14 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 				handle_connection(current_sockets, open_connections, fd_match);
 			}
 		}
+		// else if (FD_ISSET(fd_match, &write_sok)) // check of header al helemaal is gelezen ofzo
+		// {
+		// 	if (fd_match == static_cast<size_t>(data[0].fd))
+		// 	{
+		// 		cout << "socket available for writing" << endl;
+		// 		send_data(fd_match, open_connections);
+		// 	}
+		// }
 	}
 }
 
