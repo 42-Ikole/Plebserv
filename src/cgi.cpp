@@ -61,9 +61,10 @@ void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string &body)
 	close(fdin[0]);
 	close(fdout[1]);
 
+	std::cout << body << endl;
 	write(fdin[1], body.c_str(), body.size());
-	body.resize(0);
 	close(fdin[1]);
+	body.resize(0);
 	for (int ret = 1; ret > 0;)
 	{
 		ret = read(fdout[0], buff, 1024);
@@ -113,13 +114,31 @@ char	*Cgi::create_env_var(string key, string value)
 
 void	Cgi::cgi_response(Header &h, string &body, string file_path, Server &ser, size_t &size)
 {
-	char *env[19];
+	char *env[22];
 	string cwd = string(getcwd(NULL, 0));
 
-	std::cout << cwd << "\n" << file_path << endl;
+	// (void)ser;
+	// std::cout << "STARTING THE CGI\n\n\n" << h << endl;
+	// env[0]	= create_env_var("GATEWAY_INTERFACE", "CGI/1.1"); 
+	// env[1]	= create_env_var("SCRIPT_FILENAME", cwd + '/' + file_path);
+	// env[2]	= create_env_var("REQUEST_METHOD", h._method);
+	// env[3]	= create_env_var("REDIRECT_STATUS", "true");
+	// env[4]	= create_env_var("SERVER_PROTOCOL", "HTTP/1.1");
+	// env[5]	= create_env_var("REMOTE_HOST", "127.0.0.1");
+	// if (h._method == "GET")
+	// 	env[6]	= create_env_var("CONTENT_TYPE", "text/html");
+	// else
+	// 	env[6]	= create_env_var("CONTENT_TYPE", "application/x-www-form-urlencoded");
+	// env[7] = create_env_var("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+	// env[8]	= create_env_var("CONTENT_LENGTH", h._headers_in["Content-Length"]);
+	// env[9]	= 0;
+
 	env[0]	= create_env_var("AUTH_TYPE", h._headers_in["Authorization"]); // in header
-	env[1]	= create_env_var("CONTENT_LENGTH", h._headers_in["content-length"]);	// is alleen voor POST // in header
-	env[2]	= create_env_var("CONTENT_TYPE", "text/html"); // in header
+	env[1]	= create_env_var("CONTENT_LENGTH", h._headers_in["Content-Length"]);	// is alleen voor POST // in header
+	if (h._method == "GET")
+		env[2]	= create_env_var("CONTENT_TYPE", "text/html");
+	else
+		env[2]	= create_env_var("CONTENT_TYPE", "application/x-www-form-urlencoded");
 	env[3]	= create_env_var("GATEWAY_INTERFACE", "CGI/1.1"); 
 	env[4]	= create_env_var("PATH_INFO", h._path);
 	env[5]	= create_env_var("PATH_TRANSLATED", cwd + '/' + file_path);	// bugged
@@ -134,12 +153,14 @@ void	Cgi::cgi_response(Header &h, string &body, string file_path, Server &ser, s
 	env[14]	= create_env_var("SERVER_PORT", ft::to_string(ser._port[0]));
 	env[15]	= create_env_var("SERVER_PROTOCOL", "HTTP/1.1");
 	env[16]	= create_env_var("SERVER_SOFTWARE", "Plebserv (linux)");
-	env[17]	= create_env_var("REDIRECT_STATUS", "200");
-	env[18]	= NULL;
+	env[17]	= create_env_var("REDIRECT_STATUS", "true");
+	env[18]	= create_env_var("SCRIPT_FILENAME",  cwd + '/' + file_path);	// bugged
+	env[19] = create_env_var("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+	env[20]	= NULL;
 	read_response(env, body, cwd + '/' + file_path);
+	
 
 	size_t pos = body.find(HEADER_END);
-	std::cout << body << std::endl;
 
 	if (pos != string::npos)
 	{
