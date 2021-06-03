@@ -138,11 +138,13 @@ void	Cgi::cgi_response(Header &h, string &body, string file_path, Server &ser, s
 	read_response(env, body, cwd + '/' + file_path);
 
 	size_t pos = body.find(HEADER_END);
+	std::cout << body << std::endl;
 
-	if (pos != body.size())
+	if (pos != string::npos)
 	{
 		std::cout << "Found Header!!! end: " << pos << endl;
-		h._end_header = false;
-		size = body.size() - pos - 4;
+		h.add_to_header_out(ft::split(body.substr(0, pos), "\r\n"));
+		body = body.substr(pos + 4);
+		size = body.length();
 	}
 }
