@@ -128,8 +128,8 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 {
 	string ret;
 
-	while((ret = read_sok(128, close_conn, fd)) != "" && !close_conn)
-			cur_conn->buf += ret;
+	ret = read_sok(128, close_conn, fd);
+		cur_conn->buf += ret;
 
 	if (close_conn == true)
 		return ;
@@ -144,8 +144,6 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		cur_conn->buf		 = cur_conn->buf.substr(pos + 4, cur_conn->buf.size() - pos);
 		std::cout << "Setting header" << std::endl;
 		cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
-		// cout << cur_conn->header_raw << endl;
-		// cout << cur_conn->h << endl;
 	}
 	if (cur_conn->h._method == "GET" || cur_conn->h._chonky == false)
 	{
@@ -157,8 +155,6 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		cur_conn->ready = true;
 		std::cout << "Response is ready!" << std::endl;
 	}
-	
-	
 }
 
 static size_t get_cur_conn_index(size_t fd, vector<connect_data>& data)
