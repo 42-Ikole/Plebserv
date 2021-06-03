@@ -109,7 +109,10 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 		throw Plebception(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
 	rc = recv(fd, buffer, buff_size, 0);
 	if (rc < 0)
-		return "";
+	{
+		close_conn = true;
+		throw Plebception(ERR_READ_SOCK, "recv", ft::to_string(fd));
+	}
 	if (rc == 0)
 	{
 		std::cout << "Connection closed" << endl;
@@ -192,7 +195,6 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	if (!cur_conn && cur_conn->ready == false)
 		return ;
 	// sture die hap
-	cerr << "ik kom wel gewoon data versturen neef" << endl;
 	send(fd, cur_conn->response.c_str(), cur_conn->response.size(), 0);
 	cur_conn->clear();
 }
