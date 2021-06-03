@@ -120,7 +120,7 @@ static void		default_error_page(string &body, int response_code)
 	string to_push = err_default;
 	to_push.replace(to_push.find("$error_code"), 11, ft::to_string(response_code));
 	to_push.replace(to_push.find("$error_message"), 14, g_http_errors[response_code]);
-	ft::str_add(body, to_push);
+	ft::str_set(body, to_push);
 }
 
 void	Server::err_code_file(string &body, int response_code)
@@ -128,7 +128,6 @@ void	Server::err_code_file(string &body, int response_code)
 	int fd;
 	int ret = 1;
 	char buf[1025];
-	size_t i = 0;
 
 	if (_error_pages[response_code].empty())
 		default_error_page(body, response_code);
@@ -145,7 +144,7 @@ void	Server::err_code_file(string &body, int response_code)
 			default_error_page(body, response_code);
 			return ;
 		}
-		while (ret)
+		for (size_t i = 0; ret;)
 		{
 			ret = read(fd, &buf, 1024);
 			if (ret < 0)
@@ -181,7 +180,7 @@ void inline create_dirlist(string root, string path, string &body)
 		(void)closedir(dir);
 	}
 	res += "</body></html>";
-	ft::str_add(body, res);
+	ft::str_set(body, res);
 }
 
 void	read_file(string &rv, string path)
@@ -189,11 +188,10 @@ void	read_file(string &rv, string path)
 	int fd;
 	int ret = 1;
 	char buf[1025];
-	size_t i = 0;
 
 	if ((fd = open(path.c_str(), O_RDONLY)) == -1)
 		throw Plebception(ERR_FD, "read_file", path);
-	while (ret)
+	for (size_t i = 0; ret;)
 	{
 		ret = read(fd, &buf, 1024);
 		if (ret < 0)
