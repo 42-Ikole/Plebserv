@@ -29,6 +29,7 @@ void	parser_test(char *filename)
 int main(int argc, char **argv, char **env)
 {
 	std::string filename;
+
 	if (argc == 1)
 		filename = "configs/basic-server.conf";
 	else if (argc == 2)

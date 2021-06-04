@@ -51,24 +51,18 @@ server_data	setup_server(Server &ser, short port, int backlog)
 
 	res.ser = &ser;	
 	if ((res.fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-		perror("socket failed");
+		throw Plebception(ERR_SERVER_FATAL, "setup_server", "socket set failed");
 	if (setsockopt(res.fd, SOL_SOCKET, SO_REUSEADDR , &opt, sizeof(opt)))
-	{
-		perror("setsockopt");
-		exit(EXIT_FAILURE);
-	}
+		throw Plebception(ERR_SERVER_FATAL, "setup_server", "setsockopt failed");
 	res.server_addr.sin_family = AF_INET; // ipv4
 	res.server_addr.sin_addr.s_addr = INADDR_ANY; // localhost ofzo
 	res.server_addr.sin_port = htons(port);
 	if (fcntl(res.fd, F_SETFL, O_NONBLOCK) == -1)
-	{
-		perror("ioctl");
-		exit(0);
-	}
+		throw Plebception(ERR_SERVER_FATAL, "setup_server", "socket set failed");
 	if (bind(res.fd, (struct sockaddr *)&res.server_addr, sizeof(res.server_addr)) < 0)
-		perror("bind failed");
+		throw Plebception(ERR_SERVER_FATAL, "setup_server", "bind failed");
 	if (listen(res.fd, backlog) < 0)
-		perror("listen failed");
+		throw Plebception(ERR_SERVER_FATAL, "setup_server", "listen failed");
 	return (res);
 }
 
@@ -79,24 +73,12 @@ static void accept_connect(fd_set &current_sockets, server_data &data, vector<co
 	{
 		opencon.fd = accept(data.fd, NULL, NULL);
 		if (opencon.fd < 0)
-		{
-			if (errno != EWOULDBLOCK)
-			{
-				perror("  accept() failed");
-				exit(0);
-			}
-			break;
-		}
-		printf("  New incoming connection - %d\n", opencon.fd);
+			throw Plebception(ERR_SERVER, "accept_connect", "accept failed");
 		if (fcntl(opencon.fd, F_SETFL, O_NONBLOCK) == -1)
-		{
-			perror("fcntl");
-			exit(0);
-		}
+			throw Plebception(ERR_SERVER, "accept_connect", "fcntl failed");
 		opencon.ser = data.ser;
 		FD_SET(opencon.fd, &current_sockets);
 		open_connections.push_back(opencon);
-		// missing max fd resetter
 	} while(opencon.fd != -1);
 }
 
@@ -276,10 +258,8 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 
 	std::cout << "Waiting on select.." << endl;
 	if (select(FD_SETSIZE, &read_sok, &write_sok, NULL, NULL) <= 0)
-	{
-		perror("exiting due to select");
-		exit(0);
-	}
+		throw Plebception(ERR_SERVER_FATAL, "connect_handler", "select failed");
+
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
 	{
 		cur_fd = get_cur_conn_index(fd_match, open_connections);
