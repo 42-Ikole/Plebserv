@@ -39,8 +39,12 @@ Location::Location(const Location& tbc)
 
 void Location::set_root(vector<string> val)
 {
+	struct stat st;
+
 	if (val.size() > 1)
 		throw Plebception(ERR_TOO_MANY_ARG, "root", val[1]);
+	if (stat(val[0].c_str(), &st) == -1 || !(st.st_mode & S_IFDIR))
+		throw Plebception(ERR_BAD_LOCATION, "set_root", val[0]);
 	_root = val[0];
 }
 
@@ -70,8 +74,14 @@ void Location::set_auto_index(vector<string> val)
 
 void Location::set_cgi_pass(vector<string> val)
 {
+	struct stat st;
+
 	if (val.size() != 2)
 		throw Plebception(ERR_INVALID_AMOUNT_ARG, "set_cgi_pass", val[0]);
+	if (val[0][0] != '.')
+		throw Plebception(ERR_INVALID_ARG, "set_cgi_pass", val[0]);
+	if (stat(val[1].c_str(), &st) == -1 || !(st.st_mode & S_IFREG))
+		throw Plebception(ERR_NO_LOCATION, "set_root", val[1]);	
 	_cgi.push_back(Cgi(val[1], val[0]));
 }
 

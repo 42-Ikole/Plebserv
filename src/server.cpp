@@ -145,14 +145,18 @@ void	Server::load_server_identifier(vector<string> val)
 void	Server::load_error_page(vector<string> val)
 {
 	if (val.size() > 2)
-		Plebception(ERR_TOO_MANY_ARG, "error_page", val[2]);
+		throw Plebception(ERR_TOO_MANY_ARG, "error_page", val[2]);
 	else if (val.size() < 2)
-		Plebception(ERR_TOO_FEW_ARG, "error_page", val[0]);
+		throw Plebception(ERR_TOO_FEW_ARG, "error_page", val[0]);
 	else if (val[0].find_first_not_of("0123456789") != string::npos)
-		Plebception(ERR_INVALID_VALUE, "error_page", val[0]);
+		throw Plebception(ERR_INVALID_VALUE, "error_page", val[0]);
 	int code = ft::stoi(val[0]);
 	if (code < 100 || code >= 600)
-		Plebception(ERR_OUT_OF_RANGE, "error_page", val[0]);
+		throw Plebception(ERR_OUT_OF_RANGE, "error_page", val[0]);
+
+	struct stat st;
+	if (stat(val[1].c_str(), &st) == -1 || !(st.st_mode & S_IFREG))
+		throw Plebception(ERR_INVALID_ARG, "error_page", val[1]);
 	_error_pages[code] = val[1];
 }
 
