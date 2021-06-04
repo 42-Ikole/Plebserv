@@ -158,6 +158,24 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		cur_conn->ready = true;
 		std::cout << "Response is ready!" << std::endl;
 	}
+	else if (cur_conn->h._chonky == true)
+	{
+		if (cur_conn->response.empty() == false)
+			cur_conn->response.clear();
+		pos = cur_conn->buf.find_first_of("\r\n");
+		if (pos == string::npos)
+			return ;
+		size_t	body_size = ft::stoi(cur_conn->buf.substr(0, pos), "0123456789ABCDEF");
+		if (cur_conn->buf.length() - (pos + 2) < body_size)
+			return ;
+		if (cur_conn->buf.find_first_of("\r\n", pos + 2) != string::npos)
+		{
+			cur_conn->buf = cur_conn->buf.substr(pos + 2, cur_conn->buf.length());
+			string body = cur_conn->buf.substr(pos + 2, cur_conn->buf.find_first_of("\r\n", pos + 2));
+			cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
+			cur_conn->ready = true;
+		}
+	}
 }
 
 static size_t get_cur_conn_index(size_t fd, vector<connect_data>& data)
@@ -196,7 +214,8 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 		return ;
 	// sture die hap
 	send(fd, cur_conn->response.c_str(), cur_conn->response.size(), 0);
-	cur_conn->clear();
+	if (cur_conn->h._chonky == false)
+		cur_conn->clear();
 }
 
 static fd_set	get_response_fd(vector<connect_data> &open_connections)
@@ -239,7 +258,7 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 				handle_connection(current_sockets, open_connections, cur_fd, fd_match);
 			}
 		}
-		if (FD_ISSET(fd_match, &write_sok)) // check of header al helemaal is gelezen ofzo
+		if (FD_ISSET(fd_match, &write_sok))
 		{
 			cout << "socket available for writing" << endl;
 			send_data(fd_match, open_connections);
