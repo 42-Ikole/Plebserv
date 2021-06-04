@@ -129,11 +129,36 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	return (ret);
 }
 
+static void	prepare_chunk_body(connect_data * cur_conn, size_t pos, size_t body_size)
+{
+	string body = ""; 
+
+	cur_conn->buf = cur_conn->buf.substr(pos + 2, cur_conn->buf.length());
+	if (body_size > 0)
+	{
+		body = cur_conn->buf.substr(0, cur_conn->buf.find_first_of("\r\n"));
+		cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find_first_of("\r\n"), cur_conn->buf.length());
+	}
+	else
+		cur_conn->last = true;
+	std::cout << cur_conn->h << std::endl;
+	try
+	{
+		cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
+		cur_conn->ready = true;
+		cout << "chonky boi is ready" << endl;
+	}
+	catch (std::exception &e)
+	{
+		std::cout << e.what() << std::endl;
+		cur_conn->clear();
+	}
+}
+
 static void	prepare_chunk(connect_data * cur_conn)
 {
 	size_t	pos;
 	size_t	body_size;
-	string body = ""; 
 
 	if (cur_conn->response.empty() == false)
 		cur_conn->response.clear();
@@ -141,32 +166,30 @@ static void	prepare_chunk(connect_data * cur_conn)
 	if (pos == string::npos)
 		return ;
 	body_size = ft::stoi(cur_conn->buf.substr(0, pos), "0123456789ABCDEF");
-	cout << "body size = " << body_size << " pos = " << pos << " body length = " << cur_conn->buf.length() << " body raw = " << cur_conn->buf << endl;
 	if (cur_conn->buf.length() - (pos + 2) < body_size)
 		return ;
 	if (cur_conn->buf.find_first_of("\r\n", pos + 2) != string::npos)
-	{
-		cur_conn->buf = cur_conn->buf.substr(pos + 2, cur_conn->buf.length());
-		if (body_size > 0)
-		{
-			body = cur_conn->buf.substr(0, cur_conn->buf.find_first_of("\r\n"));
-			cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find_first_of("\r\n"), cur_conn->buf.length());
-		}
-		else
-			cur_conn->last = true;
-		std::cout << cur_conn->h << std::endl;
-		try
-		{
-			cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
-			cur_conn->ready = true;
-			cout << "chonky boi is ready" << endl;
-		}
-		catch (std::exception &e)
-		{
-			std::cout << e.what() << std::endl;
-			cur_conn->clear();
-		}
-	}
+		prepare_chunk_body(cur_conn, pos, body_size);
+}
+
+static void	set_header(connect_data * cur_conn, size_t pos)
+{
+	cur_conn->header_raw = cur_conn->buf.substr(0, pos);
+	cur_conn->buf		 = cur_conn->buf.substr(pos + 4, cur_conn->buf.size() - pos);
+	std::cout << "Setting header" << std::endl;
+	cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
+	std::cout << cur_conn->h << "\n\n" << std::endl;
+}
+
+static void	normal_response(connect_data * cur_conn)
+{
+	size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
+
+	if (cur_conn->buf.size() < body_size)
+		return ;
+	cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
+	cur_conn->ready = true;
+	std::cout << "Response is ready!" << std::endl;
 }
 
 static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn)
@@ -180,32 +203,14 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		return ;
 	size_t	pos = cur_conn->buf.find(HEADER_END);
 
-	std::cout << "pos: " << pos << "\t\t" << cur_conn->buf.size() <<  std::endl;
 	if (pos == string::npos && cur_conn->header_raw.empty())
 		return ;
 	if (cur_conn->header_raw.empty() == true)
-	{
-		cur_conn->header_raw = cur_conn->buf.substr(0, pos);
-		cur_conn->buf		 = cur_conn->buf.substr(pos + 4, cur_conn->buf.size() - pos);
-		std::cout << "Setting header" << std::endl;
-		cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
-		std::cout << cur_conn->h << "\n\n" << std::endl;
-	}
+		set_header(cur_conn, pos);
 	if (cur_conn->h._method == "GET" || cur_conn->h._chonky == false)
-	{
-		size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
-		cerr << "buf.size() = " << cur_conn->buf.size() <<  " cl = " << body_size << endl;
-		if (cur_conn->buf.size() < body_size)
-			return ;
-		cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
-		cur_conn->ready = true;
-		std::cout << "Response is ready!" << std::endl;
-	}
+		normal_response(cur_conn);
 	else if (cur_conn->h._chonky == true)
-	{
-		cout	<< "Chunky request" << endl;
 		prepare_chunk(cur_conn);
-	}
 }
 
 static size_t get_cur_conn_index(size_t fd, vector<connect_data>& data)
@@ -250,19 +255,6 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	else
 		prepare_chunk(cur_conn);
 }
-// Matching [/directory] with [/put_test/file_should_exist_after]
-// PUT /put_test/file_should_exist_after HTTP/1.1^M$
-// Host: localhost:5000^M$
-// User-Agent: Go-http-client/1.1^M$
-// Transfer-Encoding: chunked^M$
-// Accept-Encoding: gzip$
-
-// Matching [/put_test/] with [file_should_exist_after]
-// PUT /put_test/file_should_exist_after HTTP/1.1^M$
-// Host: localhost:5000^M$
-// User-Agent: Go-http-client/1.1^M$
-// Transfer-Encoding: chunked^M$
-// Accept-Encoding: gzip$
 
 static fd_set	get_response_fd(vector<connect_data> &open_connections)
 {
