@@ -32,6 +32,7 @@ struct	connect_data
 	string	header_raw;
 	string	response;
 	bool	ready;
+	bool	last;
 
 	void clear()
 	{
@@ -39,6 +40,7 @@ struct	connect_data
 		response.clear();
 		header_raw.clear();
 		ready = false;
+		last = false;
 	}
 };
 
@@ -139,14 +141,19 @@ static void	prepare_chunk(connect_data * cur_conn)
 	if (pos == string::npos)
 		return ;
 	body_size = ft::stoi(cur_conn->buf.substr(0, pos), "0123456789ABCDEF");
-	cout << "body size = " << body_size << " pos = " << pos << " body length = " << cur_conn->buf.length() << endl;
+	cout << "body size = " << body_size << " pos = " << pos << " body length = " << cur_conn->buf.length() << " body raw = " << cur_conn->buf << endl;
 	if (cur_conn->buf.length() - (pos + 2) < body_size)
 		return ;
 	if (cur_conn->buf.find_first_of("\r\n", pos + 2) != string::npos)
 	{
 		cur_conn->buf = cur_conn->buf.substr(pos + 2, cur_conn->buf.length());
 		if (body_size > 0)
-			body = cur_conn->buf.substr(pos + 2, cur_conn->buf.find_first_of("\r\n", pos + 2));
+		{
+			body = cur_conn->buf.substr(0, cur_conn->buf.find_first_of("\r\n"));
+			cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find_first_of("\r\n"), cur_conn->buf.length());
+		}
+		else
+			cur_conn->last = true;
 		cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
 		cur_conn->ready = true;
 		cout << "chonky boi is ready" << endl;
@@ -160,7 +167,7 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 	ret = read_sok(128, close_conn, fd);
 		cur_conn->buf += ret;
 
-	if (close_conn == true)
+	if (close_conn == true || cur_conn->ready == true)
 		return ;
 	size_t	pos = cur_conn->buf.find(HEADER_END);
 
@@ -228,7 +235,7 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	// sture die hap
 	send(fd, cur_conn->response.c_str(), cur_conn->response.size(), 0);
 	cur_conn->ready = false;
-	if (cur_conn->h._chonky == false)
+	if (cur_conn->h._chonky == false || cur_conn->last == true)
 		cur_conn->clear();
 	else
 		prepare_chunk(cur_conn);
