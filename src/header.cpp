@@ -43,6 +43,24 @@ void	Header::load_headers_in(vector<string> in)
 
 Header::Header() {}
 
+Header	&Header::operator=(const Header &h)
+{
+	this->_method		= h._method;
+	this->_path			= h._path;
+	this->_query		= h._query;
+	this->_extension	= h._extension;
+	this->_http_version	= h._http_version;
+	this->_chonky		= h._chonky;
+	this->_headers_in 	= h._headers_in;
+	this->_headers_out	= h._headers_out;
+	return *this;
+}
+
+Header::Header(const Header &h)
+{
+	*this = h;
+}
+
 Header::Header(vector<string> in)
 {
 	if (in.size() == 0)
