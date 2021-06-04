@@ -221,11 +221,11 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 		return ;
 	// sture die hap
 	send(fd, cur_conn->response.c_str(), cur_conn->response.size(), 0);
+	cur_conn->ready = false;
 	if (cur_conn->h._chonky == false)
 		cur_conn->clear();
 	else
 		prepare_chunk(cur_conn);
-	cur_conn->ready = false;
 }
 
 static fd_set	get_response_fd(vector<connect_data> &open_connections)
