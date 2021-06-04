@@ -131,6 +131,7 @@ static void	prepare_chunk(connect_data * cur_conn)
 {
 	size_t	pos;
 	size_t	body_size;
+	string body = ""; 
 
 	if (cur_conn->response.empty() == false)
 		cur_conn->response.clear();
@@ -138,12 +139,14 @@ static void	prepare_chunk(connect_data * cur_conn)
 	if (pos == string::npos)
 		return ;
 	body_size = ft::stoi(cur_conn->buf.substr(0, pos), "0123456789ABCDEF");
+	cout << "body size = " << body_size << " pos = " << pos << " body length = " << cur_conn->buf.length() << endl;
 	if (cur_conn->buf.length() - (pos + 2) < body_size)
 		return ;
 	if (cur_conn->buf.find_first_of("\r\n", pos + 2) != string::npos)
 	{
 		cur_conn->buf = cur_conn->buf.substr(pos + 2, cur_conn->buf.length());
-		string body = cur_conn->buf.substr(pos + 2, cur_conn->buf.find_first_of("\r\n", pos + 2));
+		if (body_size > 0)
+			body = cur_conn->buf.substr(pos + 2, cur_conn->buf.find_first_of("\r\n", pos + 2));
 		cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
 		cur_conn->ready = true;
 		cout << "chonky boi is ready" << endl;
@@ -182,7 +185,10 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		std::cout << "Response is ready!" << std::endl;
 	}
 	else if (cur_conn->h._chonky == true)
-		prepare_chunk(cur_conn);	
+	{
+		cout	<< "Chunky request" << endl;
+		prepare_chunk(cur_conn);
+	}
 }
 
 static size_t get_cur_conn_index(size_t fd, vector<connect_data>& data)
