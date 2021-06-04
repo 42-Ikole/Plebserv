@@ -43,7 +43,7 @@ void	Header::load_headers_in(vector<string> in)
 
 Header::Header() {}
 
-Header::Header(vector<string> in): _end_header(true)
+Header::Header(vector<string> in)
 {
 	if (in.size() == 0)
 		throw Plebception(ERR_INVALID_VECTOR, "empty", "");
@@ -72,7 +72,7 @@ string	Header::content_type_switch()
 	return ("text/html; charset=utf-8");
 }
 
-inline string create_date()
+string create_date()
 {
 	time_t rawtime;
 	struct tm * timeinfo;
@@ -127,8 +127,7 @@ string Header::create_header(int response_code, int body_length, map<int, string
 
 	for (map<string, string>::const_iterator i = _headers_out.begin(); i != _headers_out.end(); i++)
 		res += i->first + ": " + i->second + "\r\n";
-	if (_end_header)
-		res += "\r\n";
+	res += "\r\n";
 	return (res);
 }
 
