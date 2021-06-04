@@ -154,9 +154,18 @@ static void	prepare_chunk(connect_data * cur_conn)
 		}
 		else
 			cur_conn->last = true;
-		cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
-		cur_conn->ready = true;
-		cout << "chonky boi is ready" << endl;
+		std::cout << cur_conn->h << std::endl;
+		try
+		{
+			cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
+			cur_conn->ready = true;
+			cout << "chonky boi is ready" << endl;
+		}
+		catch (std::exception &e)
+		{
+			std::cout << e.what() << std::endl;
+			cur_conn->clear();
+		}
 	}
 }
 
@@ -164,14 +173,14 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 {
 	string ret;
 
-	ret = read_sok(128, close_conn, fd);
+	ret = read_sok(1024, close_conn, fd);
 		cur_conn->buf += ret;
 
 	if (close_conn == true || cur_conn->ready == true)
 		return ;
 	size_t	pos = cur_conn->buf.find(HEADER_END);
 
-	std::cout << "pos: " << pos << std::endl;
+	std::cout << "pos: " << pos << "\t\t" << cur_conn->buf.size() <<  std::endl;
 	if (pos == string::npos && cur_conn->header_raw.empty())
 		return ;
 	if (cur_conn->header_raw.empty() == true)
@@ -180,6 +189,7 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		cur_conn->buf		 = cur_conn->buf.substr(pos + 4, cur_conn->buf.size() - pos);
 		std::cout << "Setting header" << std::endl;
 		cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
+		std::cout << cur_conn->h << "\n\n" << std::endl;
 	}
 	if (cur_conn->h._method == "GET" || cur_conn->h._chonky == false)
 	{
@@ -240,6 +250,19 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	else
 		prepare_chunk(cur_conn);
 }
+// Matching [/directory] with [/put_test/file_should_exist_after]
+// PUT /put_test/file_should_exist_after HTTP/1.1^M$
+// Host: localhost:5000^M$
+// User-Agent: Go-http-client/1.1^M$
+// Transfer-Encoding: chunked^M$
+// Accept-Encoding: gzip$
+
+// Matching [/put_test/] with [file_should_exist_after]
+// PUT /put_test/file_should_exist_after HTTP/1.1^M$
+// Host: localhost:5000^M$
+// User-Agent: Go-http-client/1.1^M$
+// Transfer-Encoding: chunked^M$
+// Accept-Encoding: gzip$
 
 static fd_set	get_response_fd(vector<connect_data> &open_connections)
 {
