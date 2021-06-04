@@ -269,18 +269,26 @@ string	Server::return_post(Header &h, Location *l, string &body)
 	}
 	catch (const std::exception& e)
 	{
-		int fd = 0;
-		string full_path = l->_root + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
-		struct stat file_status;
-		if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
-			fd = open(full_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
-		else if (file_status.st_mode & S_IFDIR)
-			fd = open(string(full_path + "/" + create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
-		if (fd == -1)
-			throw Plebception(ERR_FD, "return_post", full_path);
-		write(fd, body.c_str(), body.length());
-		close(fd);
-		response_code = 201;
+		if (response_code != 404)
+		{
+			std::cerr << e.what() << " response_code: " << response_code << '\n';
+			err_code_file(body, response_code);
+		}
+		else
+		{
+			int fd = 0;
+			string full_path = l->_root + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
+			struct stat file_status;
+			if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
+				fd = open(full_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+			else if (file_status.st_mode & S_IFDIR)
+				fd = open(string(full_path + "/" + create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+			if (fd == -1)
+				throw Plebception(ERR_FD, "return_post", full_path);
+			write(fd, body.c_str(), body.length());
+			close(fd);
+			response_code = 201;
+		}
 	}
 	return (h.create_header(response_code, body.size(), g_http_errors) + string(body));
 }
@@ -306,12 +314,12 @@ string	Server::return_put(Header &h, Location *l, string &body)
 
 	if (stat(fullpath.c_str(), &file_status) == -1)
 	{
-		fd = open(fullpath.c_str(), O_CREAT | O_WRONLY, 0777);
+		fd = open(fullpath.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0777);
 		write(fd, body.c_str(), body.size());
 	}
 	else
 	{
-		fd = open(fullpath.c_str(), O_TRUNC | O_WRONLY, 0777);
+		fd = open(fullpath.c_str(), O_TRUNC | O_RDWR, 0777);
 		write(fd, body.c_str(), body.size());
 		response_code = 204;
 	}
