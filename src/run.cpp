@@ -127,6 +127,29 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	return (ret);
 }
 
+static void	prepare_chunk(connect_data * cur_conn)
+{
+	size_t	pos;
+	size_t	body_size;
+
+	if (cur_conn->response.empty() == false)
+		cur_conn->response.clear();
+	pos = cur_conn->buf.find_first_of("\r\n");
+	if (pos == string::npos)
+		return ;
+	body_size = ft::stoi(cur_conn->buf.substr(0, pos), "0123456789ABCDEF");
+	if (cur_conn->buf.length() - (pos + 2) < body_size)
+		return ;
+	if (cur_conn->buf.find_first_of("\r\n", pos + 2) != string::npos)
+	{
+		cur_conn->buf = cur_conn->buf.substr(pos + 2, cur_conn->buf.length());
+		string body = cur_conn->buf.substr(pos + 2, cur_conn->buf.find_first_of("\r\n", pos + 2));
+		cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
+		cur_conn->ready = true;
+		cout << "chonky boi is ready" << endl;
+	}
+}
+
 static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn)
 {
 	string ret;
@@ -159,23 +182,7 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		std::cout << "Response is ready!" << std::endl;
 	}
 	else if (cur_conn->h._chonky == true)
-	{
-		if (cur_conn->response.empty() == false)
-			cur_conn->response.clear();
-		pos = cur_conn->buf.find_first_of("\r\n");
-		if (pos == string::npos)
-			return ;
-		size_t	body_size = ft::stoi(cur_conn->buf.substr(0, pos), "0123456789ABCDEF");
-		if (cur_conn->buf.length() - (pos + 2) < body_size)
-			return ;
-		if (cur_conn->buf.find_first_of("\r\n", pos + 2) != string::npos)
-		{
-			cur_conn->buf = cur_conn->buf.substr(pos + 2, cur_conn->buf.length());
-			string body = cur_conn->buf.substr(pos + 2, cur_conn->buf.find_first_of("\r\n", pos + 2));
-			cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
-			cur_conn->ready = true;
-		}
-	}
+		prepare_chunk(cur_conn);	
 }
 
 static size_t get_cur_conn_index(size_t fd, vector<connect_data>& data)
@@ -216,6 +223,9 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	send(fd, cur_conn->response.c_str(), cur_conn->response.size(), 0);
 	if (cur_conn->h._chonky == false)
 		cur_conn->clear();
+	else
+		prepare_chunk(cur_conn);
+	cur_conn->ready = false;
 }
 
 static fd_set	get_response_fd(vector<connect_data> &open_connections)
