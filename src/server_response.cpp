@@ -111,8 +111,6 @@ map<int, string> create_map()
 
 map<int, string> g_http_errors = create_map();
 
-#define ERROR_PAGE "html/error_page/error.html"
-
 static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Plebbin reeee</title></head><body style='background-color: #f72d49; padding: 50px 10vw 0 10vw; color: #3f3f3f;'><h1>Error: $error_code</h1><p style='size: 15px;'>$error_message</p></body></html>";
 
 static void		default_error_page(string &body, int response_code)
@@ -243,39 +241,48 @@ string	Server::return_get(Header &h, Location *l)
 			err_code_file(body, response_code);
 		}
 	}
-	if (h._end_header)
-		body_size = body.size();
-	return (h.create_header(response_code, body_size, g_http_errors) + string(body));
+	return (h.create_header(response_code, body.size(), g_http_errors) + string(body));
 }
+
+/*
+	POST
+
+	if path == cgi
+		run cgi && return
+	if path == dir
+		store data in location or this dir
+	if path == file
+		revert to get request
+
+*/
 
 string	Server::return_post(Header &h, Location *l, string &body)
 {
 	int response_code = 200;
 	size_t body_size = 0;
-	
+
 	try
 	{
 		string file_path = l->find_file(h, response_code);
 		if (!l->run_cgi(h, body, file_path, *this, body_size))
-			read_file(body, file_path);
+			return (return_get(h, l));
 	}
-	catch(const std::exception& e)
+	catch (const std::exception& e)
 	{
-		// std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
-		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == ON)
-		{
-			response_code = 200;
-			create_dirlist(l->_root, h._path, body);
-		}
-		else
-		{
-			std::cerr << e.what() << " response_code: " << response_code << '\n';
-			err_code_file(body, response_code);
-		}
+		int fd = 0;
+		string full_path = l->_root + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
+		struct stat file_status;
+		if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
+			fd = open(full_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+		else if (file_status.st_mode & S_IFDIR)
+			fd = open(string(full_path + "/" + create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+		if (fd == -1)
+			throw Plebception(ERR_FD, "return_post", full_path);
+		write(fd, body.c_str(), body.length());
+		close(fd);
+		response_code = 201;
 	}
-	if (h._end_header)
-		body_size = body.size();
-	return (h.create_header(response_code, body_size, g_http_errors) + string(body));
+	return (h.create_header(response_code, body.size(), g_http_errors) + string(body));
 }
 
 string	Server::return_delete(Header &h, Location *l)
@@ -359,8 +366,7 @@ string	Server::return_head(Header &h, Location *l)
 			err_code_file(body, response_code);
 		}
 	}
-	if (h._end_header)
-		body_size = body.size();
+	body_size = body.size();
 	return (h.create_header(response_code, body_size, g_http_errors));
 }
 
