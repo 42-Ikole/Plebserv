@@ -36,12 +36,14 @@ struct	connect_data
 	struct	sockaddr_in	client_addr;
 	socklen_t			addr_size;
 	size_t	last_action;
+	size_t	bytes_send;
 	string	response;
 	bool	ready;
 	bool	last;
 
 	void clear()
 	{
+		bytes_send = 0;
 		buf.clear();
 		response.clear();
 		header_raw.clear();
@@ -267,15 +269,23 @@ static void	handle_connection(fd_set &current_sockets, vector<connect_data> &ope
 static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 {
 	connect_data *cur_conn = get_cur_conn(fd, open_connections);
+	ssize_t len = 0;
+
 	if (!cur_conn && cur_conn->ready == false)
 		return ;
 	// sture die hap
 	update_action(cur_conn);
-	send(fd, cur_conn->response.c_str(), cur_conn->response.size(), 0);
-	cur_conn->ready = false;
-	if (cur_conn->h._chonky == false || cur_conn->last == true)
+	len = send(fd, &cur_conn->response[cur_conn->bytes_send], cur_conn->response.size() - cur_conn->bytes_send, 0);
+	if (len == -1)
+		throw Plebception(ERR_WRITE_SOCK, "send_data", "");
+	cur_conn->bytes_send += len;
+	std::cout << "Bytes send " << cur_conn->bytes_send << " total size: " << cur_conn->response.size() << std::endl;
+	if (cur_conn->bytes_send == cur_conn->response.size())
+		cur_conn->ready = false;
+
+	if (cur_conn->ready == false && (cur_conn->h._chonky == false || cur_conn->last == true))
 		cur_conn->clear();
-	else
+	else if (cur_conn->ready == false)
 		prepare_chunk(cur_conn);
 }
 
@@ -299,7 +309,7 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 	int		rval;
 	struct timeval to;
 
-	to.tv_sec = 20;
+	to.tv_sec = 60;
 
 	std::cout << "Waiting on select.." << endl;
 	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
