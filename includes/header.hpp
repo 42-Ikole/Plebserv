@@ -35,6 +35,7 @@ public:
 	void	load_headers_in(vector<string> in);
 	void	add_to_header_out(string val, string key);
 	void	add_to_header_out(vector<string> head);
+	string	decode_url(string &str);
 
 };
 

@@ -7,6 +7,18 @@
 
 using namespace std;
 
+string	Header::decode_url(string &str)
+{
+	char	rp;
+
+	for (size_t pos = str.find_first_of("%", 0); pos != string::npos; pos = str.find_first_of("%", pos)) {
+		rp = ft::stoi(str.substr(pos + 1, 2), "0123456789ABCDEF");
+		cout << "rp = [" << rp << "]" << endl;
+		str.replace(pos, 3, 1, rp);
+	}
+	return str;
+}
+
 void	Header::Parse_request(string request)
 {
 	vector<string> parsed = ft::split(request);
@@ -19,11 +31,11 @@ void	Header::Parse_request(string request)
 		if (parsed[1].find("?") != string::npos)
 		{
 			vector<string> tmp = ft::split(parsed[1], "?");
-			_path = tmp[0];
+			_path = decode_url(tmp[0]);
 			_query = tmp[1];
 		}
 		else
-			_path = parsed[1];
+			_path = decode_url(parsed[1]);
 		if (_path.find('.') != string::npos)
 			_extension = _path.substr(_path.find_last_of('.'), string::npos);
 		_http_version = parsed[2];
