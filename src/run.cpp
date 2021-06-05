@@ -104,7 +104,9 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	if (rc < 0)
 	{
 		close_conn = true;
-		throw Plebception(ERR_READ_SOCK, "recv", ft::to_string(fd));
+		// throw Plebception(ERR_READ_SOCK, "recv", ft::to_string(fd));
+		std::cout << "error kanker sukkel" << std::endl;
+		return "";
 	}
 	if (rc == 0)
 	{
@@ -114,8 +116,8 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	}
 	buffer[rc] = 0;
 	std::cout << "Bytes recieved " << rc << std::endl;
-	// cout << buffer << endl;
-	ret = string(buffer);			// dit is fout sukkel
+	ret.resize(rc);
+	memcpy(&ret[0], buffer, rc);
 	free(buffer);
 	return (ret);
 }
