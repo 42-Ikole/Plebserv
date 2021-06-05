@@ -271,9 +271,8 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	connect_data *cur_conn = get_cur_conn(fd, open_connections);
 	ssize_t len = 0;
 
-	if (!cur_conn && cur_conn->ready == false)
+	if (!cur_conn || cur_conn->ready == false)
 		return ;
-	// sture die hap
 	update_action(cur_conn);
 	len = send(fd, &cur_conn->response[cur_conn->bytes_send], cur_conn->response.size() - cur_conn->bytes_send, 0);
 	if (len == -1)
