@@ -7,13 +7,8 @@ Fatal::Fatal(string msg, string type, string val)
 		string(" <") + COLOR_YELLOW + val + COLOR_RESET + string(">"); 
 }
 
-#ifdef LINUX
-	Fatal::~Fatal() throw()
-	{}
-#else
-	Fatal::~Fatal() throw()
-	{}
-#endif
+Fatal::~Fatal() throw()
+{}
 
 Fatal::Fatal(const Fatal &tbc)
 {
@@ -35,13 +30,15 @@ Plebception::Plebception(string msg, string type, string val) : Fatal(msg, type,
 {
 }
 
-Plebception::Plebception(const Plebception &tbc)
+Plebception::Plebception(const Plebception &tbc) : Fatal(tbc)
 {
-	*this = tbc;
 }
 
 Plebception & Plebception::operator=(const Plebception &tba)
 {
-	*this = tba;
+	this->_msg = tba._msg;
+	return *this;
 }
 
+Plebception::~Plebception() throw()
+{}

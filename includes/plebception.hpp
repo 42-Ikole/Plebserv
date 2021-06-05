@@ -48,7 +48,6 @@ class	Fatal : public exception
 		Fatal(const Fatal &tbc);
 		Fatal & operator=(const Fatal &tba);
 		const char *what() const throw();
-	
 };
 
 class Plebception : public Fatal
