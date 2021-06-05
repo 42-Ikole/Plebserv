@@ -13,6 +13,8 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <plebception.hpp>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define HEADER_END "\r\n\r\n"
 
@@ -30,6 +32,8 @@ struct	connect_data
 	Header	h;
 	string	buf;
 	string	header_raw;
+	struct	sockaddr_in	client_addr;
+	socklen_t			addr_size;
 	string	response;
 	bool	ready;
 	bool	last;
@@ -71,13 +75,18 @@ static void accept_connect(fd_set &current_sockets, server_data &data, vector<co
 	connect_data opencon = connect_data();
 	do
 	{
-		opencon.fd = accept(data.fd, NULL, NULL);
+		opencon.fd = accept(data.fd, (struct sockaddr *)&opencon.client_addr, &opencon.addr_size);
 		if (opencon.fd < 0)
-			throw Plebception(ERR_SERVER, "accept_connect", "accept failed");
+		{
+			if (errno != EWOULDBLOCK)
+				throw Plebception(ERR_SERVER, "accept_connect", "accept failed" + ft::to_string(errno));
+			continue;
+		}
 		if (fcntl(opencon.fd, F_SETFL, O_NONBLOCK) == -1)
 			throw Plebception(ERR_SERVER, "accept_connect", "fcntl failed");
 		opencon.ser = data.ser;
 		FD_SET(opencon.fd, &current_sockets);
+		std::cout << "New connection " << inet_ntoa(opencon.client_addr.sin_addr) << " on port " << opencon.client_addr.sin_port << std::endl;
 		open_connections.push_back(opencon);
 	} while(opencon.fd != -1);
 }

@@ -81,7 +81,7 @@ void Location::set_cgi_pass(vector<string> val)
 	if (val[0][0] != '.')
 		throw Plebception(ERR_INVALID_ARG, "set_cgi_pass", val[0]);
 	if (stat(val[1].c_str(), &st) == -1 || !(st.st_mode & S_IFREG))
-		throw Plebception(ERR_NO_LOCATION, "set_root", val[1]);	
+		throw Plebception(ERR_NO_LOCATION, "set_cgi_pass", val[1]);	
 	_cgi.push_back(Cgi(val[1], val[0]));
 }
 
