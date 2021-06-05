@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 
 #define HEADER_END "\r\n\r\n"
+#define TIMEOUT		300
 
 struct server_data
 {
@@ -34,6 +35,7 @@ struct	connect_data
 	string	header_raw;
 	struct	sockaddr_in	client_addr;
 	socklen_t			addr_size;
+	size_t	last_action;
 	string	response;
 	bool	ready;
 	bool	last;
@@ -47,6 +49,31 @@ struct	connect_data
 		last = false;
 	}
 };
+
+static void	update_action(connect_data * cur_conn)
+{
+	struct timeval current_time;
+
+	gettimeofday(&current_time, NULL);
+	cur_conn->last_action = current_time.tv_sec;
+}
+
+static void	clear_stale_connection(vector<connect_data> &open_connections, fd_set &current_sockets)
+{
+	struct timeval current_time;
+
+	gettimeofday(&current_time, NULL);
+	size_t cur_time = current_time.tv_sec;
+
+	for (size_t i = 0; i < open_connections.size(); i++)
+		if (cur_time - open_connections[i].last_action > TIMEOUT)
+		{
+			close(open_connections[i].fd);
+			FD_CLR(open_connections[i].fd, &current_sockets);			
+			open_connections.erase(open_connections.begin() + i);
+			std::cout << "Succesfull removal of " << i << std::endl;
+		}
+}
 
 server_data	setup_server(Server &ser, short port, int backlog)
 {
@@ -85,6 +112,7 @@ static void accept_connect(fd_set &current_sockets, server_data &data, vector<co
 		if (fcntl(opencon.fd, F_SETFL, O_NONBLOCK) == -1)
 			throw Plebception(ERR_SERVER, "accept_connect", "fcntl failed");
 		opencon.ser = data.ser;
+		update_action(&opencon);
 		FD_SET(opencon.fd, &current_sockets);
 		std::cout << "New connection " << inet_ntoa(opencon.client_addr.sin_addr) << " on port " << opencon.client_addr.sin_port << std::endl;
 		open_connections.push_back(opencon);
@@ -226,6 +254,7 @@ static void	handle_connection(fd_set &current_sockets, vector<connect_data> &ope
 	connect_data	*cur_conn;
 
 	cur_conn = &open_connections[cur_fd];
+	update_action(cur_conn);
 	read_request(close_conn, fd, cur_conn);
 	if (close_conn == true) {
 		close(fd);
@@ -241,6 +270,7 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	if (!cur_conn && cur_conn->ready == false)
 		return ;
 	// sture die hap
+	update_action(cur_conn);
 	send(fd, cur_conn->response.c_str(), cur_conn->response.size(), 0);
 	cur_conn->ready = false;
 	if (cur_conn->h._chonky == false || cur_conn->last == true)
@@ -266,12 +296,16 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 	fd_set	read_sok  = current_sockets;
 	fd_set	write_sok = get_response_fd(open_connections);
 	size_t cur_fd;
+	int		rval;
+	struct timeval to;
+
+	to.tv_sec = 20;
 
 	std::cout << "Waiting on select.." << endl;
-	if (select(FD_SETSIZE, &read_sok, &write_sok, NULL, NULL) <= 0)
+	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
+	if (rval < 0)
 		throw Plebception(ERR_SERVER_FATAL, "connect_handler", "select failed");
-
-	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
+	else for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
 	{
 		cur_fd = get_cur_conn_index(fd_match, open_connections);
 		if (FD_ISSET(fd_match, &read_sok))
@@ -313,5 +347,8 @@ void	host_servers(vector<Server> serv)
 	for (size_t i = 0; i < data.size(); i++)
 		FD_SET(data[i].fd, &current_sockets);
 	while (true)
+	{
+		clear_stale_connection(open_connections, current_sockets);
 		connection_handler(current_sockets, data, open_connections);
+	}	
 }
