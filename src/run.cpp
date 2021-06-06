@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 
 #define HEADER_END "\r\n\r\n"
-#define TIMEOUT		300
+#define TIMEOUT		150
 
 struct server_data
 {
@@ -60,21 +60,26 @@ static void	update_action(connect_data * cur_conn)
 	cur_conn->last_action = current_time.tv_sec;
 }
 
+static void clear_connetion(vector<connect_data> &open_connections, fd_set &current_sockets, size_t i)
+{
+	close(open_connections[i].fd);
+	FD_CLR(open_connections[i].fd, &current_sockets);		
+	open_connections.erase(open_connections.begin() + i);
+	std::cout << "Succesfull removal of " << i << std::endl;
+}
+
 static void	clear_stale_connection(vector<connect_data> &open_connections, fd_set &current_sockets)
 {
 	struct timeval current_time;
 
 	gettimeofday(&current_time, NULL);
-	size_t cur_time = current_time.tv_sec;
 
 	for (size_t i = 0; i < open_connections.size(); i++)
-		if (cur_time - open_connections[i].last_action > TIMEOUT)
-		{
-			close(open_connections[i].fd);
-			FD_CLR(open_connections[i].fd, &current_sockets);			
-			open_connections.erase(open_connections.begin() + i);
-			std::cout << "Succesfull removal of " << i << std::endl;
-		}
+	{
+		if (current_time.tv_sec - open_connections[i].last_action > TIMEOUT)
+			clear_connetion(open_connections, current_sockets, i);
+	}
+	cout << open_connections.size() << endl;
 }
 
 server_data	setup_server(Server &ser, short port, int backlog)
@@ -258,12 +263,8 @@ static void	handle_connection(fd_set &current_sockets, vector<connect_data> &ope
 	cur_conn = &open_connections[cur_fd];
 	update_action(cur_conn);
 	read_request(close_conn, fd, cur_conn);
-	if (close_conn == true) {
-		close(fd);
-		FD_CLR(fd, &current_sockets);
-		open_connections.erase(open_connections.begin() + cur_fd);
-		return ;
-	}
+	if (close_conn == true)
+		return clear_connetion(open_connections, current_sockets, cur_fd);
 }
 
 static void	send_data(size_t &fd, vector<connect_data> &open_connections)
@@ -308,13 +309,15 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 	int		rval;
 	struct timeval to;
 
-	to.tv_sec = 60;
+	to.tv_sec = 30;
 
 	std::cout << "Waiting on select.." << endl;
 	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
 	if (rval < 0)
 		throw Plebception(ERR_SERVER_FATAL, "connect_handler", "select failed");
-	else for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
+	else if (rval == 0)
+		return;
+	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
 	{
 		cur_fd = get_cur_conn_index(fd_match, open_connections);
 		if (FD_ISSET(fd_match, &read_sok))
