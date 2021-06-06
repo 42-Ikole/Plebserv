@@ -115,7 +115,9 @@ char	*Cgi::create_env_var(string key, string value)
 void	Cgi::cgi_response(Header &h, string &body, string file_path, Server &ser, size_t &size)
 {
 	char *env[22];
-	string cwd = string(getcwd(NULL, 0));
+	char *cwd_cstr = getcwd(NULL, 0);
+	string cwd = string(cwd_cstr);
+	free(cwd_cstr);
 
 	// (void)ser;
 	// std::cout << "STARTING THE CGI\n\n\n" << h << endl;
@@ -169,4 +171,9 @@ void	Cgi::cgi_response(Header &h, string &body, string file_path, Server &ser, s
 		body = body.substr(pos + 4);
 		size = body.length();
 	}
+	for (size_t i = 0; i < 22; i++)
+	{
+		free(env[i]);
+	}
+	
 }
