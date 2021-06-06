@@ -56,8 +56,10 @@ static void	update_action(connect_data * cur_conn)
 {
 	struct timeval current_time;
 
-	gettimeofday(&current_time, NULL);
-	cur_conn->last_action = current_time.tv_sec;
+	if (gettimeofday(&current_time, NULL) >= 0)
+		cur_conn->last_action = current_time.tv_sec;
+	else
+		cur_conn->last_action = 420;
 }
 
 static void clear_connetion(vector<connect_data> &open_connections, fd_set &current_sockets, size_t i)
@@ -193,7 +195,7 @@ static void	prepare_chunk(connect_data * cur_conn)
 	pos = cur_conn->buf.find_first_of("\r\n");
 	if (pos == string::npos)
 		return ;
-	body_size = ft::stoi(cur_conn->buf.substr(0, pos), "0123456789ABCDEF");
+	body_size = ft::stoi(cur_conn->buf.substr(0, pos), HEXADECIMAL);
 	if (cur_conn->buf.length() - (pos + 2) < body_size)
 		return ;
 	if (cur_conn->buf.find_first_of("\r\n", pos + 2) != string::npos)
@@ -241,11 +243,18 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		prepare_chunk(cur_conn);
 }
 
-static size_t get_cur_conn_index(size_t fd, vector<connect_data>& data)
+static int get_cur_conn_index(size_t fd, vector<connect_data>& data)
 {
-	size_t x = 0;
-	for (; x < data.size() && static_cast<size_t>(data[x].fd) != fd; x++);
-	return (x == data.size() ? -1 : x);
+	long x = 0;
+	for (; x < (long)data.size() && static_cast<size_t>(data[x].fd) != fd; x++);
+	return (x == (long)data.size() ? -1 : x);
+}
+
+static int get_port_fd(size_t fd, vector<server_data>& data)
+{
+	long x = 0;
+	for (; x < (long)data.size() && static_cast<size_t>(data[x].fd) != fd; x++);
+	return (x == (long)data.size() ? -1 : x);
 }
 
 static connect_data * get_cur_conn(size_t fd, vector<connect_data>& data)
@@ -305,8 +314,9 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 {
 	fd_set	read_sok  = current_sockets;
 	fd_set	write_sok = get_response_fd(open_connections);
-	size_t cur_fd;
+	int		cur_fd;
 	int		rval;
+	int		server_idx;
 	struct timeval to;
 
 	to.tv_sec = 30;
@@ -322,10 +332,11 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 		cur_fd = get_cur_conn_index(fd_match, open_connections);
 		if (FD_ISSET(fd_match, &read_sok))
 		{
-			if (fd_match == static_cast<size_t>(data[0].fd))
+			server_idx = get_port_fd(fd_match, data);
+			if (server_idx >= 0 && fd_match == static_cast<size_t>(data[server_idx].fd))
 			{
 				std::cout << "Listening socket is available!" << endl;
-				accept_connect(current_sockets, data[0], open_connections);
+				accept_connect(current_sockets, data[server_idx], open_connections);
 			}
 			else if (cur_fd >= 0)
 			{
