@@ -143,12 +143,14 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 		close_conn = true;
 		// throw Plebception(ERR_READ_SOCK, "recv", ft::to_string(fd));
 		std::cout << "error kanker sukkel" << std::endl;
+		free(buffer);
 		return "";
 	}
 	if (rc == 0)
 	{
 		std::cout << "Connection closed" << endl;
 		close_conn = true;
+		free(buffer);
 		return "";
 	}
 	buffer[rc] = 0;
