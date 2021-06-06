@@ -205,32 +205,42 @@ string	Server::return_post(Header &h, Location *l, string &body)
 string	Server::return_delete(Header &h, Location *l)
 {
 	int response_code = 204;
-	string fullpath = l->_root + h._path;
+	string full_path = l->_root + h._path;
 
-	if (unlink(fullpath.c_str()) == -1)
+	if (unlink(full_path.c_str()) == -1)
 		response_code = 403;
 	return (h.create_header(response_code, 0, g_http_errors));
 }
 
 string	Server::return_put(Header &h, Location *l, string &body)
 {
-	string fullpath = l->_upload_store + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
+	string	full_path = l->_upload_store + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
 	struct stat file_status;
-	int response_code = 201;
-	int fd;
+	int		response_code = 201;
+	int		fd;
+	int		ret = 1;
+	size_t	i = 0;
 
-	cout << "Path to save to: " << fullpath << endl;
+	cout << "Path to save to: " << full_path << endl;
 
-	if (stat(fullpath.c_str(), &file_status) == -1)
-	{
-		fd = open(fullpath.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0777);
-		write(fd, body.c_str(), body.size());
-	}
+	if (stat(full_path.c_str(), &file_status) == -1)
+		fd = open(full_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0777);
 	else
 	{
-		fd = open(fullpath.c_str(), O_TRUNC | O_RDWR, 0777);
-		write(fd, body.c_str(), body.size());
+		fd = open(full_path.c_str(), O_TRUNC | O_RDWR, 0777);
 		response_code = 204;
+	}
+	if (fd == -1)
+		throw Plebception(ERR_FD, "opening file failed", full_path);
+	else
+	{
+		while (ret > 0)
+		{
+			ret = write(fd, &body[i], body.size() - i);
+			if (ret == -1)
+				throw Plebception(ERR_FD, "writing to file", full_path);
+			i += ret;
+		}
 	}
 	return(h.create_header(response_code, 0, g_http_errors));
 }
