@@ -1,7 +1,7 @@
 #ifndef UTILITIES_HPP
 # define UTILITIES_HPP
 
-
+#define HEXADECIMAL "0123456789ABCDEF"
 namespace ft
 {
 	std::string& ltrim(std::string& s, std::string delim = " \t");

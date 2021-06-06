@@ -10,6 +10,7 @@
 #include <plebception.hpp>
 
 #define BUFFER 128
+
 namespace ft
 {
     std::string& ltrim(std::string& s, std::string delim = " \t")
