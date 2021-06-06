@@ -242,6 +242,7 @@ string	Server::return_put(Header &h, Location *l, string &body)
 			i += ret;
 		}
 	}
+	close(fd);
 	return(h.create_header(response_code, 0, g_http_errors));
 }
 
@@ -299,9 +300,16 @@ string	Server::return_head(Header &h, Location *l)
 
 string	Server::create_response(Header &h, string &body)
 {
+	int response_code = 200;
 	Location *l = match_location(h._path);
 	if (l == NULL)
 		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
+	try {l->method_allowed(h, response_code); }
+	catch (std::exception &e)
+	{
+		cout << e.what() << response_code << endl;
+		return (h.create_header(response_code, 0, g_http_errors));
+	}
 	std::cout << "The match is " << l->_location << std::endl;
 	if (h._method == "GET")
 		return (return_get(h, l));

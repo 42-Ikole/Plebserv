@@ -226,6 +226,22 @@ bool	Location::run_cgi(Header &h, string &body, string file_path, Server &ser, s
 	}
 	return (false);
 }
+
+bool	Location::method_allowed(Header &h, int &response_code)
+{
+	if (_limit_except.size())
+	{
+		size_t i = 0;
+		for (; i < _limit_except.size() && h._method != _limit_except[i]; i++);
+		if (i == _limit_except.size())
+		{
+			response_code = 405;
+			throw Plebception("405 method not allowed", "find_file", h._path);
+			return (false);
+		}
+	}
+	return (true);
+}
 // /dir/hoi/jaja.txt
 
 // /jaja.txt
@@ -235,17 +251,6 @@ string	Location::find_file(Header h, int &response_code)
 	struct stat file_status;
 	string full_path = _root + "/" + h._path.replace(h._path.find(_location), _location.size(), "");
 
-	std::cout << full_path << std::endl;
-	if (_limit_except.size())
-	{
-		size_t i = 0;
-		for (; i < _limit_except.size() && h._method != _limit_except[i]; i++);
-		if (i == _limit_except.size())
-		{
-			response_code = 405;
-			throw Plebception("405 method not allowed", "find_file", h._path);
-		}
-	}
 	std::cout << full_path << std::endl;	
 	if (stat(full_path.c_str(), &file_status) == -1)
 	{
