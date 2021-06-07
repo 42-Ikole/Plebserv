@@ -104,6 +104,15 @@ Header::Header(vector<string> in)
 	_chonky = (_headers_in["Transfer-Encoding"] == "chunked") ? true : false; 
 }
 
+int	Header::validate_header()
+{
+	if (_http_version != "HTTP/1.1")
+		return (505);
+	if (_path.length() > 2000)
+		return (414);
+	return (0);
+}
+
 string	Header::content_type_switch()
 {
 	if (_extension == ".html")
