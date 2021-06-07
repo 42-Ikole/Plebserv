@@ -28,6 +28,7 @@ struct	connect_data
 	Server	*ser;
 	Header	h;
 	string	buf;
+	string	chunk_unchunked;
 	string	header_raw;
 	struct	sockaddr_in	client_addr;
 	socklen_t			addr_size;
@@ -41,6 +42,7 @@ struct	connect_data
 	{
 		bytes_send = 0;
 		buf.clear();
+		chunk_unchunked.clear();
 		response.clear();
 		header_raw.clear();
 		ready = false;

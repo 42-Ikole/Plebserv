@@ -143,7 +143,7 @@ string	Server::return_get(Header &h, Location *l)
 			h._extension = ".html";
 		}
 	}
-	return (h.create_header(response_code, body.size(), g_http_errors) + string(body));
+	return (h.create_header(response_code, body.size()) + string(body));
 }
 
 /*
@@ -170,7 +170,7 @@ string	Server::return_post(Header &h, Location *l, string &body)
 			response_code = 413;
 			body.clear();
 			err_code_file(body, response_code);
-			return (h.create_header(response_code, body.size(), g_http_errors) + string(body));
+			return (h.create_header(response_code, body.size()) + string(body));
 		}
 		string file_path = l->find_file(h, response_code);
 		if (!l->run_cgi(h, body, file_path, *this, body_size))
@@ -199,7 +199,7 @@ string	Server::return_post(Header &h, Location *l, string &body)
 			response_code = 201;
 		}
 	}
-	return (h.create_header(response_code, body.size(), g_http_errors) + string(body));
+	return (h.create_header(response_code, body.size()) + string(body));
 }
 
 string	Server::return_delete(Header &h, Location *l)
@@ -209,7 +209,7 @@ string	Server::return_delete(Header &h, Location *l)
 
 	if (unlink(full_path.c_str()) == -1)
 		response_code = 403;
-	return (h.create_header(response_code, 0, g_http_errors));
+	return (h.create_header(response_code, 0));
 }
 
 string	Server::return_put(Header &h, Location *l, string &body)
@@ -243,7 +243,7 @@ string	Server::return_put(Header &h, Location *l, string &body)
 		}
 	}
 	close(fd);
-	return(h.create_header(response_code, 0, g_http_errors));
+	return(h.create_header(response_code, 0));
 }
 
 
@@ -264,7 +264,7 @@ string	Server::return_options(Header &h, Location *l)
 		}
 	std::cout << "Allowed: " << allowed << endl;
 	h.add_to_header_out("Allow", allowed);
-	header = h.create_header(204, 0, g_http_errors);
+	header = h.create_header(204, 0);
 	return (header);
 }
 
@@ -295,7 +295,7 @@ string	Server::return_head(Header &h, Location *l)
 		}
 	}
 	body_size = body.size();
-	return (h.create_header(response_code, body_size, g_http_errors));
+	return (h.create_header(response_code, body_size));
 }
 
 string	Server::create_response(Header &h, string &body)
@@ -308,7 +308,7 @@ string	Server::create_response(Header &h, string &body)
 	catch (std::exception &e)
 	{
 		cout << e.what() << response_code << endl;
-		return (h.create_header(response_code, 0, g_http_errors));
+		return (h.create_header(response_code, 0));
 	}
 	std::cout << "The match is " << l->_location << std::endl;
 	if (h._method == "GET")

@@ -4,6 +4,7 @@
 #include <map>
 #include <ctime>
 #include <stdlib.h>
+#include <http_responses.hpp>
 
 using namespace std;
 
@@ -127,14 +128,14 @@ void	Header::add_to_header_out(vector<string> head)
 }
 
 
-string Header::create_header(int response_code, int body_length, map<int, string> &status_text)
+string Header::create_header(int response_code, int body_length)
 {
 	string res;
 
 	if (!_headers_out["Status"].empty())
-		res = "HTTP/1.1 " + _headers_out["Status"] + " " + status_text[atoi(_headers_out["Status"].c_str())] +"\r\n";
+		res = "HTTP/1.1 " + _headers_out["Status"] + " " + g_http_errors[atoi(_headers_out["Status"].c_str())] +"\r\n";
 	else
-		res = "HTTP/1.1 " + ft::to_string(response_code) + " " + status_text[response_code] +"\r\n";
+		res = "HTTP/1.1 " + ft::to_string(response_code) + " " + g_http_errors[response_code] +"\r\n";
 
 	add_to_header_out("Date", ft::create_date());
 	add_to_header_out("Server", "Plebserv/1.3.29 (Unix)");

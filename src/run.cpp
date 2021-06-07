@@ -58,27 +58,25 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 
 static void	prepare_chunk_body(connect_data * cur_conn, size_t pos, size_t body_size)
 {
-	string body = ""; 
-
-	cur_conn->buf = cur_conn->buf.substr(pos + 2, cur_conn->buf.length());
+	cur_conn->buf = cur_conn->buf.substr(pos + 2);
 	if (body_size > 0)
 	{
-		body = cur_conn->buf.substr(0, cur_conn->buf.find_first_of("\r\n"));
-		cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find_first_of("\r\n"), cur_conn->buf.length());
+		cur_conn->chunk_unchunked += cur_conn->buf.substr(0, cur_conn->buf.find("\r\n"));
+		cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find("\r\n") + 2);
 	}
 	else
-		cur_conn->last = true;
-	std::cout << cur_conn->h << std::endl;
-	try
 	{
-		cur_conn->response = cur_conn->ser->create_response(cur_conn->h, body);
-		cur_conn->ready = true;
-		cout << "chonky boi is ready" << endl;
-	}
-	catch (std::exception &e)
-	{
-		std::cout << e.what() << std::endl;
-		cur_conn->clear();
+		try
+		{
+			cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->chunk_unchunked);
+			cur_conn->ready = true;
+			cout << "chonky boi is ready\n" << cur_conn->response << endl;
+		}
+		catch (std::exception &e)
+		{
+			std::cout << e.what() << std::endl;
+			cur_conn->clear(); // error code something
+		}
 	}
 }
 
@@ -87,16 +85,20 @@ static void	prepare_chunk(connect_data * cur_conn)
 	size_t	pos;
 	size_t	body_size;
 
-	if (cur_conn->response.empty() == false)
-		cur_conn->response.clear();
-	pos = cur_conn->buf.find_first_of("\r\n");
+	pos = cur_conn->buf.find("\r\n");
 	if (pos == string::npos)
+	{
+		cout << "no possie" << endl;
 		return ;
+	}
 	body_size = ft::stoi(cur_conn->buf.substr(0, pos), HEXADECIMAL);
-	if (cur_conn->buf.length() - (pos + 2) < body_size)
+	cout << "chunk size = " << body_size << "\nBuffer size = " << cur_conn->buf.size() << "\ntotal_size = " << cur_conn->chunk_unchunked.size() << endl;
+	if (cur_conn->buf.length() - (pos + 2) < body_size + 2)
+	{
+		cout << "no fully read! len: " << cur_conn->buf.length() - (pos + 2) << "vs: " << body_size + 2 << std::endl;
 		return ;
-	if (cur_conn->buf.find_first_of("\r\n", pos + 2) != string::npos)
-		prepare_chunk_body(cur_conn, pos, body_size);
+	}
+	prepare_chunk_body(cur_conn, pos, body_size);
 }
 
 static void	set_header(connect_data * cur_conn, size_t pos)
@@ -123,7 +125,7 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 {
 	string ret;
 
-	ret = read_sok(1024, close_conn, fd);
+	ret = read_sok(10240, close_conn, fd);
 		cur_conn->buf += ret;
 
 	if (close_conn == true || cur_conn->ready == true)
@@ -168,10 +170,11 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	if (cur_conn->bytes_send == cur_conn->response.size())
 		cur_conn->ready = false;
 
-	if (cur_conn->ready == false && (cur_conn->h._chonky == false || cur_conn->last == true))
+	if (cur_conn->ready == false)
+	{
+		cout << "buf after send = " << cur_conn->buf << endl;
 		cur_conn->clear();
-	else if (cur_conn->ready == false)
-		prepare_chunk(cur_conn);
+	}
 }
 
 static fd_set	get_response_fd(vector<connect_data> &open_connections)
