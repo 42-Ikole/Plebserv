@@ -243,6 +243,14 @@ string	Server::return_put(Header &h, Location *l, string &body)
 
 	cout << "Path to save to: " << full_path << endl;
 
+	if (body.size() > l->_max_body_size)
+	{
+		response_code = 413;
+		body.clear();
+		err_code_file(body, response_code);
+		return (h.create_header(response_code, body.size()) + string(body));
+	}
+
 	if (stat(full_path.c_str(), &file_status) == -1)
 		fd = open(full_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0777);
 	else
