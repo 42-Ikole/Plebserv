@@ -50,7 +50,7 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	
 	buffer = (char *)malloc(sizeof(char) * (buff_size + 1));
 	if (buffer == NULL)
-		throw Fatal(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
+		throw Plebception(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
 	rc = recv(fd, buffer, buff_size, 0);
 	if (rc < 0)
 	{
@@ -160,7 +160,12 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 	if (pos == string::npos && cur_conn->header_raw.empty())
 		return ;
 	if (cur_conn->header_raw.empty() == true)
+	{
 		set_header(cur_conn, pos);
+		int res = cur_conn->h.validate_header();
+		if (res != 0)
+			return create_custom_response(cur_conn, cur_conn->h.create_header(res, 0));
+	}
 	if (cur_conn->h._method == "GET" || cur_conn->h._chonky == false)
 		normal_response(cur_conn);
 	else if (cur_conn->h._chonky == true)

@@ -95,9 +95,6 @@ class Location
 		bool	run_cgi(Header &h, string &body, string file_path, Server &ser, size_t &size);
 		bool	method_allowed(Header &h, int &response_code);
 
-
-
-
 		char	*read_file(size_t len);
 		string	find_file(Header h, int &response_code);
 };
