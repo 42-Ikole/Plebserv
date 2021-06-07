@@ -73,7 +73,7 @@ static map<int, string> create_http_map()
 	m[428] = "Precondition Required";
 	m[429] = "Too Many Requests";
 	m[431] = "Request Header Fields Too Large";
-	m[450] = "Geblokkeerd door Windows Parental Control";
+	m[450] = "Blocked by Windows Parental Control";
 	m[451] = "Unavailable For Legal Reasons";
 	m[494] = "Request Header Too Large";
 	m[495] = "Cert Error";
