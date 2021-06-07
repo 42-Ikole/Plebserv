@@ -2,11 +2,11 @@
 #define RUN_HPP
 
 #include <server.hpp>
+#include <string.h>
 #include <string>
 #include <iostream>     // std::cout
 #include <header.hpp>
 #include <utilities.hpp>
-
 #include <sys/time.h>
 #include <errno.h>		// mag er later uit niffo
 #include <plebception.hpp>
