@@ -1,3 +1,22 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*	 																				 */
+/*     _ (`-.              ('-. .-. .-')    .-')      ('-.  _  .-')        (`-.   	 */
+/*    ( (OO  )           _(  OO)\  ( OO )  ( OO ).  _(  OO)( \( -O )     _(OO  )_ 	 */
+/*   _.`     \ ,--.     (,------.;-----.\ (_)---\_)(,------.,------. ,--(_/   ,. \	 */
+/*  (__...--'' |  |.-')  |  .---'| .-.  | /    _ |  |  .---'|   /`. '\   \   /(__/	 */
+/*   |  /  | | |  | OO ) |  |    | '-' /_)\  :` `.  |  |    |  /  | | \   \ /   / 	 */
+/*   |  |_.' | |  |`-' |(|  '--. | .-. `.  '..`''.)(|  '--. |  |_.' |  \   '   /, 	 */
+/*   |  .___.'(|  '---.' |  .--' | |  \  |.-._)   \ |  .--' |  .  '.'   \     /__)	 */
+/*   |  |      |      |  |  `---.| '--'  /\       / |  `---.|  |\  \     \   /    	 */
+/*   `--'      `------'  `------'`------'  `-----'  `------'`--' '--'     `-'     	 */
+/*																					 */
+/* 									MADE BY											 */
+/* 		—————————————————————————————————————————————————————————————————————		 */
+/*				 Alpha_1337k       |    https://github.com/Alpha1337k				 */
+/*				 VictorTennekes    |    https://github.com/VictorTennekes			 */
+/*				 Kingmar	 	   |    https://github.com/K1ngmar					 */
+/*																					 */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <run.hpp>
 
@@ -121,7 +140,12 @@ static void	normal_response(connect_data * cur_conn)
 		return ;
 	cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
 	cur_conn->ready = true;
-	std::cout << "Response is ready!" << std::endl;
+}
+
+static void	create_custom_response(connect_data *cur_conn, string data)
+{
+	cur_conn->response = data;
+	cur_conn->ready = true;
 }
 
 static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn)
@@ -205,7 +229,15 @@ static void	accept_handle_connection(fd_set &current_sockets, vector<server_data
 		else if (cur_fd >= 0)
 		{
 			std::cout << "FD " << fd_match << " is readable!" << std::endl;
-			handle_connection(current_sockets, open_connections, cur_fd, fd_match);
+			try
+			{
+				handle_connection(current_sockets, open_connections, cur_fd, fd_match);
+			}
+			catch (const Plebception &e)
+			{
+				cerr << e.what() << endl;
+				create_custom_response(&open_connections[fd_match], open_connections[fd_match].h.create_header(500, 0));
+			}
 		}
 	}
 }
@@ -226,14 +258,7 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 		return;
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
 	{
-		try
-		{
-			accept_handle_connection(current_sockets, data, open_connections, read_sok, fd_match);
-		}
-		catch (const Plebception &e)
-		{
-			cerr << e.what() << endl;
-		}
+		accept_handle_connection(current_sockets, data, open_connections, read_sok, fd_match);
 		if (FD_ISSET(fd_match, &write_sok))
 		{
 			cout << "socket available for writing" << endl;
