@@ -26,7 +26,32 @@ static void	parser_test(char *filename)
 	}
 }
 
-int main(int argc, char **argv, char **env)
+static void persistent_run_serv(int tries, std::vector<Server> &l)
+{
+	if (tries == 0)
+	{
+		cout << "Too many retries. shutting down..." << endl;
+		exit(0);
+	}
+	try
+	{
+		host_servers(l);
+	}
+	catch(const Plebception &e)
+	{
+		std::cout << e.what() << std::endl;
+		if (tries == -1)
+			persistent_run_serv (-1, l);
+		else
+			persistent_run_serv (tries - 1, l);
+	}
+	catch (const Fatal &e)
+	{
+		std::cout << e.what() << std::endl;
+	}
+}
+
+int main(int argc, char **argv)
 {
 	std::string filename;
 
@@ -43,7 +68,6 @@ int main(int argc, char **argv, char **env)
 	std::vector<Server> l = load_config(filename);
 	for (size_t i = 0; i < l.size(); i++)
 		std::cout << l[i] << std::endl;
-	host_servers(l);
-	(void)env;
+	persistent_run_serv(3, l);
 	return (0);
 }
