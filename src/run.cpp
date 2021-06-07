@@ -31,7 +31,7 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	
 	buffer = (char *)malloc(sizeof(char) * (buff_size + 1));
 	if (buffer == NULL)
-		throw Plebception(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
+		throw Fatal(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
 	rc = recv(fd, buffer, buff_size, 0);
 	if (rc < 0)
 	{
@@ -56,13 +56,16 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	return (ret);
 }
 
-static void	prepare_chunk_body(connect_data * cur_conn, size_t pos, size_t body_size)
+static void	get_chunk_body(connect_data * cur_conn, size_t pos, size_t body_size)
 {
 	cur_conn->buf = cur_conn->buf.substr(pos + 2);
 	if (body_size > 0)
 	{
 		cur_conn->chunk_unchunked += cur_conn->buf.substr(0, cur_conn->buf.find("\r\n"));
 		cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find("\r\n") + 2);
+		cout << "Added to unchunked! new size: " << cur_conn->chunk_unchunked.size() << " remainder: " << cur_conn->buf.size() << endl;
+		if (cur_conn->buf.size() != 0)
+			unchunk_chunk(cur_conn);
 	}
 	else
 	{
@@ -80,7 +83,7 @@ static void	prepare_chunk_body(connect_data * cur_conn, size_t pos, size_t body_
 	}
 }
 
-static void	prepare_chunk(connect_data * cur_conn)
+void	unchunk_chunk(connect_data * cur_conn)
 {
 	size_t	pos;
 	size_t	body_size;
@@ -98,13 +101,13 @@ static void	prepare_chunk(connect_data * cur_conn)
 		cout << "no fully read! len: " << cur_conn->buf.length() - (pos + 2) << "vs: " << body_size + 2 << std::endl;
 		return ;
 	}
-	prepare_chunk_body(cur_conn, pos, body_size);
+	get_chunk_body(cur_conn, pos, body_size);
 }
 
 static void	set_header(connect_data * cur_conn, size_t pos)
 {
 	cur_conn->header_raw = cur_conn->buf.substr(0, pos);
-	cur_conn->buf		 = cur_conn->buf.substr(pos + 4, cur_conn->buf.size() - pos);
+	cur_conn->buf		 = cur_conn->buf.substr(pos + 4);
 	std::cout << "Setting header" << std::endl;
 	cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
 	std::cout << cur_conn->h << "\n\n" << std::endl;
@@ -127,11 +130,9 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 
 	ret = read_sok(10240, close_conn, fd);
 		cur_conn->buf += ret;
-
 	if (close_conn == true || cur_conn->ready == true)
 		return ;
 	size_t	pos = cur_conn->buf.find(HEADER_END);
-
 	if (pos == string::npos && cur_conn->header_raw.empty())
 		return ;
 	if (cur_conn->header_raw.empty() == true)
@@ -139,7 +140,7 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 	if (cur_conn->h._method == "GET" || cur_conn->h._chonky == false)
 		normal_response(cur_conn);
 	else if (cur_conn->h._chonky == true)
-		prepare_chunk(cur_conn);
+		unchunk_chunk(cur_conn);
 }
 
 static void	handle_connection(fd_set &current_sockets, vector<connect_data> &open_connections, size_t cur_fd, size_t &fd)
@@ -169,7 +170,6 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	std::cout << "Bytes send " << cur_conn->bytes_send << " total size: " << cur_conn->response.size() << std::endl;
 	if (cur_conn->bytes_send == cur_conn->response.size())
 		cur_conn->ready = false;
-
 	if (cur_conn->ready == false)
 	{
 		cout << "buf after send = " << cur_conn->buf << endl;
@@ -182,46 +182,57 @@ static fd_set	get_response_fd(vector<connect_data> &open_connections)
 	fd_set ret;
 
 	FD_ZERO(&ret);
-	for (size_t i = 0; i < open_connections.size(); i++) {
+	for (size_t i = 0; i < open_connections.size(); i++)
 		if (open_connections[i].ready == true)
 			FD_SET(open_connections[i].fd, &ret);
-	}
 	return ret;
+}
+
+static void	accept_handle_connection(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, fd_set &read_sok, size_t &fd_match)
+{
+	int		cur_fd;
+	int		server_idx;
+
+	cur_fd = get_cur_conn_index(fd_match, open_connections);
+	if (FD_ISSET(fd_match, &read_sok))
+	{
+		server_idx = get_port_fd(fd_match, data);
+		if (server_idx >= 0 && fd_match == static_cast<size_t>(data[server_idx].fd))
+		{
+			std::cout << "Listening socket is available!" << endl;
+			accept_connect(current_sockets, data[server_idx], open_connections);
+		}
+		else if (cur_fd >= 0)
+		{
+			std::cout << "FD " << fd_match << " is readable!" << std::endl;
+			handle_connection(current_sockets, open_connections, cur_fd, fd_match);
+		}
+	}
 }
 
 static void	connection_handler(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections)
 {
 	fd_set	read_sok  = current_sockets;
 	fd_set	write_sok = get_response_fd(open_connections);
-	int		cur_fd;
 	int		rval;
-	int		server_idx;
 	struct timeval to;
 
 	to.tv_sec = 30;
-
 	std::cout << "Waiting on select.." << endl;
 	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
 	if (rval < 0)
-		throw Plebception(ERR_SERVER_FATAL, "connect_handler", "select failed");
+		throw Fatal(ERR_SERVER_FATAL, "connect_handler", "select failed");
 	else if (rval == 0)
 		return;
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
 	{
-		cur_fd = get_cur_conn_index(fd_match, open_connections);
-		if (FD_ISSET(fd_match, &read_sok))
+		try
 		{
-			server_idx = get_port_fd(fd_match, data);
-			if (server_idx >= 0 && fd_match == static_cast<size_t>(data[server_idx].fd))
-			{
-				std::cout << "Listening socket is available!" << endl;
-				accept_connect(current_sockets, data[server_idx], open_connections);
-			}
-			else if (cur_fd >= 0)
-			{
-				std::cout << "FD " << fd_match << " is readable!" << std::endl;
-				handle_connection(current_sockets, open_connections, cur_fd, fd_match);
-			}
+			accept_handle_connection(current_sockets, data, open_connections, read_sok, fd_match);
+		}
+		catch (const Plebception &e)
+		{
+			cerr << e.what() << endl;
 		}
 		if (FD_ISSET(fd_match, &write_sok))
 		{
@@ -250,7 +261,14 @@ void	host_servers(vector<Server> serv)
 		FD_SET(data[i].fd, &current_sockets);
 	while (true)
 	{
-		clear_stale_connection(open_connections, current_sockets);
-		connection_handler(current_sockets, data, open_connections);
+		try
+		{
+			clear_stale_connection(open_connections, current_sockets);
+			connection_handler(current_sockets, data, open_connections);
+		}
+		catch(const Plebception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
 	}	
 }
