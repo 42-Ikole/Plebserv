@@ -31,7 +31,7 @@ public:
 
 	void	Parse_request(string request);
 	string	content_type_switch();
-	string	create_header(int response_code, int body_length, map<int, string> &status_text);
+	string	create_header(int response_code, int body_lengtha);
 	void	load_headers_in(vector<string> in);
 	void	add_to_header_out(string val, string key);
 	void	add_to_header_out(vector<string> head);

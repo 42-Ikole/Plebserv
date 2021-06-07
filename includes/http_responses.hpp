@@ -7,7 +7,7 @@
 
 using namespace std;
 
-map<int, string> create_map()
+static map<int, string> create_http_map()
 {
 	map<int, string> m;
 /*
@@ -99,6 +99,6 @@ map<int, string> create_map()
 	return m;
 }
 
-static map<int, string> g_http_errors = create_map();
+static map<int, string> g_http_errors = create_http_map();
 
 #endif
