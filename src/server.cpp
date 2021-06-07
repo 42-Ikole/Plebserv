@@ -20,7 +20,7 @@ static map<string, LoadFunction> create_map()
 	return m;
 }
 
-map<string, LoadFunction> g_server_load_map = create_map();
+static map<string, LoadFunction> g_server_load_map = create_map();
 
 Server::Server(Server const &tbc)
 {

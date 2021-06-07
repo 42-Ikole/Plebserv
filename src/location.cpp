@@ -8,7 +8,7 @@ using namespace std;
 
 typedef void (Location::*LoadFunction)(vector<string> val);
 
-string methods[] = {"GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "TRACE", "PATCH"};
+static const string methods[] = {"GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "TRACE", "PATCH"};
 
 static map<string, LoadFunction> create_map()
 {
@@ -23,7 +23,7 @@ static map<string, LoadFunction> create_map()
 	return m;
 }
 
-map<string, LoadFunction> g_location_load_map = create_map();
+static map<string, LoadFunction> g_location_load_map = create_map();
 
 Location::~Location()
 {

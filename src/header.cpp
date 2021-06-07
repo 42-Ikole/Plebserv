@@ -102,19 +102,6 @@ string	Header::content_type_switch()
 	return ("text/html; charset=utf-8");
 }
 
-string create_date()
-{
-	time_t rawtime;
-	struct tm * timeinfo;
-	char buf[100];
-
-	time (&rawtime);
-	timeinfo = gmtime(&rawtime);
-
-	strftime(buf, 100, "%a, %d %b %G %H:%M:%S GMT", timeinfo);
-	return (string(buf));
-}
-
 void	Header::add_to_header_out(string val, string key)
 {
 	// if (!_headers_out[val].empty())
@@ -149,7 +136,7 @@ string Header::create_header(int response_code, int body_length, map<int, string
 	else
 		res = "HTTP/1.1 " + ft::to_string(response_code) + " " + status_text[response_code] +"\r\n";
 
-	add_to_header_out("Date", create_date());
+	add_to_header_out("Date", ft::create_date());
 	add_to_header_out("Server", "Plebserv/1.3.29 (Unix)");
 	add_to_header_out("Connection", "keep-alive");
 	add_to_header_out("Content-Type", content_type_switch());

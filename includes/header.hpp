@@ -40,6 +40,5 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &out, Header const &value);
-string create_date();
 
 #endif

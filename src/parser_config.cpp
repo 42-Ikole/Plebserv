@@ -6,7 +6,7 @@
 
 using namespace std;
 
-vector<Server>	get_servers(vector<string> lines)
+static vector<Server>	get_servers(vector<string> lines)
 {
 	vector<Server>	res;
 	int				depth;
@@ -35,7 +35,7 @@ vector<Server>	get_servers(vector<string> lines)
 	return (res);
 }
 
-void	depth_check(vector<string> lines, string filename)
+static void	depth_check(vector<string> lines, string filename)
 {
 	int depth = 0;
 	for (size_t i = 0; i < lines.size(); i++)

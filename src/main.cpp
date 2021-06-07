@@ -9,7 +9,7 @@ std::vector<std::string> get_lines(std::string file);
 std::vector<Server> load_config(std::string filename);
 void	host_servers(vector<Server> serv);
 
-void	parser_test(char *filename)
+static void	parser_test(char *filename)
 {
 	try
 	{

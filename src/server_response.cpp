@@ -58,7 +58,7 @@ void	Server::err_code_file(string &body, int response_code)
 	}
 }
 
-void inline create_dirlist(string root, string path, string &body)
+static void inline create_dirlist(string root, string path, string &body)
 {
 	string res = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Directory listing of $DIR </title></head><body><h1>Directory listing of $DIR</h1><br><br>";
 	DIR *dir;
@@ -82,7 +82,7 @@ void inline create_dirlist(string root, string path, string &body)
 	ft::str_set(body, res);
 }
 
-void	read_file(string &rv, string path)
+static void	read_file(string &rv, string path)
 {
 	int fd;
 	int ret = 1;
@@ -191,7 +191,7 @@ string	Server::return_post(Header &h, Location *l, string &body)
 			if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
 				fd = open(full_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
 			else if (file_status.st_mode & S_IFDIR)
-				fd = open(string(full_path + "/" + create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+				fd = open(string(full_path + "/" + ft::create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
 			if (fd == -1)
 				throw Plebception(ERR_FD, "return_post", full_path);
 			write(fd, body.c_str(), body.length());

@@ -1,7 +1,5 @@
 #include <string>
 #include <vector>
-#include <string>
-#include <vector>
 #include <cstring>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -133,5 +131,18 @@ namespace ft
     {
         res.resize(to_push.size());
         memcpy(&res[0], to_push.c_str(), to_push.size());
+    }
+
+    string create_date()
+    {
+        time_t rawtime;
+        struct tm * timeinfo;
+        char buf[100];
+
+        time (&rawtime);
+        timeinfo = gmtime(&rawtime);
+
+        strftime(buf, 100, "%a, %d %b %G %H:%M:%S GMT", timeinfo);
+        return (string(buf));
     }
 }

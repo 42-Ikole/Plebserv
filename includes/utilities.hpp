@@ -13,6 +13,7 @@ namespace ft
 	char *strdup(char *str);
 	std::string to_string(int val);
 	void str_set(string &res, string to_push);
+	string create_date();
 }
 
 #endif
