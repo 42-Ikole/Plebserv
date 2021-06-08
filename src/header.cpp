@@ -185,7 +185,8 @@ string Header::create_header(int response_code, int body_length)
 	add_to_header_out("Server", "Plebserv/1.3.29 (Unix)");
 	add_to_header_out("Connection", "keep-alive");
 	add_to_header_out("Content-Type", content_type_switch());
-	add_to_header_out("Content-Length", ft::to_string(body_length));
+	if (_headers_out["Content-Length"].empty() == true)
+		add_to_header_out("Content-Length", ft::to_string(body_length));
 	add_to_header_out("Cookie", _cookies);
 
 	for (map<string, string>::const_iterator i = _headers_out.begin(); i != _headers_out.end(); i++)
