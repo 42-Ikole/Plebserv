@@ -127,9 +127,9 @@ static void	set_header(connect_data* cur_conn, size_t pos)
 	cur_conn->buf		 = cur_conn->buf.substr(pos + 4);
 	std::cout << "Setting header" << std::endl;
 	cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
-	if (cur_conn->_session_cookies)
+	if (cur_conn->_session_cookies.empty() == false)
 		cur_conn->h._cookies = cur_conn->_session_cookies + cur_conn->h._cookies;
-	if (cur_conn->h._cookies)
+	if (cur_conn->h._cookies.empty() == false)
 		cur_conn->_session_cookies = cur_conn->h._cookies;
 	std::cout << cur_conn->h << "\n\n" << std::endl;
 }
