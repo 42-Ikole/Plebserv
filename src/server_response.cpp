@@ -325,6 +325,11 @@ string	Server::create_response(Header& h, string& body)
 		cout << e.what() << response_code << endl;
 		return (h.create_header(response_code, 0));
 	}
+	if (l->redir.first != 0)
+	{
+		h.add_to_header_out("Location", l->redir.second);
+		return (h.create_header(l->redir.first, 0));
+	}
 	std::cout << "The match is " << l->location << std::endl;
 	if (h._method == "GET")
 		return (return_get(h, l));
