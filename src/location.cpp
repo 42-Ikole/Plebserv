@@ -41,6 +41,7 @@ static map<string, LoadFunction> create_map()
 	m["cgi"]					= &Location::set_cgi_pass;
 	m["upload_store"]			= &Location::set_upload_store;
 	m["client_max_body_size"]	= &Location::load_client_max_body_size;
+	m["redir"]					= &Location::set_redir;
 	return m;
 }
 
@@ -113,6 +114,16 @@ void Location::set_index_page(vector<string> val)
 		index_page.push_back(val[i]);
 }
 
+void Location::set_redir(vector<string> val)
+{
+	if (val.size() != 2)
+		throw Plebception(ERR_INVALID_AMOUNT_ARG, "set_redir", "");
+	if (val[0].find_first_not_of("0123456789") != string::npos)
+		throw Plebception(ERR_INVALID_ARG, "set_redir", val[0]);
+	redir.first = ft::stoi(val[0]);
+	redir.second = val[1];	
+}
+
 void Location::set_limit_except(vector<string> val)
 {
 	for (size_t i = 0; i < val.size(); i++)
@@ -133,12 +144,13 @@ void Location::set_limit_except(vector<string> val)
 Location& Location::operator=(Location const& tba)
 {
 	location		= tba.location;
+	redir			= tba.redir;
 	_methods		= tba._methods;
 	limit_except	= tba.limit_except;
 	root			= tba.root;
 	auto_index		= tba.auto_index;
 	index_page		= tba.index_page;
-	cgi			= tba.cgi;
+	cgi				= tba.cgi;
 	upload_store	= tba.upload_store;
 	max_body_size	= tba.max_body_size;
 	return *this;
@@ -149,6 +161,7 @@ std::ostream &operator<<(std::ostream& out, Location const& value)
 	out << "------------ LOCATION " << value.location << " --------" << std::endl;
 	out << std::setw(20) << "ROOT | " << value.root << std::endl;
 	out << std::setw(20) << "MAX_BODY | " << value.max_body_size << std::endl;
+	out << std::setw(20) << "REDIR | " << value.redir.first << " " << value.redir.second << std::endl;
 	out << std::setw(20) << "UPLOAD STORE | " << value.upload_store << std::endl;
 	out << std::setw(20) << "AUTO INDEX | " << (value.auto_index == false ? COLOR_RED : COLOR_GREEN) << value.auto_index << COLOR_RESET << std::endl;
 	out << std::setw(20) << "INDEX PAGE | ";
@@ -182,7 +195,7 @@ int	Location::parse_args(string str)
 	return (1);
 }
 
-Location::Location(vector<string> val) : max_body_size(16000), upload_store("/html/uploads"), auto_index(OFF),  location(val[0]), root("/html")
+Location::Location(vector<string> val) : max_body_size(16000), upload_store("/html/uploads"), auto_index(OFF),  location(val[0]), redir(0, ""), root("/html")
 {
 	index_page.push_back("index.html");
 	index_page.push_back("index");
