@@ -139,7 +139,10 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser, s
 	free(cwd_cstr);
 
 	env[0]	= create_env_var("AUTH_TYPE", h._headers_in["Authorization"]); // in header
-	env[1]	= create_env_var("CONTENT_LENGTH", h._headers_in["Content-Length"]);	// is alleen voor POST // in header
+	if (h._chonky)
+		env[1] = create_env_var("CONTENT_LENGTH", ft::to_string(body.size()));
+	else
+		env[1] = create_env_var("CONTENT_LENGTH", h._headers_in["Content-Length"]);	// is alleen voor POST // in header
 	content_type = (h._method == "GET" ? "text/html" : "application/x-www-form-urlencoded");
 	env[2]	= create_env_var("CONTENT_TYPE", content_type);
 	env[3]	= create_env_var("GATEWAY_INTERFACE", "CGI/1.1"); 
