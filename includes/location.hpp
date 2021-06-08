@@ -23,18 +23,12 @@
 
 # include <vector>
 # include <iostream>
-# include <map>
-# include <string>
-# include <iomanip>
-# include <exception>
-# include <header.hpp> 
 # include <unistd.h>
 # include <fcntl.h>
-# include <sys/types.h>
 # include <sys/stat.h>
-# include <unistd.h>
-# include <cgi.hpp>
 
+# include <cgi.hpp>
+# include <header.hpp> 
 
 class Server;
 using namespace std;
@@ -65,23 +59,24 @@ typedef struct	s_lim_except
 
 class Location
 {
-	public:
+	private:
 		vector<http_methods>	_methods;
-		vector<string>			_limit_except;
-		string					_root;
-		string					_upload_store;
-		bool					_auto_index;
-		vector<string>			_index_page;
-		vector<Cgi>				_cgi;
-		size_t					_max_body_size;
-		string					_location;
+	public:
+		size_t					max_body_size;
+		vector<string>			limit_except;
+		string					upload_store;
+		vector<string>			index_page;
+		bool					auto_index;
+		string					location;
+		string					root;
+		vector<Cgi>				cgi;
 		Location();
 	
 	public:
 		virtual ~Location();
 		Location(vector<string> input);
-		Location(const Location &tbc);
-		Location & operator=(const Location &tba);
+		Location(const Location& tbc);
+		Location& operator=(const Location& tba);
 
 		void 	call(const string& s, vector<string> val);
 		int		parse_args(string str);
@@ -92,13 +87,13 @@ class Location
 		void 	set_cgi_pass(vector<string> val);
 		void	set_upload_store(vector<string> val);
 		void	load_client_max_body_size(vector<string> val);
-		bool	run_cgi(Header &h, string &body, string file_path, Server &ser, size_t &size);
-		bool	method_allowed(Header &h, int &response_code);
+		bool	run_cgi(Header& h, string& body, string file_path, Server& ser, size_t& size);
+		bool	method_allowed(Header& h, int& response_code);
 
-		char	*read_file(size_t len);
-		string	find_file(Header h, int &response_code);
+		char*	read_file(size_t len);
+		string	find_file(Header h, int& response_code);
 };
 
-std::ostream &operator<<(std::ostream &out, Location const &value);
+std::ostream &operator<<(std::ostream& out, Location const& value);
 
 #endif

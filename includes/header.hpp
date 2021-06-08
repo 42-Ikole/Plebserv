@@ -34,20 +34,20 @@ using namespace std;
 class Header
 {
 public:
-	string	_method;
-	string	_path;
-	string	_query;
-	string	_extension;
-	string	_http_version;
-	bool	_chonky;
+	string				_method;
+	string				_path;
+	string				_query;
+	string				_extension;
+	string				_http_version;
+	bool				_chonky;
 	map<string, string> _headers_in;
 	map<string, string> _headers_out;
+	
 public:
 	Header();
 	Header(vector<std::string> in);
-	Header &operator=(const Header &h);
-	Header(const Header &h);
-	// virtual ~Header();
+	Header& operator=(const Header& h);
+	Header(const Header& h);
 
 	void	Parse_request(string request);
 	string	content_type_switch();
@@ -55,11 +55,11 @@ public:
 	void	load_headers_in(vector<string> in);
 	void	add_to_header_out(string val, string key);
 	void	add_to_header_out(vector<string> head);
-	string	decode_url(string &str);
+	string	decode_url(string& str);
 	int		validate_header();
 
 };
 
-std::ostream &operator<<(std::ostream &out, Header const &value);
+std::ostream &operator<<(std::ostream& out, Header const& value);
 
 #endif

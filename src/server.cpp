@@ -42,48 +42,47 @@ static map<string, LoadFunction> create_map()
 
 static map<string, LoadFunction> g_server_load_map = create_map();
 
-Server::Server(Server const &tbc)
+Server::Server(Server const& tbc)
 {
 	*this = tbc;
 }
 
 Server::~Server() {}
 
-Server	&Server::operator=(Server const &tba)
+Server	&Server::operator=(Server const& tba)
 {
-	_port = tba._port;
-	_server = tba._server;
-	_server_identifier = tba._server_identifier;
-	_error_pages = tba._error_pages;
-	_locations = tba._locations;
+	port = tba.port;
+	server = tba.server;
+	server_identifier = tba.server_identifier;
+	error_pages = tba.error_pages;
+	locations = tba.locations;
 	return (*this);
 }
 
-std::ostream &operator<<(std::ostream &out, Server const &value)
+std::ostream &operator<<(std::ostream& out, Server const& value)
 {
-	out << "------------ SERVER " << value._server << "--------" << std::endl;
+	out << "------------ SERVER " << value.server << "--------" << std::endl;
 	out << std::setw(15) << "LISTEN | ";
-	for (size_t i = 0; i < value._port.size(); i++)
-		out << value._port[i] << " ";
+	for (size_t i = 0; i < value.port.size(); i++)
+		out << value.port[i] << " ";
 	out << std::endl << std::setw(15) << "IDENTIFERS | ";
-	for (size_t i = 0; i < value._server_identifier.size(); i++)
-		out << "{" << value._server_identifier[i] << "} ";
+	for (size_t i = 0; i < value.server_identifier.size(); i++)
+		out << "{" << value.server_identifier[i] << "} ";
 	out << std::endl << std::setw(15) << "ERROR PAGES | ";
-	for (std::map<int, std::string>::const_iterator i = value._error_pages.begin(); i != value._error_pages.end(); ++i)
+	for (std::map<int, std::string>::const_iterator i = value.error_pages.begin(); i != value.error_pages.end(); ++i)
 		out << "{" << i->first << ' ' << i->second << "} ";
 	out << std::endl << std::setw(15) << "LOCATIONS | " << endl;
-	for (size_t i = 0; i < value._locations.size(); i++)
-		out << value._locations[i] << " ";
+	for (size_t i = 0; i < value.locations.size(); i++)
+		out << value.locations[i] << " ";
 	out << std::endl << "---------------- DONE ----------------" << std::endl;
 	return (out);
 }
 
-Server::Server(vector<string> input) :
-	_server(""), _server_identifier()
+Server::Server(vector<string> input) : server_identifier(), server("")
 {
-	_server_identifier.push_back("");
-	_port.push_back(80);
-	_port.push_back(8000);
+	server_identifier.push_back("");
+	port.push_back(80);
+	port.push_back(8000);
 	for (size_t x = 1; x < input.size();)
 		x = parse_args(input, x);
 }
@@ -96,7 +95,7 @@ void	Server::call(const string& s, vector<string> val)
 	(this->*func)(val);
 }
 
-void	Server::check_servername(string &val)
+void	Server::check_servername(string& val)
 {
 	vector<string> tokens = ft::split(val, ".");
 	if ((tokens.size() == 3 && tokens[0] != "www") || tokens.size() > 3)
@@ -106,7 +105,7 @@ void	Server::check_servername(string &val)
 	string res = tokens[0];
 	if (tokens.size() == 2)
 		res += '.' + tokens[1];
-	if (_server != "" && _server.find(res) == string::npos)
+	if (server != "" && server.find(res) == string::npos)
 		throw Plebception(ERR_MULTIPLE_DOM, "listen2", res);
 }
 
@@ -116,7 +115,7 @@ void	Server::check_port(string &val)
 		throw Plebception(ERR_INVALID_VALUE, "listen3", val);
 }
 
-vector<string>	Server::check_listen(string &val)
+vector<string>	Server::check_listen(string& val)
 {
 	vector<string> tmp = ft::split(val, ":");
 
@@ -136,53 +135,55 @@ vector<string>	Server::check_listen(string &val)
 
 void	Server::load_ports(vector<string> val)
 {
-	_port.clear();
+	port.clear();
 	for (size_t i = 0; i < val.size(); i++)
 	{
 		vector<string> tmp = check_listen(val[i]);
 		for (size_t j = 0; j < tmp.size(); j++)
 		{
 			if (tmp[j].find_first_not_of("0123456789") != string::npos)
-				_server = tmp[j];
+				server = tmp[j];
 			else
-				_port.push_back(ft::stoi(tmp[j]));
+				port.push_back(ft::stoi(tmp[j]));
 		}
 	}
 }
 
 void	Server::load_server_identifier(vector<string> val)
 {
-	_server_identifier.clear();
+	server_identifier.clear();
 	for (size_t i = 0; i < val.size(); i++)
 	{
 		check_servername(val[i]);
-		_server_identifier.push_back(val[i]);
-		if (_server == "")
-			_server = val[i];
+		server_identifier.push_back(val[i]);
+		if (server == "")
+			server = val[i];
 	}
 }
 
 void	Server::load_error_page(vector<string> val)
 {
+	struct stat st;
+
 	if (val.size() > 2)
 		throw Plebception(ERR_TOO_MANY_ARG, "error_page", val[2]);
 	else if (val.size() < 2)
 		throw Plebception(ERR_TOO_FEW_ARG, "error_page", val[0]);
 	else if (val[0].find_first_not_of("0123456789") != string::npos)
 		throw Plebception(ERR_INVALID_VALUE, "error_page", val[0]);
+
 	int code = ft::stoi(val[0]);
+	
 	if (code < 100 || code >= 600)
 		throw Plebception(ERR_OUT_OF_RANGE, "error_page", val[0]);
-
-	struct stat st;
 	if (stat(val[1].c_str(), &st) == -1 || !(st.st_mode & S_IFREG))
 		throw Plebception(ERR_INVALID_ARG, "error_page", val[1]);
-	_error_pages[code] = val[1];
+	error_pages[code] = val[1];
 }
 
 void	Server::load_locations(vector<string> val)
 {
-	_locations.push_back(Location(val));
+	locations.push_back(Location(val));
 }
 
 static bool verify_line(string s, char delim) {
@@ -197,14 +198,14 @@ static void	validate_line(string token, string s)
 		throw Plebception(ERR_INVALID_TOKEN, token, s);
 }
 
-static void trim_lines(vector<string> &args)
+static void trim_lines(vector<string>& args)
 {
 	for (size_t j = 0; j < args.size(); j++)
 		if (args[j][args[j].size() - 1] == ';')
 			args[j] = ft::trim_char(args[j], ';');
 }
 
-static void	parse_location_block(vector<string> &args, vector<string> &arr, vector<string> &tokens, size_t &i)
+static void	parse_location_block(vector<string>& args, vector<string>& arr, vector<string>& tokens, size_t& i)
 {
 	args.push_back(tokens[1]);
 	for(i++; i < arr.size() && arr[i].find('}') == string::npos; i++)
@@ -220,11 +221,12 @@ int Server::parse_args(vector<string> arr, int index)
 {
 	std::vector<string> tokens;
 	std::vector<string> args;
-	size_t i;
+	size_t 				i;
+	string 				s;
 
 	for (i = index; i < arr.size(); i++)
 	{
-		string s = arr[i];
+		s = arr[i];
 		if (!s.size())
 			continue ;
 		tokens = ft::split(s);

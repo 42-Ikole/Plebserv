@@ -66,9 +66,9 @@ class	Fatal : public exception
 	public:
 		Fatal(string msg, string type, string val);
 		virtual ~Fatal() throw();
-		Fatal(const Fatal &tbc);
-		Fatal & operator=(const Fatal &tba);
-		const char *what() const throw();
+		Fatal(const Fatal& tbc);
+		Fatal& operator=(const Fatal& tba);
+		const char* what() const throw();
 };
 
 class Plebception : public Fatal
@@ -78,8 +78,8 @@ class Plebception : public Fatal
 	public:
 		Plebception(string msg, string type, string val);
 		virtual ~Plebception() throw();
-		Plebception(const Plebception &tbc);
-		Plebception & operator=(const Plebception &tba);
+		Plebception(const Plebception& tbc);
+		Plebception& operator=(const Plebception& tba);
 };
 
 #endif
