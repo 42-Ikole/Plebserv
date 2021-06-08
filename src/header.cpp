@@ -18,17 +18,18 @@
 /*																					 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include <header.hpp>
 #include <iostream>
 #include <exception>
 #include <map>
 #include <ctime>
 #include <stdlib.h>
+
+#include <header.hpp>
 #include <http_responses.hpp>
 
 using namespace std;
 
-string	Header::decode_url(string &str)
+string	Header::decode_url(string& str)
 {
 	char	rp;
 
@@ -61,7 +62,7 @@ void	Header::Parse_request(string request)
 			_extension = _path.substr(_path.find_last_of('.'), string::npos);
 		_http_version = parsed[2];
 	}
-	catch (exception &e)
+	catch (exception& e)
 	{
 		cout << e.what() << endl;
 		throw Plebception(ERR_INVALID_VALUE, "parsing request", "");
@@ -70,6 +71,7 @@ void	Header::Parse_request(string request)
 
 void	Header::load_headers_in(vector<string> in)
 {
+<<<<<<< HEAD
 	for (size_t i = 0; i < in.size(); i++)
 	{
 		if (in[i].compare(0, 10 ,"Set-Cookie") == 0)
@@ -79,12 +81,19 @@ void	Header::load_headers_in(vector<string> in)
 		}
 		else
 			_headers_in[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
+=======
+	size_t pos = 0;
+	for (size_t i = 0; i < in.size() - 1; i++)
+	{
+		pos = in[i].find(":");
+		_headers_in[in[i].substr(0, pos)] = in[i].substr(pos + 2, string::npos);
+>>>>>>> ee6772d8b68aca06c00bb089280a4b62cc33f66c
 	}
 }
 
 Header::Header() {}
 
-Header	&Header::operator=(const Header &h)
+Header&	Header::operator=(const Header& h)
 {
 	this->_method		= h._method;
 	this->_cookies		= h._cookies;
@@ -98,7 +107,7 @@ Header	&Header::operator=(const Header &h)
 	return *this;
 }
 
-Header::Header(const Header &h)
+Header::Header(const Header& h)
 {
 	*this = h;
 }
@@ -143,21 +152,22 @@ string	Header::content_type_switch()
 
 void	Header::add_to_header_out(string val, string key)
 {
-	// if (!_headers_out[val].empty())
-	// 	_headers_out_len -= _headers_out[val].size() - val.size() - 3;
 	_headers_out[val] = key;
-	// _headers_out_len += val.size() + key.size() + 3;
 }
 
 void	Header::add_to_header_out(vector<string> head)
 {
+	size_t pos;
+	string val;
+	string key;
+
 	for (size_t i = 0; i < head.size(); i++)
 	{
-		size_t pos = head[i].find(":");
+		pos = head[i].find(":");
 		if (pos != string::npos)
 		{
-			string val = head[i].substr(0, pos);
-			string key = head[i].substr(pos + 2);
+			val = head[i].substr(0, pos);
+			key = head[i].substr(pos + 2);
 			_headers_out[val] = key;
 		}
 		else
@@ -189,10 +199,9 @@ string Header::create_header(int response_code, int body_length)
 	return (res);
 }
 
-std::ostream &operator<<(std::ostream &out, Header const &value)
+std::ostream& operator<<(std::ostream& out, Header const& value)
 {
 	out << "------------ HEADER --------" << std::endl;
-
 	out << std::setw(15) << "REQUEST LINE | " << "[" << value._method << "] [" << value._path << "]" << std::endl;
 	out << std::setw(15) << "QUERY | " << value._query << std::endl;
 	out << std::setw(15) << "EXTENSION | " << value._extension << std::endl;
@@ -200,7 +209,6 @@ std::ostream &operator<<(std::ostream &out, Header const &value)
 	out << std::setw(15) << "OTHER HEADERS:\n";
 	for (map<string, string>::const_iterator i = value._headers_in.begin(); i != value._headers_in.end(); i++)
 		out << i->first << ": " <<  i->second << std::endl;
-
 	out << "------------ DONE ----------" << std::endl;
 	return (out);
 }

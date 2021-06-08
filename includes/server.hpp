@@ -21,11 +21,12 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-#include <algorithm>
-#include <vector>
-#include <string>
-#include <map>
-#include <iostream>
+# include <algorithm>
+# include <vector>
+# include <string>
+# include <map>
+# include <iostream>
+
 # include <location.hpp>
 # include <plebception.hpp>
 # include <server.hpp>
@@ -36,26 +37,26 @@ using namespace std;
 
 typedef struct	s_err_page
 {
-	int		html_error_code;
-	string	location;
-}	err_page;
+	int			html_error_code;
+	string		location;
+}				err_page;
 
 class Server
 {
 	public:
-		vector<int>					_port;
-		string						_server;
-		vector<string>				_server_identifier;
-		map<int, string>			_error_pages;
-		vector<Location>			_locations;
+		vector<string>				server_identifier;
+		map<int, string>			error_pages;
+		vector<Location>			locations;
+		string						server;
+		vector<int>					port;
 		
 		Server();
 
 	public:
 		virtual ~Server();
 		Server(vector<string> input);
-		Server(const Server &tbc);
-		Server & operator=(const Server &tba);
+		Server(const Server& tbc);
+		Server& operator=(const Server& tba);
 
 		void 	call(const string& s, vector<string> val);
 		int		parse_args(vector<string> arr, int i);
@@ -64,28 +65,27 @@ class Server
 		void	load_locations(vector<string> val);
 		void	load_error_page(vector<string> val);
 		
-		vector<string>	check_listen(string &val);
-		void			check_port(string &val);
-		void			check_servername(string &val);
+		vector<string>	check_listen(string& val);
+		void			check_port(string& val);
+		void			check_servername(string& val);
 
 		Location		*match_location(string path);
-		string	create_response(Header &h, string &body);
+		string	create_response(Header& h, string& body);
 
-		void			err_code_file(string &body, int response_code);
+		void			err_code_file(string& body, int response_code);
 		inline size_t 	get_error_file_len(int response_code);
 
-		string	return_get(Header &h, Location *l);
-		string	return_post(Header &h, Location *l, string &body);
-		string	return_delete(Header &h, Location *l);
-		string	return_options(Header &h, Location *l);
-		string	return_put(Header &h, Location *l, string &body);
-		string	return_head(Header &h, Location *l);
-		string	return_connect(Header &h, Location *l);
-		string	return_trace(Header &h, Location *l);
+		string	return_get(Header& h, Location* l);
+		string	return_post(Header& h, Location* l, string& body);
+		string	return_delete(Header& h, Location* l);
+		string	return_options(Header& h, Location* l);
+		string	return_put(Header& h, Location* l, string& body);
+		string	return_head(Header& h, Location* l);
+		string	return_connect(Header& h, Location* l);
+		string	return_trace(Header& h, Location* l);
 
 };
 
-std::ostream &operator<<(std::ostream &out, Server const &value);
-
+std::ostream &operator<<(std::ostream& out, Server const& value);
 
 #endif

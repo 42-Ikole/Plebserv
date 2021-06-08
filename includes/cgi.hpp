@@ -35,17 +35,17 @@ public:
 	string _match;
 public:
 	Cgi(string path, string match);
+	Cgi(const Cgi& tbc);
 	~Cgi();
-	Cgi(const Cgi &tbc);
-	Cgi & operator=(const Cgi &tba);
+	Cgi& operator=(const Cgi& tba);
 
-	void cgi_response(Header &h, string &body, string file_path, Server &ser, size_t &size);
-	void read_response(char** env, string &body, string file_path);
-	char *create_env_var(string key, string value);
-	void cgi_child(int fdin[2], int fdout[2], char *args[3], char **env);
-	void cgi_parent(int fdin[2], int fdout[2], pid_t id, string &body);
+	void	cgi_response(Header& h, string& body, string file_path, Server& ser, size_t& size);
+	void	read_response(char** env, string& body, string file_path);
+	char*	create_env_var(string key, string value);
+	void	cgi_child(int fdin[2], int fdout[2], char* args[3], char** env);
+	void	cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body);
 };
 
-std::ostream &operator<<(std::ostream &out, Cgi const &value);
+std::ostream &operator<<(std::ostream& out, Cgi const& value);
 
 #endif

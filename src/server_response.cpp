@@ -18,15 +18,16 @@
 /*																					 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include <server.hpp>
 #include <fcntl.h>
 #include <unistd.h>
-# include <sys/types.h>
-# include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <map>
 #include <dirent.h>
 #include <string>
+
+#include <server.hpp>
 #include <http_responses.hpp>
 
 #define HYPERLINK_OPEN	"<a href='"
@@ -34,7 +35,7 @@
 
 static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Plebbin reeee</title></head><body style='background-color: #f72d49; padding: 50px 10vw 0 10vw; color: #3f3f3f;'><h1>Error: $error_code</h1><p style='size: 15px;'>$error_message</p></body></html>";
 
-static void		default_error_page(string &body, int response_code)
+static void		default_error_page(string& body, int response_code)
 {
 	string to_push = err_default;
 	to_push.replace(to_push.find("$error_code"), 11, ft::to_string(response_code));
@@ -42,22 +43,22 @@ static void		default_error_page(string &body, int response_code)
 	ft::str_set(body, to_push);
 }
 
-void	Server::err_code_file(string &body, int response_code)
+void	Server::err_code_file(string& body, int response_code)
 {
-	int fd;
-	int ret = 1;
-	char buf[1025];
+	int		fd;
+	int		ret = 1;
+	char	buf[1025];
 
-	if (_error_pages[response_code].empty())
+	if (error_pages[response_code].empty())
 		default_error_page(body, response_code);
 	else
 	{
 		try
 		{
-			if ((fd = open(_error_pages[response_code].c_str(), O_RDONLY)) == -1)
-				throw Plebception(ERR_FD, "err_read_file", _error_pages[response_code]);
+			if ((fd = open(error_pages[response_code].c_str(), O_RDONLY)) == -1)
+				throw Plebception(ERR_FD, "err_read_file", error_pages[response_code]);
 		}
-		catch (Plebception &msg)
+		catch (Plebception& msg)
 		{
 			cerr << msg.what() << " Falling back to server default!" << endl;
 			default_error_page(body, response_code);
@@ -67,7 +68,7 @@ void	Server::err_code_file(string &body, int response_code)
 		{
 			ret = read(fd, &buf, 1024);
 			if (ret < 0)
-				throw Plebception(ERR_READ, "err_read_file", _error_pages[response_code]);
+				throw Plebception(ERR_READ, "err_read_file", error_pages[response_code]);
 			if (ret == 0)
 				break ;
 			buf[ret] = '\0';
@@ -78,11 +79,11 @@ void	Server::err_code_file(string &body, int response_code)
 	}
 }
 
-static void inline create_dirlist(string root, string path, string &body)
+static void inline create_dirlist(string root, string path, string& body)
 {
-	string res = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Directory listing of $DIR </title></head><body><h1>Directory listing of $DIR</h1><br><br>";
-	DIR *dir;
-	struct dirent *cur_file;
+	string			res = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Directory listing of $DIR </title></head><body><h1>Directory listing of $DIR</h1><br><br>";
+	DIR*			dir;
+	struct dirent*	cur_file;
 	
 	dir = opendir(string((root + path)).c_str());
 	for (size_t pos = res.find("$DIR"); pos != string::npos; pos = res.find("$DIR"))
@@ -102,11 +103,11 @@ static void inline create_dirlist(string root, string path, string &body)
 	ft::str_set(body, res);
 }
 
-static void	read_file(string &rv, string path)
+static void	read_file(string&  rv, string path)
 {
-	int fd;
-	int ret = 1;
-	char buf[1025];
+	int		fd;
+	int		ret = 1;
+	char	buf[1025];
 
 	if ((fd = open(path.c_str(), O_RDONLY)) == -1)
 		throw Plebception(ERR_FD, "read_file", path);
@@ -122,25 +123,25 @@ static void	read_file(string &rv, string path)
 	}
 }
 
-Location	*Server::match_location(string path)
+Location*	Server::match_location(string path)
 {
 	Location *closest_match = 0;
 
-	for (size_t i = 0; i < _locations.size(); i++)
+	for (size_t i = 0; i < locations.size(); i++)
 	{
-		std::cout << "Matching [" << _locations[i]._location << "] with [" << path << "]\n";
-		if (!strncmp(_locations[i]._location.c_str(), path.c_str(), _locations[i]._location.length()))
-			if (!closest_match || _locations[i]._location.length() > closest_match->_location.length())
-				closest_match = &_locations[i];
+		std::cout << "Matching [" << locations[i].location << "] with [" << path << "]\n";
+		if (!strncmp(locations[i].location.c_str(), path.c_str(), locations[i].location.length()))
+			if (!closest_match || locations[i].location.length() > closest_match->location.length())
+				closest_match = &locations[i];
 	}
 	return (closest_match);
 }
 
-string	Server::return_get(Header &h, Location *l)
+string	Server::return_get(Header& h, Location* l)
 {
-	int response_code = 200;
-	size_t body_size = 0;
-	string body;
+	int		response_code = 200;
+	size_t	body_size = 0;
+	string	body;
 
 	try
 	{
@@ -150,11 +151,11 @@ string	Server::return_get(Header &h, Location *l)
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
-		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == ON)
+		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->auto_index << endl;
+		if (response_code == 404 && ft::ends_with(h._path, "/") && l->auto_index == ON)
 		{
 			response_code = 200;
-			create_dirlist(l->_root, h._path, body);
+			create_dirlist(l->root, h._path, body);
 		}
 		else
 		{
@@ -166,26 +167,14 @@ string	Server::return_get(Header &h, Location *l)
 	return (h.create_header(response_code, body.size()) + string(body));
 }
 
-/*
-	POST
-
-	if path == cgi
-		run cgi && return
-	if path == dir
-		store data in location or this dir
-	if path == file
-		revert to get request
-
-*/
-
-string	Server::return_post(Header &h, Location *l, string &body)
+string	Server::return_post(Header& h, Location* l, string& body)
 {
-	int response_code = 200;
-	size_t body_size = 0;
+	int		response_code = 200;
+	size_t	body_size = 0;
 
 	try
 	{
-		if (body.size() > l->_max_body_size)
+		if (body.size() > l->max_body_size)
 		{
 			response_code = 413;
 			body.clear();
@@ -206,8 +195,9 @@ string	Server::return_post(Header &h, Location *l, string &body)
 		else
 		{
 			int fd = 0;
-			string full_path = l->_root + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
+			string full_path = l->root + "/" + h._path.replace(h._path.find(l->location), l->location.size(), "");
 			struct stat file_status;
+
 			if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
 				fd = open(full_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
 			else if (file_status.st_mode & S_IFDIR)
@@ -222,35 +212,31 @@ string	Server::return_post(Header &h, Location *l, string &body)
 	return (h.create_header(response_code, body.size()) + string(body));
 }
 
-string	Server::return_delete(Header &h, Location *l)
+string	Server::return_delete(Header& h, Location* l)
 {
-	int response_code = 204;
-	string full_path = l->_root + h._path;
+	int		response_code = 204;
+	string	full_path = l->root + h._path;
 
 	if (unlink(full_path.c_str()) == -1)
 		response_code = 403;
 	return (h.create_header(response_code, 0));
 }
 
-string	Server::return_put(Header &h, Location *l, string &body)
+string	Server::return_put(Header& h, Location* l, string& body)
 {
-	string	full_path = l->_upload_store + "/" + h._path.replace(h._path.find(l->_location), l->_location.size(), "");
-	struct stat file_status;
-	int		response_code = 201;
-	int		fd;
-	int		ret = 1;
-	size_t	i = 0;
+	string		full_path = l->upload_store + "/" + h._path.replace(h._path.find(l->location), l->location.size(), "");
+	struct stat	file_status;
+	int			response_code = 201;
+	int			fd;
 
 	cout << "Path to save to: " << full_path << endl;
-
-	if (body.size() > l->_max_body_size)
+	if (body.size() > l->max_body_size)
 	{
 		response_code = 413;
 		body.clear();
 		err_code_file(body, response_code);
 		return (h.create_header(response_code, body.size()) + string(body));
 	}
-
 	if (stat(full_path.c_str(), &file_status) == -1)
 		fd = open(full_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0777);
 	else
@@ -262,7 +248,8 @@ string	Server::return_put(Header &h, Location *l, string &body)
 		throw Plebception(ERR_FD, "opening file failed", full_path);
 	else
 	{
-		while (ret > 0)
+		int	ret = 1;
+		for (size_t i = 0; ret > 0; i += ret)
 		{
 			ret = write(fd, &body[i], body.size() - i);
 			if (ret == -1)
@@ -275,20 +262,20 @@ string	Server::return_put(Header &h, Location *l, string &body)
 }
 
 
-string	Server::return_options(Header &h, Location *l)
+string	Server::return_options(Header& h, Location* l)
 {
 	string header;
 	string allowed;
 
-	if (l->_limit_except.size() == 0)
+	if (l->limit_except.size() == 0)
 		allowed = "OPTIONS, GET, HEAD, POST, PUT, DELETE, CONNECT, TRACE";
 	else
-		for (size_t i = 0; i < l->_limit_except.size(); i++)
+		for (size_t i = 0; i < l->limit_except.size(); i++)
 		{
-			if (i + 1 == l->_limit_except.size())
-				allowed += l->_limit_except[i];
+			if (i + 1 == l->limit_except.size())
+				allowed += l->limit_except[i];
 			else
-				allowed += l->_limit_except[i] + ", ";
+				allowed += l->limit_except[i] + ", ";
 		}
 	std::cout << "Allowed: " << allowed << endl;
 	h.add_to_header_out("Allow", allowed);
@@ -296,11 +283,11 @@ string	Server::return_options(Header &h, Location *l)
 	return (header);
 }
 
-string	Server::return_head(Header &h, Location *l)
+string	Server::return_head(Header& h, Location* l)
 {
-	string body;
-	size_t body_size = 0;
-	int response_code = 200;
+	string 	body;
+	size_t 	body_size = 0;
+	int		response_code = 200;
 
 	try
 	{
@@ -310,11 +297,10 @@ string	Server::return_head(Header &h, Location *l)
 	}
 	catch(const exception& e)
 	{
-		// std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->_auto_index << endl;
-		if (response_code == 404 && ft::ends_with(h._path, "/") && l->_auto_index == ON)
+		if (response_code == 404 && ft::ends_with(h._path, "/") && l->auto_index == ON)
 		{
 			response_code = 200;
-			create_dirlist(l->_root, h._path, body);
+			create_dirlist(l->root, h._path, body);
 		}
 		else
 		{
@@ -326,19 +312,20 @@ string	Server::return_head(Header &h, Location *l)
 	return (h.create_header(response_code, body_size));
 }
 
-string	Server::create_response(Header &h, string &body)
+string	Server::create_response(Header& h, string& body)
 {
-	int response_code = 200;
-	Location *l = match_location(h._path);
+	int			response_code = 200;
+	Location*	l = match_location(h._path);
+
 	if (l == NULL)
 		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
 	try {l->method_allowed(h, response_code); }
-	catch (std::exception &e)
+	catch (std::exception& e)
 	{
 		cout << e.what() << response_code << endl;
 		return (h.create_header(response_code, 0));
 	}
-	std::cout << "The match is " << l->_location << std::endl;
+	std::cout << "The match is " << l->location << std::endl;
 	if (h._method == "GET")
 		return (return_get(h, l));
 	if (h._method == "POST")

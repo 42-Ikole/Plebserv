@@ -30,12 +30,12 @@ Fatal::Fatal(string msg, string type, string val)
 Fatal::~Fatal() throw()
 {}
 
-Fatal::Fatal(const Fatal &tbc)
+Fatal::Fatal(const Fatal& tbc)
 {
 	*this = tbc;
 }
 
-Fatal	&Fatal::operator=(const Fatal &tba)
+Fatal	&Fatal::operator=(const Fatal& tba)
 {
 	this->_msg = tba._msg;
 	return (*this);
@@ -50,11 +50,11 @@ Plebception::Plebception(string msg, string type, string val) : Fatal(msg, type,
 {
 }
 
-Plebception::Plebception(const Plebception &tbc) : Fatal(tbc)
+Plebception::Plebception(const Plebception& tbc) : Fatal(tbc)
 {
 }
 
-Plebception & Plebception::operator=(const Plebception &tba)
+Plebception& Plebception::operator=(const Plebception&tba)
 {
 	this->_msg = tba._msg;
 	return *this;

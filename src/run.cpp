@@ -20,7 +20,7 @@
 
 #include <run.hpp>
 
-static void accept_connect(fd_set &current_sockets, server_data &data, vector<connect_data> &open_connections)	
+static void accept_connect(fd_set& current_sockets, server_data& data, vector<connect_data>& open_connections)	
 {
 	connect_data opencon = connect_data();
 	do
@@ -42,9 +42,9 @@ static void accept_connect(fd_set &current_sockets, server_data &data, vector<co
 	} while(opencon.fd != -1);
 }
 
-static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
+static string read_sok(size_t buff_size, bool& close_conn, size_t& fd)
 {
-	char	*buffer;
+	char*	buffer;
 	int		rc;
 	string	ret;
 	
@@ -55,7 +55,6 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	if (rc < 0)
 	{
 		close_conn = true;
-		// throw Plebception(ERR_READ_SOCK, "recv", ft::to_string(fd));
 		std::cout << "error kanker sukkel" << std::endl;
 		free(buffer);
 		return "";
@@ -69,13 +68,12 @@ static string read_sok(size_t buff_size, bool & close_conn, size_t & fd)
 	}
 	buffer[rc] = 0;
 	std::cout << "Bytes recieved " << rc << std::endl;
-	ret.resize(rc);
-	memcpy(&ret[0], buffer, rc);
+	ft::str_set(ret, buffer);
 	free(buffer);
 	return (ret);
 }
 
-static void	get_chunk_body(connect_data * cur_conn, size_t pos, size_t body_size)
+static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
 {
 	cur_conn->buf = cur_conn->buf.substr(pos + 2);
 	if (body_size > 0)
@@ -94,7 +92,7 @@ static void	get_chunk_body(connect_data * cur_conn, size_t pos, size_t body_size
 			cur_conn->ready = true;
 			cout << "chonky boi is ready\n" << cur_conn->response << endl;
 		}
-		catch (std::exception &e)
+		catch (std::exception& e)
 		{
 			std::cout << e.what() << std::endl;
 			cur_conn->clear(); // error code something
@@ -102,7 +100,7 @@ static void	get_chunk_body(connect_data * cur_conn, size_t pos, size_t body_size
 	}
 }
 
-void	unchunk_chunk(connect_data * cur_conn)
+void	unchunk_chunk(connect_data* cur_conn)
 {
 	size_t	pos;
 	size_t	body_size;
@@ -123,7 +121,7 @@ void	unchunk_chunk(connect_data * cur_conn)
 	get_chunk_body(cur_conn, pos, body_size);
 }
 
-static void	set_header(connect_data * cur_conn, size_t pos)
+static void	set_header(connect_data* cur_conn, size_t pos)
 {
 	cur_conn->header_raw = cur_conn->buf.substr(0, pos);
 	cur_conn->buf		 = cur_conn->buf.substr(pos + 4);
@@ -136,7 +134,7 @@ static void	set_header(connect_data * cur_conn, size_t pos)
 	std::cout << cur_conn->h << "\n\n" << std::endl;
 }
 
-static void	normal_response(connect_data * cur_conn)
+static void	normal_response(connect_data* cur_conn)
 {
 	size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
 
@@ -146,13 +144,13 @@ static void	normal_response(connect_data * cur_conn)
 	cur_conn->ready = true;
 }
 
-static void	create_custom_response(connect_data *cur_conn, string data)
+static void	create_custom_response(connect_data* cur_conn, string data)
 {
 	cur_conn->response = data;
 	cur_conn->ready = true;
 }
 
-static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn)
+static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn)
 {
 	string ret;
 
@@ -176,10 +174,10 @@ static void	read_request(bool & close_conn, size_t & fd, connect_data * cur_conn
 		unchunk_chunk(cur_conn);
 }
 
-static void	handle_connection(fd_set &current_sockets, vector<connect_data> &open_connections, size_t cur_fd, size_t &fd)
+static void	handle_connection(fd_set& current_sockets, vector<connect_data>& open_connections, size_t cur_fd, size_t& fd)
 {
-	bool close_conn = false;
-	connect_data	*cur_conn;
+	bool 			close_conn = false;
+	connect_data*	cur_conn;
 
 	cur_conn = &open_connections[cur_fd];
 	update_action(cur_conn);
@@ -190,8 +188,8 @@ static void	handle_connection(fd_set &current_sockets, vector<connect_data> &ope
 
 static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 {
-	connect_data *cur_conn = get_cur_conn(fd, open_connections);
-	ssize_t len = 0;
+	connect_data* 	cur_conn = get_cur_conn(fd, open_connections);
+	ssize_t 		len = 0;
 
 	if (!cur_conn || cur_conn->ready == false)
 		return ;
@@ -221,7 +219,7 @@ static fd_set	get_response_fd(vector<connect_data> &open_connections)
 	return ret;
 }
 
-static void	accept_handle_connection(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections, fd_set &read_sok, size_t &fd_match)
+static void	accept_handle_connection(fd_set& current_sockets, vector<server_data>& data, vector<connect_data>& open_connections, fd_set& read_sok, size_t& fd_match)
 {
 	int		cur_fd;
 	int		server_idx;
@@ -242,7 +240,7 @@ static void	accept_handle_connection(fd_set &current_sockets, vector<server_data
 			{
 				handle_connection(current_sockets, open_connections, cur_fd, fd_match);
 			}
-			catch (const Plebception &e)
+			catch (const Plebception& e)
 			{
 				cerr << e.what() << endl;
 				create_custom_response(&open_connections[fd_match], open_connections[fd_match].h.create_header(500, 0));
@@ -251,12 +249,12 @@ static void	accept_handle_connection(fd_set &current_sockets, vector<server_data
 	}
 }
 
-static void	connection_handler(fd_set &current_sockets, vector<server_data> &data, vector<connect_data> &open_connections)
+static void	connection_handler(fd_set& current_sockets, vector<server_data>& data, vector<connect_data>& open_connections)
 {
-	fd_set	read_sok  = current_sockets;
-	fd_set	write_sok = get_response_fd(open_connections);
-	int		rval;
-	struct timeval to;
+	fd_set			read_sok  = current_sockets;
+	fd_set			write_sok = get_response_fd(open_connections);
+	int				rval;
+	struct timeval 	to;
 
 	to.tv_sec = 30;
 	std::cout << "Waiting on select.." << endl;
@@ -265,7 +263,7 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 		throw Fatal(ERR_SERVER_FATAL, "connect_handler", "select failed");
 	else if (rval == 0)
 		return;
-	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)	// fd_setzsize naar current highest veranderen
+	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
 	{
 		accept_handle_connection(current_sockets, data, open_connections, read_sok, fd_match);
 		if (FD_ISSET(fd_match, &write_sok))
@@ -278,16 +276,16 @@ static void	connection_handler(fd_set &current_sockets, vector<server_data> &dat
 
 void	host_servers(vector<Server> serv)
 {
-	vector<server_data> data;
-	vector<connect_data> open_connections;
-	fd_set current_sockets;
+	vector<server_data> 	data;
+	vector<connect_data> 	open_connections;
+	fd_set 					current_sockets;
 
 	for (size_t i = 0; i < serv.size(); i++)
 	{
-		for (size_t x = 0; x < serv[i]._port.size(); x++)
+		for (size_t x = 0; x < serv[i].port.size(); x++)
 		{
-			std::cout << "Server " << serv[i]._server << " port: " << serv[i]._port[x] << std::endl;
-			data.push_back(setup_server(serv[i], serv[i]._port[x] , 32));
+			std::cout << "Server " << serv[i].server << " port: " << serv[i].port[x] << std::endl;
+			data.push_back(setup_server(serv[i], serv[i].port[x] , 32));
 		}
 	}
 	FD_ZERO(&current_sockets);

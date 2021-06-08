@@ -37,11 +37,11 @@ namespace ft
         return s;
     }
 
-    // Split string {str} on characters in string {delim} and return vector {res} of tokens
     std::vector<std::string> split(std::string str, std::string delim = " \t\n")
     {
-        std::vector<std::string> res;
-        size_t end;
+        std::vector<std::string>    res;
+        size_t                      end;
+        size_t                      tmp_end;
 
         for (size_t begin = 0; begin < str.size(); begin++)
         {
@@ -50,7 +50,7 @@ namespace ft
                 end = str.size();
             if (begin != end)
                 res.push_back(str.substr(begin, end - begin));
-            size_t tmp_end = str.find_first_not_of(delim, end + 1);
+            tmp_end = str.find_first_not_of(delim, end + 1);
             if (tmp_end != std::string::npos)
                 end = tmp_end - 1;
             begin = end;
@@ -71,12 +71,13 @@ namespace ft
     int stoi(std::string number, const std::string base = "0123456789")
     {
         int res = 0;
+        size_t num;
 
         if (!number.size())
             return (res);
         int sign = (number[0] == '+') - (number[0] == '-');
         for (size_t i = !!sign; i < number.size(); i++) {
-            size_t num = base.find(number[i]);
+            num = base.find(number[i]);
             if (num == std::string::npos)
                 continue;
             res = res * base.size() + num;
@@ -85,7 +86,7 @@ namespace ft
         return (sign * res);
     }
 
-	bool ends_with(std::string const & value, std::string const & ending)
+	bool ends_with(std::string const& value, std::string const& ending)
 	{
 		if (ending.size() > value.size()) return false;
 		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
@@ -117,9 +118,9 @@ namespace ft
         return (res);
     }
 
-    char *strdup(char *str)
+    char *strdup(char* str)
     {
-        char *dup = (char *)malloc(sizeof(char) * strlen(str) + 1);
+        char* dup = (char *)malloc(sizeof(char) * strlen(str) + 1);
         if (dup)
             strcpy(dup, str);
         return(dup);
@@ -128,7 +129,7 @@ namespace ft
 	std::string to_string(int val)
 	{
 		std::string rval;
-		bool isneg = val < 0 ? true : false;
+		bool        isneg = val < 0 ? true : false;
 
 		if (val == 0)
 			return (std::string("0"));
@@ -147,7 +148,7 @@ namespace ft
 		return (rval);
 	}
 
-    void str_set(string &res, string to_push)
+    void str_set(string& res, string to_push)
     {
         res.resize(to_push.size());
         memcpy(&res[0], to_push.c_str(), to_push.size());
@@ -155,13 +156,12 @@ namespace ft
 
     string create_date()
     {
-        time_t rawtime;
-        struct tm * timeinfo;
-        char buf[100];
+        time_t      rawtime;
+        struct tm*  timeinfo;
+        char        buf[100];
 
         time (&rawtime);
         timeinfo = gmtime(&rawtime);
-
         strftime(buf, 100, "%a, %d %b %G %H:%M:%S GMT", timeinfo);
         return (string(buf));
     }
