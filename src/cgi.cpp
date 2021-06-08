@@ -28,7 +28,7 @@
 #include <server.hpp>
 
 #define HEADER_END	"\r\n\r\n"
-#define PIPE_BUFFER	65536
+#define PIPE_BUFFER	16384
 
 Cgi::Cgi(string path, string match)
 {
@@ -89,13 +89,13 @@ void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
 	{
 		cerr << "Write je moer " << i << endl;
 		write_size = i + PIPE_BUFFER >= body.size() ? PIPE_BUFFER + i - body.size() : PIPE_BUFFER;
-		ret = write(fdin[1], &body[i], write_size);
+		ret = write(fdin[1], /* WTF IS DEZE FUNCTIE */&body[i], write_size);
 		cerr << "ret = " << ret << endl;
 		if (ret < 0 && errno != EWOULDBLOCK)
 			throw Plebception(ERR_WRITING, "cgi_parent", ft::to_string(fdin[1]));
 		else if (ret < 0)
 		{
-			sleep(1);
+			read(fdout[0], /* READEN NA WRITEN WANT CGI IS KUT */buff, PIPE_BUFFER);
 			continue ;
 		}
 		i += ret;
@@ -112,7 +112,7 @@ void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
 		// else if (ret < 0)
 		// 	continue;
 		buff[ret] = 0;
-		body.resize(body.size() + ret);	
+		body.resize(body.size() /* WE ZIJN TE THICC VOOR DIE PIPES */+ ret);	
 		memcpy(&body[i], buff, ret);
 		i += ret;
 	}
