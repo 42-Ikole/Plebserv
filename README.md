@@ -5,33 +5,33 @@
 # Plebserv 🖥
 A shitty webserver written by plebians [no plagiarism, no pet @rpet91]
 
-## ABOUT
+## ABOUT 📝
 We created a really cool HTTP 1.1 compliant webserver written in C++98
 
 ## FEATURES ✨
 * [METHODS]
-  * GET
-  * POST
-  * DELETE
-  * PUT
-  * OPTIONS
-  * HEAD
-* [CGI] 
-  * Any cgi specified in the config file
+  * `GET`
+  * `POST`
+  * `DELETE`
+  * `PUT`
+  * `OPTIONS`
+  * `HEAD`
+* [CGI]
+  * `Any cgi specified in the config file`
 * [PORTS]
-  * listen on any port specified
+  * `listen on any port specified`
 * [ERROR PAGES]
-  * setup custom default error pages
+  * `setup custom default error pages`
 * [LIMIT CLIENT BODY SIZE]
-  * upload limit for client
+  * `upload limit for client`
 * [HTTP REDIRECTION]
-  * custom http redirections
+  * `custom http redirections`
 * [AUTO INDEX]
-  * turn on directory listing
+  * `turn on directory listing`
 * [SESSIONS and COOKIES]
-  * session management
+  * `session management`
 
-## CONFIG OPTIONS
+## CONFIG OPTIONS 📌
 * [listen]
   * `listen domain:port port;`
 * [server_name]
@@ -52,9 +52,9 @@ We created a really cool HTTP 1.1 compliant webserver written in C++98
   * [client_max_body_size]
     * `client_max_body_size [uint][mod]`
 
-## CONFIG EXAMPLE
+## CONFIG EXAMPLE 📜
 
-```conf
+```c
 server {
   listen phantom.nl:8080 400 5000;
 
