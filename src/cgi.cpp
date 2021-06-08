@@ -28,6 +28,7 @@
 #include <server.hpp>
 
 #define HEADER_END	"\r\n\r\n"
+#define PIPE_BUFFER	65536
 
 Cgi::Cgi(string path, string match)
 {
@@ -58,12 +59,14 @@ std::ostream& operator<<(std::ostream& out, Cgi const& value)
 
 void	Cgi::cgi_child(int fdin[2], int fdout[2], char* args[3], char** env)
 {
-	dup2 (fdout[1], 1);
-	dup2 (fdin[0], 0);
+	if (dup2 (fdout[1], 1) < 0)
+		throw Plebception(ERR_FAIL_SYSCL, "dup2", "rip1");
+	if (dup2 (fdin[0], 0) < 0)
+		throw Plebception(ERR_FAIL_SYSCL, "dup2", "rip2");
 	close(fdin[0]);
-    close(fdin[1]);
+	close(fdin[1]);
     close(fdout[0]);
-    close(fdout[1]); 
+    close(fdout[1]);
 	if (execve(_full_path.c_str(), args, env) == -1)
 	{
 		perror("exeve");
@@ -74,25 +77,49 @@ void	Cgi::cgi_child(int fdin[2], int fdout[2], char* args[3], char** env)
 
 void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
 {
-	char	buff[1025];
+	char	buff[PIPE_BUFFER + 1];
 	int		status = 0;
-	int		i = 0;
+	size_t	i = 0;
+	size_t write_size;
 
 	close(fdin[0]);
 	close(fdout[1]);
-	write(fdin[1], body.c_str(), body.size());
-	close(fdin[1]);
+	i = 0;
+	for (int ret = 1; ret != 0 && i != body.size();)
+	{
+		cerr << "Write je moer " << i << endl;
+		write_size = i + PIPE_BUFFER >= body.size() ? PIPE_BUFFER + i - body.size() : PIPE_BUFFER;
+		ret = write(fdin[1], &body[i], write_size);
+		cerr << "ret = " << ret << endl;
+		if (ret < 0 && errno != EWOULDBLOCK)
+			throw Plebception(ERR_WRITING, "cgi_parent", ft::to_string(fdin[1]));
+		else if (ret < 0)
+		{
+			sleep(1);
+			continue ;
+		}
+		i += ret;
+	}
+    close(fdin[1]);
 	body.resize(0);
+	cerr << "we zijn hier kanker"  << endl;
 	for (int ret = 1; ret > 0;)
 	{
-		ret = read(fdout[0], buff, 1024);
+		ret = read(fdout[0], buff, PIPE_BUFFER);
+		cerr << "reteketet = " << ret << endl;
+		// if (ret < 0 && errno != EWOULDBLOCK)
+		// 	throw Plebception(ERR_WRITING, "cgi_parent", ft::to_string(fdin[1]));
+		// else if (ret < 0)
+		// 	continue;
 		buff[ret] = 0;
-		body.resize(body.size() + ret);
+		body.resize(body.size() + ret);	
 		memcpy(&body[i], buff, ret);
 		i += ret;
 	}
+	cerr << "enge dingen gelezen wejoow " << i << endl;
 	close(fdout[0]);
 	waitpid(id, &status, 0);
+	cerr << "Peace out bitch" << endl;
 }
 
 void Cgi::read_response(char** env, string& body, string file_path)
@@ -109,6 +136,14 @@ void Cgi::read_response(char** env, string& body, string file_path)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "pipe");
 	if (pipe(fdout) == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "pipe");
+	if (fcntl(fdin[0], F_SETFL, O_NONBLOCK) < 0)
+		throw Plebception(ERR_FAIL_SYSCL, "fcntl1",  "rip");
+	if (fcntl(fdin[1], F_SETFL, O_NONBLOCK) < 0)
+		throw Plebception(ERR_FAIL_SYSCL, "fcntl2",  "rip");
+	// if (fcntl(fdout[0], F_SETFL) < 0)
+	// 	throw Plebception(ERR_FAIL_SYSCL, "fcnt3l",  "rip");
+	// if (fcntl(fdout[1], F_SETFL) < 0)
+	// 	throw Plebception(ERR_FAIL_SYSCL, "fcntl4",  "rip");
 
 	pid_t id = fork();
 	if (id == -1)
@@ -138,12 +173,15 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser, s
 	
 	free(cwd_cstr);
 
+	// cout << "eikels\n\n" << h << endl;
+	cerr << "body size = " << body.size() << endl;
 	env[0]	= create_env_var("AUTH_TYPE", h._headers_in["Authorization"]); // in header
 	if (h._chonky)
 		env[1] = create_env_var("CONTENT_LENGTH", ft::to_string(body.size()));
 	else
-		env[1] = create_env_var("CONTENT_LENGTH", h._headers_in["Content-Length"]);	// is alleen voor POST // in header
-	content_type = (h._method == "GET" ? "text/html" : "application/x-www-form-urlencoded");
+		env[1]	= create_env_var("CONTENT_LENGTH", h._headers_in["Content-Length"]);	// is alleen voor POST // in header
+	cerr << "env1 = " << env[1] << endl;
+	content_type = (h._method == "GET" ? "text/html" : h._headers_in["Content-Type"]);
 	env[2]	= create_env_var("CONTENT_TYPE", content_type);
 	env[3]	= create_env_var("GATEWAY_INTERFACE", "CGI/1.1"); 
 	env[4]	= create_env_var("PATH_INFO", h._path);
@@ -166,9 +204,10 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser, s
 
 	read_response(env, body, cwd + '/' + file_path);
 	size_t pos = body.find(HEADER_END);
+	cerr << "kut body gvd\n\n\n\n" << body << endl;
 	if (pos != string::npos)
 	{
-		std::cout << "Found Header!!! end: " << pos << endl;
+		std::cerr << "Found Header!!! end: " << pos << endl;
 		h.add_to_header_out(ft::split(body.substr(0, pos), "\r\n"));
 		body = body.substr(pos + 4);
 		size = body.length();
