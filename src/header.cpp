@@ -71,7 +71,6 @@ void	Header::Parse_request(string request)
 
 void	Header::load_headers_in(vector<string> in)
 {
-<<<<<<< HEAD
 	for (size_t i = 0; i < in.size(); i++)
 	{
 		if (in[i].compare(0, 10 ,"Set-Cookie") == 0)
@@ -81,13 +80,6 @@ void	Header::load_headers_in(vector<string> in)
 		}
 		else
 			_headers_in[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
-=======
-	size_t pos = 0;
-	for (size_t i = 0; i < in.size() - 1; i++)
-	{
-		pos = in[i].find(":");
-		_headers_in[in[i].substr(0, pos)] = in[i].substr(pos + 2, string::npos);
->>>>>>> ee6772d8b68aca06c00bb089280a4b62cc33f66c
 	}
 }
 
