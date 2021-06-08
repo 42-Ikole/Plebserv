@@ -170,6 +170,6 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser, s
 		body = body.substr(pos + 4);
 		size = body.length();
 	}
-	for (size_t i = 0; i < 22; i++)
+	for (size_t i = 0; i < 21; i++)
 		free(env[i]);
 }
