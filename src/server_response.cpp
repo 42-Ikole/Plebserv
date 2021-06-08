@@ -253,8 +253,7 @@ string	Server::return_put(Header& h, Location* l, string& body)
 		{
 			ret = write(fd, &body[i], body.size() - i);
 			if (ret == -1)
-				throw Plebception(ERR_FD, "writing to file", full_path);
-			i += ret;
+				throw Plebception(ERR_WRITING, "writing to file", full_path);
 		}
 	}
 	close(fd);
