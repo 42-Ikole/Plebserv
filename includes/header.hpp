@@ -39,12 +39,12 @@ public:
 	string				_query;
 	string				_extension;
 	string				_http_version;
+	string 				_cookies;
 	bool				_chonky;
 	map<string, string> _headers_in;
 	map<string, string> _headers_out;
 	
 public:
-	string _cookies;
 	Header();
 	Header(vector<std::string> in);
 	Header& operator=(const Header& h);

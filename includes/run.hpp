@@ -54,20 +54,12 @@ struct	connect_data
 	string				header_raw;
 	struct	sockaddr_in	client_addr;
 	socklen_t			addr_size;
-<<<<<<< HEAD
-	size_t	last_action;
-	size_t	bytes_send;
-	string	response;
-	bool	ready;
-	bool	last;
-	string	_session_cookies;
-=======
 	size_t				last_action;
 	size_t				bytes_send;
 	string				response;
 	bool				ready;
 	bool				last;
->>>>>>> ee6772d8b68aca06c00bb089280a4b62cc33f66c
+	string				_session_cookies;
 
 	void clear()
 	{
