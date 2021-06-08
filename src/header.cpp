@@ -70,8 +70,16 @@ void	Header::Parse_request(string request)
 
 void	Header::load_headers_in(vector<string> in)
 {
-	for (size_t i = 0; i < in.size() - 1; i++)
-		_headers_in[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
+	for (size_t i = 0; i < in.size(); i++)
+	{
+		if (in[i].compare(0, 10 ,"Set-Cookie") == 0)
+		{
+			_cookies = _cookies + in[i].substr(in[i].find(':') + 2) + ";";
+			cout << "new cookie: " << _cookies << endl;
+		}
+		else
+			_headers_in[in[i].substr(0, in[i].find(':'))] = in[i].substr(in[i].find(':') + 2, string::npos);
+	}
 }
 
 Header::Header() {}
@@ -79,6 +87,7 @@ Header::Header() {}
 Header	&Header::operator=(const Header &h)
 {
 	this->_method		= h._method;
+	this->_cookies		= h._cookies;
 	this->_path			= h._path;
 	this->_query		= h._query;
 	this->_extension	= h._extension;
@@ -171,9 +180,11 @@ string Header::create_header(int response_code, int body_length)
 	add_to_header_out("Connection", "keep-alive");
 	add_to_header_out("Content-Type", content_type_switch());
 	add_to_header_out("Content-Length", ft::to_string(body_length));
+	add_to_header_out("Cookie", _cookies);
 
 	for (map<string, string>::const_iterator i = _headers_out.begin(); i != _headers_out.end(); i++)
 		res += i->first + ": " + i->second + "\r\n";
+
 	res += "\r\n";
 	return (res);
 }

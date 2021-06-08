@@ -58,6 +58,7 @@ struct	connect_data
 	string	response;
 	bool	ready;
 	bool	last;
+	string	_session_cookies;
 
 	void clear()
 	{

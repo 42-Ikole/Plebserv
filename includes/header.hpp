@@ -43,6 +43,7 @@ public:
 	map<string, string> _headers_in;
 	map<string, string> _headers_out;
 public:
+	string _cookies;
 	Header();
 	Header(vector<std::string> in);
 	Header &operator=(const Header &h);
