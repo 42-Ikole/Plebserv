@@ -75,51 +75,66 @@ void	Cgi::cgi_child(int fdin[2], int fdout[2], char* args[3], char** env)
 	exit(0);
 }
 
-void	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
+inline	int cgi_write(int fdin[2], string &body, size_t &i)
 {
-	char	buff[PIPE_BUFFER + 1];
-	int		status = 0;
-	size_t	i = 0;
 	size_t write_size;
-
-	close(fdin[0]);
-	close(fdout[1]);
-	i = 0;
-	for (int ret = 1; ret != 0 && i != body.size();)
+	for (int ret = 1; ret > 0 && i != body.size();)
 	{
-		cerr << "Write je moer " << i << endl;
+		cerr << "WRITE " << i << endl;
 		write_size = i + PIPE_BUFFER >= body.size() ? PIPE_BUFFER + i - body.size() : PIPE_BUFFER;
-		ret = write(fdin[1], /* WTF IS DEZE FUNCTIE */&body[i], write_size);
-		cerr << "ret = " << ret << endl;
-		if (ret < 0 && errno != EWOULDBLOCK)
-			throw Plebception(ERR_WRITING, "cgi_parent", ft::to_string(fdin[1]));
-		else if (ret < 0)
-		{
-			read(fdout[0], /* READEN NA WRITEN WANT CGI IS KUT */buff, PIPE_BUFFER);
-			continue ;
-		}
+		ret = write(fdin[1], &body[i], write_size);
+		if (ret <= 0)
+			return ret;
 		i += ret;
 	}
-    close(fdin[1]);
-	body.resize(0);
-	cerr << "we zijn hier kanker"  << endl;
+	close(fdin[1]);
+	return 0;
+}
+
+inline	int cgi_read(int fdout[2], string &body, size_t &i)
+{
+	char buff[PIPE_BUFFER + 1];
+
 	for (int ret = 1; ret > 0;)
 	{
+		cerr << "READ " << i << endl;
 		ret = read(fdout[0], buff, PIPE_BUFFER);
-		cerr << "reteketet = " << ret << endl;
-		// if (ret < 0 && errno != EWOULDBLOCK)
-		// 	throw Plebception(ERR_WRITING, "cgi_parent", ft::to_string(fdin[1]));
-		// else if (ret < 0)
-		// 	continue;
+		if (ret <= 0)
+			return ret;
 		buff[ret] = 0;
-		body.resize(body.size() /* WE ZIJN TE THICC VOOR DIE PIPES */+ ret);	
+		body.resize(body.size() + ret);
 		memcpy(&body[i], buff, ret);
 		i += ret;
 	}
-	cerr << "enge dingen gelezen wejoow " << i << endl;
 	close(fdout[0]);
-	waitpid(id, &status, 0);
+	return 0;
+}
+
+
+string	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
+{
+	string rval;
+	size_t write_i = 0;
+	size_t read_i = 0;
+	int status = 0, read_s = 1, write_s = 1;
+
+	close(fdin[0]);
+	close(fdout[1]);
+	if (body.size() == 0)
+		return ("");
+	while (read_s != 0)
+	{
+		cerr << "statuses R: " << read_s << " W: " << write_s << endl; 
+		if (write_s != 0)
+			write_s = cgi_write(fdin, body, write_i);
+		read_s = cgi_read(fdout, rval, read_i);			
+	}
+
 	cerr << "Peace out bitch" << endl;
+	(void)id;
+	(void)status;
+	// waitpid(id, &status, 0);
+	return (rval);
 }
 
 void Cgi::read_response(char** env, string& body, string file_path)
@@ -140,10 +155,10 @@ void Cgi::read_response(char** env, string& body, string file_path)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl1",  "rip");
 	if (fcntl(fdin[1], F_SETFL, O_NONBLOCK) < 0)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl2",  "rip");
-	// if (fcntl(fdout[0], F_SETFL) < 0)
-	// 	throw Plebception(ERR_FAIL_SYSCL, "fcnt3l",  "rip");
-	// if (fcntl(fdout[1], F_SETFL) < 0)
-	// 	throw Plebception(ERR_FAIL_SYSCL, "fcntl4",  "rip");
+	if (fcntl(fdout[0], F_SETFL) < 0)
+		throw Plebception(ERR_FAIL_SYSCL, "fcnt3l",  "rip");
+	if (fcntl(fdout[1], F_SETFL) < 0)
+		throw Plebception(ERR_FAIL_SYSCL, "fcntl4",  "rip");
 
 	pid_t id = fork();
 	if (id == -1)
@@ -151,7 +166,7 @@ void Cgi::read_response(char** env, string& body, string file_path)
 	if (id == 0)
 		cgi_child(fdin, fdout, args, env);
 	else
-		cgi_parent(fdin, fdout, id, body);
+		body = cgi_parent(fdin, fdout, id, body);
 }
 
 char*	Cgi::create_env_var(string key, string value)
@@ -204,7 +219,7 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser, s
 
 	read_response(env, body, cwd + '/' + file_path);
 	size_t pos = body.find(HEADER_END);
-	cerr << "kut body gvd\n\n\n\n" << body << endl;
+	cerr << "kut body gvd: " << body.size() << endl;
 	if (pos != string::npos)
 	{
 		std::cerr << "Found Header!!! end: " << pos << endl;

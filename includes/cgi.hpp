@@ -43,7 +43,7 @@ public:
 	void	read_response(char** env, string& body, string file_path);
 	char*	create_env_var(string key, string value);
 	void	cgi_child(int fdin[2], int fdout[2], char* args[3], char** env);
-	void	cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body);
+	string	cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body);
 };
 
 std::ostream &operator<<(std::ostream& out, Cgi const& value);
