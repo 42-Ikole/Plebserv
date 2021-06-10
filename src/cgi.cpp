@@ -80,8 +80,8 @@ inline	int cgi_write(int fdin[2], string &body, size_t &i)
 	size_t write_size;
 	for (int ret = 1; ret > 0 && i != body.size();)
 	{
-		cerr << "WRITE " << i << endl;
-		write_size = i + PIPE_BUFFER >= body.size() ? PIPE_BUFFER + i - body.size() : PIPE_BUFFER;
+		write_size = i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
+		cerr << "WRITE " << i << " sz: " << write_size << endl;
 		ret = write(fdin[1], &body[i], write_size);
 		if (ret <= 0)
 			return ret;
@@ -114,9 +114,8 @@ inline	int cgi_read(int fdout[2], string &body, size_t &i)
 string	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
 {
 	string rval;
-	size_t write_i = 0;
-	size_t read_i = 0;
-	int status = 0, read_s = 1, write_s = 1;
+	size_t write_i = 0, read_i = 0;
+	int read_s = 1, write_s = 1;
 
 	close(fdin[0]);
 	close(fdout[1]);
@@ -132,8 +131,6 @@ string	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
 
 	cerr << "Peace out bitch" << endl;
 	(void)id;
-	(void)status;
-	// waitpid(id, &status, 0);
 	return (rval);
 }
 
@@ -155,9 +152,9 @@ void Cgi::read_response(char** env, string& body, string file_path)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl1",  "rip");
 	if (fcntl(fdin[1], F_SETFL, O_NONBLOCK) < 0)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl2",  "rip");
-	if (fcntl(fdout[0], F_SETFL) < 0)
+	if (fcntl(fdout[0], F_SETFL, O_NONBLOCK) < 0)
 		throw Plebception(ERR_FAIL_SYSCL, "fcnt3l",  "rip");
-	if (fcntl(fdout[1], F_SETFL) < 0)
+	if (fcntl(fdout[1], F_SETFL, O_NONBLOCK) < 0)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl4",  "rip");
 
 	pid_t id = fork();
