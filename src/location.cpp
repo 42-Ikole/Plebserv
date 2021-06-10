@@ -42,6 +42,7 @@ static map<string, LoadFunction> create_map()
 	m["upload_store"]			= &Location::set_upload_store;
 	m["client_max_body_size"]	= &Location::load_client_max_body_size;
 	m["redir"]					= &Location::set_redir;
+	m["static_dir"]				= &Location::set_static_dir;
 	return m;
 }
 
@@ -68,6 +69,18 @@ void Location::set_root(vector<string> val)
 	if (stat(val[0].c_str(), &st) == -1 || !(st.st_mode & S_IFDIR))
 		throw Plebception(ERR_BAD_LOCATION, "set_root", val[0]);
 	root = val[0];
+}
+
+void Location::set_static_dir(vector<string> val)
+{
+	if (val.size() != 1)
+		throw Plebception(ERR_TOO_MANY_ARG, "set_static_dir", val[0]);
+	if (val[0] == "true")
+		static_dir = true;
+	else if (val[0] == "false")
+		static_dir = false;
+	else
+		throw Plebception(ERR_INVALID_VALUE, "set_static_dir", val[0]);	
 }
 
 void Location::set_upload_store(vector<string> val)
@@ -144,6 +157,8 @@ void Location::set_limit_except(vector<string> val)
 Location& Location::operator=(Location const& tba)
 {
 	location		= tba.location;
+	static_files	= tba.static_files;
+	static_dir		= tba.static_dir;
 	redir			= tba.redir;
 	_methods		= tba._methods;
 	limit_except	= tba.limit_except;
@@ -163,6 +178,7 @@ std::ostream &operator<<(std::ostream& out, Location const& value)
 	out << std::setw(20) << "MAX_BODY | " << value.max_body_size << std::endl;
 	out << std::setw(20) << "REDIR | " << value.redir.first << " " << value.redir.second << std::endl;
 	out << std::setw(20) << "UPLOAD STORE | " << value.upload_store << std::endl;
+	out << std::setw(20) << "STATIC DIR | " << value.static_dir << std::endl;
 	out << std::setw(20) << "AUTO INDEX | " << (value.auto_index == false ? COLOR_RED : COLOR_GREEN) << value.auto_index << COLOR_RESET << std::endl;
 	out << std::setw(20) << "INDEX PAGE | ";
 	for (size_t i = 0; i < value.index_page.size(); i++)
@@ -195,7 +211,9 @@ int	Location::parse_args(string str)
 	return (1);
 }
 
-Location::Location(vector<string> val) : max_body_size(16000), upload_store("/html/uploads"), auto_index(OFF),  location(val[0]), redir(0, ""), root("/html")
+Location::Location(vector<string> val) : max_body_size(16000), upload_store("/html/uploads"),
+										auto_index(OFF),  location(val[0]), redir(0, ""),
+										root("/html"), static_dir(false)
 {
 	index_page.push_back("index.html");
 	index_page.push_back("index");

@@ -109,7 +109,7 @@ void	Location::read_file(string&  rv, string path)
 	int		ret = 1;
 	char	buf[1025];
 
-	if (static_files[path].empty() == false)
+	if (static_dir && static_files[path].empty() == false)
 	{
 		cout << "using cached response: " << path << endl;
 		rv = static_files[path];
@@ -127,7 +127,8 @@ void	Location::read_file(string&  rv, string path)
 		memcpy(&rv[i], buf, ret);
 		i += ret;
 	}
-	static_files[path] = rv;
+	if (static_dir)
+		static_files[path] = rv;
 	close (fd);
 }
 
