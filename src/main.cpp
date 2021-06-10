@@ -72,6 +72,7 @@ static void persistent_run_serv(int tries, std::vector<Server>& l)
 int main(int argc, char** argv)
 {
 	std::string filename;
+	std::vector<Server> l;
 
 	if (argc == 1)
 		filename = "configs/basic-server.conf";
@@ -82,9 +83,16 @@ int main(int argc, char** argv)
 		if (string(argv[1]) == "-t")
 			parser_test(argv[2]);
 	}
-	std::vector<Server> l = load_config(filename);
-	// for (size_t i = 0; i < l.size(); i++)
-		// std::cout << l[i] << std::endl;
+	try {
+		l = load_config(filename);
+	}
+	catch (std::exception &e)
+	{
+		std::cout << e.what() << std::endl;
+		return (-1);
+	}
+	for (size_t i = 0; i < l.size(); i++)
+		std::cout << l[i] << std::endl;
 	persistent_run_serv(3, l);
 	return (0);
 }
