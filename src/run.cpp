@@ -154,7 +154,7 @@ static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn)
 {
 	string ret;
 
-	ret = read_sok(4096, close_conn, fd);
+	ret = read_sok(10240, close_conn, fd);
 		cur_conn->buf += ret;
 	if (close_conn == true || cur_conn->ready == true)
 		return ;
@@ -257,7 +257,7 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 	struct timeval 	to;
 
 	to.tv_sec = 30;
-	std::cout << "Waiting on select.. [" << FD_SETSIZE << "]" <<  endl;
+	// std::cout << "Waiting on select.. [" << FD_SETSIZE << "]" <<  endl;
 	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
 	if (rval < 0)
 		throw Fatal(ERR_SERVER_FATAL, "connect_handler", "select failed " + ft::to_string(errno));
