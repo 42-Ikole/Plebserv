@@ -171,50 +171,65 @@ char*	Cgi::create_env_var(string key, string value)
 	return(ft::strdup((char *)string(key + "=" + value).c_str()));
 }
 
+char	**Cgi::create_env_array(map<string, string> &env)
+{
+	char **rval;
+	size_t i = 0;
+
+	rval = (char **)malloc(sizeof(char *) * (env.size() + 1));
+	for(map<string, string>::iterator it = env.begin(); it != env.end(); it++)
+	{
+		rval[i] = create_env_var(it->first, it->second);
+		i++;
+	}
+	rval[i] = 0;
+	return (rval);
+}
+
 /*
 	Maybe
 	DOCUMENT_ROOT - This reflects the document root directory of the webserver.
 */
 
-void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser, size_t& size)
+void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, map<string, string> &env_tmp)
 {
-	char* 	env[22];
 	char* 	cwd_cstr = getcwd(NULL, 0);
-	string 	content_type;
 	string 	cwd = string(cwd_cstr);
-	
+
 	free(cwd_cstr);
+	env_tmp["AUTH_TYPE"] = h._headers_in["Authorization"];
+	env_tmp["CONTENT_LENGTH"] = h._chonky == true ? ft::to_string(body.size()) : h._headers_in["Content-Length"];
+	env_tmp["CONTENT_TYPE"] = h._method == "GET" ? "text/html" : h._headers_in["Content-Type"];
+	env_tmp["GATEWAY_INTERFACE"] = "CGI/1.1";
+	env_tmp["PATH_INFO"] = h._path;
+	env_tmp["PATH_TRANSLATED"] = cwd + '/' + file_path;
+	env_tmp["QUERY_STRING"] = h._query;
+	env_tmp["REMOTE_ADDR"] = "127.0.0.1";
+	env_tmp["REMOTE_IDENT"] = "";
+	env_tmp["REMOTE_USER"] = "";
+	env_tmp["REQUEST_METHOD"] =	h._method;
+	env_tmp["REQUEST_URI"] = h._path;
+	env_tmp["SCRIPT_NAME"] = "http://" + ser.server + h._path;
+	env_tmp["SERVER_NAME"] = ser.server;
+	env_tmp["SERVER_PORT"] = ft::to_string(ser.port[0]);
+	env_tmp["SERVER_PROTOCOL"] = "HTTP/1.1";
+	env_tmp["SERVER_SOFTWARE"] = "Plebserv (linux)";
+	env_tmp["REDIRECT_STATUS"] = "true";
+	env_tmp["SCRIPT_FILENAME"] = cwd + '/' + file_path;
+	env_tmp["HTTP_ACCEPT"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+}
 
-	// cout << "eikels\n\n" << h << endl;
+void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser)
+{
+	map<string, string> env_tmp;
+
 	cerr << "body size = " << body.size() << endl;
-	env[0]	= create_env_var("AUTH_TYPE", h._headers_in["Authorization"]); // in header
-	if (h._chonky)
-		env[1] = create_env_var("CONTENT_LENGTH", ft::to_string(body.size()));
-	else
-		env[1]	= create_env_var("CONTENT_LENGTH", h._headers_in["Content-Length"]);	// is alleen voor POST // in header
-	cerr << "env1 = " << env[1] << endl;
-	content_type = (h._method == "GET" ? "text/html" : h._headers_in["Content-Type"]);
-	env[2]	= create_env_var("CONTENT_TYPE", content_type);
-	env[3]	= create_env_var("GATEWAY_INTERFACE", "CGI/1.1"); 
-	env[4]	= create_env_var("PATH_INFO", h._path);
-	env[5]	= create_env_var("PATH_TRANSLATED", cwd + '/' + file_path);	// bugged
-	env[6]	= create_env_var("QUERY_STRING", h._query);
-	env[7]	= create_env_var("REMOTE_ADDR", "127.0.0.1");
-	env[8]	= create_env_var("REMOTE_IDENT", "");
-	env[9]	= create_env_var("REMOTE_USER", ""); // if auth type == Basic use provided else undefined
-	env[10]	= create_env_var("REQUEST_METHOD", h._method);
-	env[11]	= create_env_var("REQUEST_URI", h._path);
-	env[12]	= create_env_var("SCRIPT_NAME", "http://" + ser.server + h._path); // leading part of path component
-	env[13]	= create_env_var("SERVER_NAME", ser.server);
-	env[14]	= create_env_var("SERVER_PORT", ft::to_string(ser.port[0]));
-	env[15]	= create_env_var("SERVER_PROTOCOL", "HTTP/1.1");
-	env[16]	= create_env_var("SERVER_SOFTWARE", "Plebserv (linux)");
-	env[17]	= create_env_var("REDIRECT_STATUS", "true");
-	env[18]	= create_env_var("SCRIPT_FILENAME",  cwd + '/' + file_path);	// bugged
-	env[19] = create_env_var("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-	env[20]	= NULL;
+	default_env(h, body, file_path, ser, env_tmp);
+	for(map<string, string>::iterator it = h._headers_in.begin(); it != h._headers_in.end(); it++)
+		env_tmp[ft::convert_header(it->first)] = it->second;
 
-	read_response(env, body, cwd + '/' + file_path);
+	char **env = create_env_array(env_tmp);
+	read_response(env, body, file_path);
 	size_t pos = body.find(HEADER_END);
 	cerr << "kut body gvd: " << body.size() << endl;
 	if (pos != string::npos)
@@ -222,8 +237,8 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser, s
 		std::cerr << "Found Header!!! end: " << pos << endl;
 		h.add_to_header_out(ft::split(body.substr(0, pos), "\r\n"));
 		body = body.substr(pos + 4);
-		size = body.length();
 	}
-	for (size_t i = 0; i < 21; i++)
+	for (size_t i = 0; env[i]; i++)
 		free(env[i]);
+	free(env);
 }
