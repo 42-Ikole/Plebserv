@@ -47,7 +47,7 @@ superclean:
 
 release:
 	@clear
-	@$(CC) $(FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME) &
+	@$(CC) $(FLAGS) $(SRC) $(LIBS) -OFast -I includes -o $(NAME) &
 	@echo "   ___ _      _                         "
 	@sleep 1
 	@echo "  / _ \ | ___| |__  ___  ___ _ ____   __"

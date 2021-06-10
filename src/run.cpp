@@ -154,7 +154,7 @@ static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn)
 {
 	string ret;
 
-	ret = read_sok(10240, close_conn, fd);
+	ret = read_sok(4096, close_conn, fd);
 		cur_conn->buf += ret;
 	if (close_conn == true || cur_conn->ready == true)
 		return ;
