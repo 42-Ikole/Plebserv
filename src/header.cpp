@@ -35,7 +35,7 @@ string	Header::decode_url(string& str)
 
 	for (size_t pos = str.find_first_of("%", 0); pos != string::npos; pos = str.find_first_of("%", pos)) {
 		rp = ft::stoi(str.substr(pos + 1, 2), "0123456789ABCDEF");
-		cout << "rp = [" << rp << "]" << endl;
+		// cout << "rp = [" << rp << "]" << endl;
 		str.replace(pos, 3, 1, rp);
 	}
 	return str;
@@ -64,7 +64,7 @@ void	Header::Parse_request(string request)
 	}
 	catch (exception& e)
 	{
-		cout << e.what() << endl;
+		std::cerr << e.what() << endl;
 		throw Plebception(ERR_INVALID_VALUE, "parsing request", "");
 	}
 }
@@ -77,7 +77,7 @@ void	Header::load_headers_in(vector<string> in)
 		if (in[i].compare(0, 10 ,"Set-Cookie") == 0)
 		{
 			_cookies = _cookies + in[i].substr(in[i].find(':') + 2) + ";";
-			cout << "new cookie: " << _cookies << endl;
+			// cout << "new cookie: " << _cookies << endl;
 		}
 		else
 		{

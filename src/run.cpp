@@ -37,7 +37,7 @@ static void accept_connect(fd_set& current_sockets, server_data& data, vector<co
 		opencon.ser = data.ser;
 		update_action(&opencon);
 		FD_SET(opencon.fd, &current_sockets);
-		std::cout << "New connection " << inet_ntoa(opencon.client_addr.sin_addr) << " on port " << opencon.client_addr.sin_port << std::endl;
+		// std::// cout << "New connection " << inet_ntoa(opencon.client_addr.sin_addr) << " on port " << opencon.client_addr.sin_port << std::endl;
 		open_connections.push_back(opencon);
 	} while(opencon.fd != -1);
 }
@@ -55,19 +55,19 @@ static string read_sok(size_t buff_size, bool& close_conn, size_t& fd)
 	if (rc < 0)
 	{
 		close_conn = true;
-		std::cout << "error kanker sukkel" << std::endl;
+		// std::cout << "error kanker sukkel" << std::endl;
 		free(buffer);
 		return "";
 	}
 	if (rc == 0)
 	{
-		std::cout << "Connection closed" << endl;
+		// std::cout << "Connection closed" << endl;
 		close_conn = true;
 		free(buffer);
 		return "";
 	}
 	buffer[rc] = 0;
-	std::cout << "Bytes recieved " << rc << std::endl;
+	// std::cout << "Bytes recieved " << rc << std::endl;
 	ft::str_set(ret, buffer);
 	free(buffer);
 	return (ret);
@@ -80,7 +80,7 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
 	{
 		cur_conn->chunk_unchunked += cur_conn->buf.substr(0, cur_conn->buf.find("\r\n"));
 		cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find("\r\n") + 2);
-		cout << "Added to unchunked! new size: " << cur_conn->chunk_unchunked.size() << " remainder: " << cur_conn->buf.size() << endl;
+		// cout << "Added to unchunked! new size: " << cur_conn->chunk_unchunked.size() << " remainder: " << cur_conn->buf.size() << endl;
 		if (cur_conn->buf.size() != 0)
 			unchunk_chunk(cur_conn);
 	}
@@ -90,7 +90,7 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
 		{
 			cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->chunk_unchunked);
 			cur_conn->ready = true;
-			cout << "chonky boi is ready\n" << endl;
+			// cout << "chonky boi is ready\n" << endl;
 		}
 		catch (std::exception& e)
 		{
@@ -108,14 +108,14 @@ void	unchunk_chunk(connect_data* cur_conn)
 	pos = cur_conn->buf.find("\r\n");
 	if (pos == string::npos)
 	{
-		cout << "no possie" << endl;
+		// cout << "no possie" << endl;
 		return ;
 	}
 	body_size = ft::stoi(cur_conn->buf.substr(0, pos), HEXADECIMAL);
-	cout << "chunk size = " << body_size << "\nBuffer size = " << cur_conn->buf.size() << "\ntotal_size = " << cur_conn->chunk_unchunked.size() << endl;
+	// cout << "chunk size = " << body_size << "\nBuffer size = " << cur_conn->buf.size() << "\ntotal_size = " << cur_conn->chunk_unchunked.size() << endl;
 	if (cur_conn->buf.length() - (pos + 2) < body_size + 2)
 	{
-		cout << "no fully read! len: " << cur_conn->buf.length() - (pos + 2) << "vs: " << body_size + 2 << std::endl;
+		// cout << "no fully read! len: " << cur_conn->buf.length() - (pos + 2) << "vs: " << body_size + 2 << std::endl;
 		return ;
 	}
 	get_chunk_body(cur_conn, pos, body_size);
@@ -125,13 +125,13 @@ static void	set_header(connect_data* cur_conn, size_t pos)
 {
 	cur_conn->header_raw = cur_conn->buf.substr(0, pos);
 	cur_conn->buf		 = cur_conn->buf.substr(pos + 4);
-	std::cout << "Setting header" << std::endl;
+	// std::cout << "Setting header" << std::endl;
 	cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
 	if (cur_conn->_session_cookies.empty() == false)
 		cur_conn->h._cookies = cur_conn->_session_cookies + cur_conn->h._cookies;
 	if (cur_conn->h._cookies.empty() == false)
 		cur_conn->_session_cookies = cur_conn->h._cookies;
-	std::cout << cur_conn->h << "\n\n" << std::endl;
+	// std::cout << cur_conn->h << "\n\n" << std::endl;
 }
 
 static void	normal_response(connect_data* cur_conn)
@@ -198,12 +198,12 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 	if (len == -1)
 		throw Plebception(ERR_WRITE_SOCK, "send_data", "");
 	cur_conn->bytes_send += len;
-	std::cout << "Bytes send " << cur_conn->bytes_send << " total size: " << cur_conn->response.size() << std::endl;
+	// std::cout << "Bytes send " << cur_conn->bytes_send << " total size: " << cur_conn->response.size() << std::endl;
 	if (cur_conn->bytes_send == cur_conn->response.size())
 		cur_conn->ready = false;
 	if (cur_conn->ready == false)
 	{
-		cout << "buf after send size = " << cur_conn->buf.size() << endl;
+		// cout << "buf after send size = " << cur_conn->buf.size() << endl;
 		cur_conn->clear();
 	}
 }
@@ -230,19 +230,19 @@ static void	accept_handle_connection(fd_set& current_sockets, vector<server_data
 		server_idx = get_port_fd(fd_match, data);
 		if (server_idx >= 0 && fd_match == static_cast<size_t>(data[server_idx].fd))
 		{
-			std::cout << "Listening socket is available!" << endl;
+			// std::cout << "Listening socket is available!" << endl;
 			accept_connect(current_sockets, data[server_idx], open_connections);
 		}
 		else if (cur_fd >= 0)
 		{
-			std::cout << "FD " << fd_match << " is readable!" << std::endl;
+			// std::cout << "FD " << fd_match << " is readable!" << std::endl;
 			try
 			{
 				handle_connection(current_sockets, open_connections, cur_fd, fd_match);
 			}
 			catch (const Plebception& e)
 			{
-				cerr << e.what() << endl;
+				// cerr << e.what() << endl;
 				create_custom_response(&open_connections[fd_match], open_connections[fd_match].h.create_header(500, 0));
 			}
 		}
@@ -257,10 +257,10 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 	struct timeval 	to;
 
 	to.tv_sec = 30;
-	std::cout << "Waiting on select.." << endl;
+	std::cout << "Waiting on select.. [" << FD_SETSIZE << "]" <<  endl;
 	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
 	if (rval < 0)
-		throw Fatal(ERR_SERVER_FATAL, "connect_handler", "select failed");
+		throw Fatal(ERR_SERVER_FATAL, "connect_handler", "select failed " + ft::to_string(errno));
 	else if (rval == 0)
 		return;
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
@@ -268,7 +268,7 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 		accept_handle_connection(current_sockets, data, open_connections, read_sok, fd_match);
 		if (FD_ISSET(fd_match, &write_sok))
 		{
-			cout << "socket available for writing" << endl;
+			// cout << "socket available for writing" << endl;
 			send_data(fd_match, open_connections);
 		}
 	}
@@ -284,8 +284,8 @@ void	host_servers(vector<Server> serv)
 	{
 		for (size_t x = 0; x < serv[i].port.size(); x++)
 		{
-			std::cout << "Server " << serv[i].server << " port: " << serv[i].port[x] << std::endl;
-			data.push_back(setup_server(serv[i], serv[i].port[x] , 32));
+			// std::cout << "Server " << serv[i].server << " port: " << serv[i].port[x] << std::endl;
+			data.push_back(setup_server(serv[i], serv[i].port[x] , 128));
 		}
 	}
 	FD_ZERO(&current_sockets);
@@ -300,7 +300,7 @@ void	host_servers(vector<Server> serv)
 		}
 		catch(const Plebception& e)
 		{
-			std::cerr << e.what() << '\n';
+			// std::// cerr << e.what() << '\n';
 		}
 	}	
 }

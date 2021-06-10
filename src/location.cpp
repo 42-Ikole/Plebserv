@@ -276,7 +276,7 @@ string	Location::find_file(Header h, int& response_code)
 	struct stat	file_status;
 	string		full_path = root + "/" + h._path.replace(h._path.find(location), location.size(), "");
 
-	std::cout << full_path << std::endl;	
+	// std::cout << full_path << std::endl;
 	if (stat(full_path.c_str(), &file_status) == -1)
 	{
 		response_code = 404;
@@ -292,7 +292,7 @@ string	Location::find_file(Header h, int& response_code)
 		for (size_t i = 0; i < index_page.size(); i++)
 		{
 			new_path = full_path + index_page[i];
-			std::cout << "Testing path " << new_path << std::endl;
+			// std::cout << "Testing path " << new_path << std::endl;
 			if (stat(new_path.c_str(), &file_status) != -1)
 				return (new_path);
 		}

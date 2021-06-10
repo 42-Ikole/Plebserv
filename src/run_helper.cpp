@@ -54,10 +54,13 @@ void	update_action(connect_data* cur_conn)
 
 void clear_connection(vector<connect_data>& open_connections, fd_set& current_sockets, size_t i)
 {
+	int fd = open_connections[i].fd;
+
 	close(open_connections[i].fd);
 	FD_CLR(open_connections[i].fd, &current_sockets);		
 	open_connections.erase(open_connections.begin() + i);
-	std::cout << "Succesfull removal of " << i << std::endl;
+	(void)fd;
+	// std::cout << "Succesfull removal of " << fd << std::endl;
 }
 
 void	clear_stale_connection(vector<connect_data>& open_connections, fd_set& current_sockets)
@@ -70,7 +73,7 @@ void	clear_stale_connection(vector<connect_data>& open_connections, fd_set& curr
 		if (current_time.tv_sec - open_connections[i].last_action > TIMEOUT)
 			clear_connection(open_connections, current_sockets, i);
 	}
-	cout << open_connections.size() << endl;
+	// cout << open_connections.size() << endl;
 }
 
 int get_cur_conn_index(size_t fd, vector<connect_data>& data)

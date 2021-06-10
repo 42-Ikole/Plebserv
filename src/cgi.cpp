@@ -81,7 +81,7 @@ inline	int cgi_write(int fdin[2], string &body, size_t &i)
 	for (int ret = 1; ret > 0 && i != body.size();)
 	{
 		write_size = i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
-		cerr << "WRITE " << i << " sz: " << write_size << endl;
+		// cerr << "WRITE " << i << " sz: " << write_size << endl;
 		ret = write(fdin[1], &body[i], write_size);
 		if (ret <= 0)
 			return ret;
@@ -97,7 +97,7 @@ inline	int cgi_read(int fdout[2], string &body, size_t &i)
 
 	for (int ret = 1; ret > 0;)
 	{
-		cerr << "READ " << i << endl;
+		// cerr << "READ " << i << endl;
 		ret = read(fdout[0], buff, PIPE_BUFFER);
 		if (ret <= 0)
 			return ret;
@@ -123,13 +123,13 @@ string	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
 		return ("");
 	while (read_s != 0)
 	{
-		cerr << "statuses R: " << read_s << " W: " << write_s << endl; 
+		// cerr << "statuses R: " << read_s << " W: " << write_s << endl; 
 		if (write_s != 0)
 			write_s = cgi_write(fdin, body, write_i);
 		read_s = cgi_read(fdout, rval, read_i);			
 	}
 
-	cerr << "Peace out bitch" << endl;
+	// cerr << "Peace out bitch" << endl;
 	(void)id;
 	return (rval);
 }
@@ -223,7 +223,7 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser)
 {
 	map<string, string> env_tmp;
 
-	cerr << "body size = " << body.size() << endl;
+	// cerr << "body size = " << body.size() << endl;
 	default_env(h, body, file_path, ser, env_tmp);
 	for(map<string, string>::iterator it = h._headers_in.begin(); it != h._headers_in.end(); it++)
 		env_tmp[ft::convert_header(it->first)] = it->second;
@@ -231,10 +231,10 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser)
 	char **env = create_env_array(env_tmp);
 	read_response(env, body, file_path);
 	size_t pos = body.find(HEADER_END);
-	cerr << "kut body gvd: " << body.size() << endl;
+	// cerr << "kut body gvd: " << body.size() << endl;
 	if (pos != string::npos)
 	{
-		std::cerr << "Found Header!!! end: " << pos << endl;
+		//std::// cerr << "Found Header!!! end: " << pos << endl;
 		h.add_to_header_out(ft::split(body.substr(0, pos), "\r\n"));
 		body = body.substr(pos + 4);
 	}

@@ -39,7 +39,7 @@ static void	parser_test(char* filename)
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "[ " << COLOR_RED << "KO" << COLOR_RESET << " ]" << std::endl;
+		std::cerr << "[ " << COLOR_RED << "KO" << COLOR_RESET << " ]" << std::endl;
 		exit(1);
 	}
 }
@@ -83,8 +83,8 @@ int main(int argc, char** argv)
 			parser_test(argv[2]);
 	}
 	std::vector<Server> l = load_config(filename);
-	for (size_t i = 0; i < l.size(); i++)
-		std::cout << l[i] << std::endl;
+	// for (size_t i = 0; i < l.size(); i++)
+		// std::cout << l[i] << std::endl;
 	persistent_run_serv(3, l);
 	return (0);
 }

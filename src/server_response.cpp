@@ -130,7 +130,7 @@ Location*	Server::match_location(string path)
 
 	for (size_t i = 0; i < locations.size(); i++)
 	{
-		std::cout << "Matching [" << locations[i].location << "] with [" << path << "]\n";
+		// std::cout << "Matching [" << locations[i].location << "] with [" << path << "]\n";
 		if (!strncmp(locations[i].location.c_str(), path.c_str(), locations[i].location.length()))
 			if (!closest_match || locations[i].location.length() > closest_match->location.length())
 				closest_match = &locations[i];
@@ -151,7 +151,7 @@ string	Server::return_get(Header& h, Location* l)
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->auto_index << endl;
+		//std::// cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->auto_index << endl;
 		if (response_code == 404 && ft::ends_with(h._path, "/") && l->auto_index == ON)
 		{
 			response_code = 200;
@@ -228,7 +228,7 @@ string	Server::return_put(Header& h, Location* l, string& body)
 	int			response_code = 201;
 	int			fd;
 
-	cout << "Path to save to: " << full_path << endl;
+	// cout << "Path to save to: " << full_path << endl;
 	if (body.size() > l->max_body_size)
 	{
 		response_code = 413;
@@ -275,7 +275,7 @@ string	Server::return_options(Header& h, Location* l)
 			else
 				allowed += l->limit_except[i] + ", ";
 		}
-	std::cout << "Allowed: " << allowed << endl;
+	//std::cout << "Allowed: " << allowed << endl;
 	h.add_to_header_out("Allow", allowed);
 	header = h.create_header(204, 0);
 	return (header);
@@ -326,7 +326,7 @@ string	Server::create_response(Header& h, string& body)
 		h.add_to_header_out("Location", l->redir.second);
 		return (h.create_header(l->redir.first, 0));
 	}
-	std::cout << "The match is " << l->location << std::endl;
+	//std::cout << "The match is " << l->location << std::endl;
 	if (h._method == "GET")
 		return (return_get(h, l));
 	if (h._method == "POST")
