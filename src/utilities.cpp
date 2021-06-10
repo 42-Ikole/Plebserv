@@ -27,18 +27,17 @@
 #include <unistd.h>
 
 #include <plebception.hpp>
-
-#define BUFFER 128
+#include <utilities.hpp>
 
 namespace ft
 {
-    std::string& ltrim(std::string& s, std::string delim = " \t")
+    std::string& ltrim(std::string& s, std::string delim)
     {
         s.erase(s.begin(), s.begin() + s.find_first_not_of(delim));
         return s;
     }
 
-    std::vector<std::string> split(std::string str, std::string delim = " \t\n")
+    std::vector<std::string> split(std::string str, std::string delim)
     {
         std::vector<std::string>    res;
         size_t                      end;
@@ -69,7 +68,7 @@ namespace ft
         return(res);
     }
 
-    int stoi(std::string number, const std::string base = "0123456789")
+    int stoi(std::string number, const std::string base)
     {
         int res = 0;
         size_t num;
@@ -94,30 +93,39 @@ namespace ft
 		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 	}
 
+    // std::vector<std::string> get_lines(std::string file)
+    // {
+    //     int 			            fd	= open(file.c_str(), O_RDONLY);
+    //     char			            incoming[BUFFER + 1];
+    //     std::string			        str_buff = "";
+    //     std::vector<std::string>	res;
+
+    //     if (fd == -1)
+    //         throw Plebception(ERR_FD, "FD", file);
+    //     for (int ret = 1; ret > 0;)
+    //     {
+    //         ret = ::read(fd, incoming, BUFFER);
+    //         if (ret < 1)
+    //             break ;
+    //         incoming[ret] = '\0';
+    //         str_buff += incoming;
+    //         for (size_t pos = str_buff.find("\n"); pos != string::npos; pos = str_buff.find("\n"))
+    //         {
+    //             res.push_back(str_buff.substr(0, pos));
+    //             str_buff = str_buff.substr(pos + 1, str_buff.size());
+    //         }
+    //     }
+    //     res.push_back(str_buff.substr(0, str_buff.size()));
+    //     return (res);
+    // }
     std::vector<std::string> get_lines(std::string file)
     {
-        int 			            fd	= open(file.c_str(), O_RDONLY);
-        char			            incoming[BUFFER + 1];
-        std::string			        str_buff = "";
-        std::vector<std::string>	res;
-
-        if (fd == -1)
-            throw Plebception(ERR_FD, "FD", file);
-        for (int ret = 1; ret > 0;)
-        {
-            ret = read(fd, incoming, BUFFER);
-            if (ret < 1)
-                break ;
-            incoming[ret] = '\0';
-            str_buff += incoming;
-            for (size_t pos = str_buff.find("\n"); pos != string::npos; pos = str_buff.find("\n"))
-            {
-                res.push_back(str_buff.substr(0, pos));
-                str_buff = str_buff.substr(pos + 1, str_buff.size());
-            }
-        }
-        res.push_back(str_buff.substr(0, str_buff.size()));
-        return (res);
+        int		fd	= open(file.c_str(), O_RDONLY);
+		string	unparsed;
+		
+		if (ft::read(fd, unparsed, 2048) == -1)
+			throw Plebception(ERR_READ, "get_lines", file.c_str());
+        return (ft::split(unparsed, "\n"));
     }
 
     char *strdup(char* str)
@@ -180,4 +188,99 @@ namespace ft
         tmp = "HTTP_" + tmp;
         return tmp;
     }
+    
+	int		read(int fd, std::string& rv, size_t buf_size, size_t &i)
+	{
+		int ret = 1;
+		char *buff = (char *)malloc(sizeof(char) * (buf_size + 1));
+
+        if (!buff)
+            throw Plebception(ERR_FAIL_SYSCL, "read", "error allocating region");
+		for (;ret > 0; i += ret)
+		{
+			ret = ::read(fd, buff, buf_size);
+			if (ret < 0)
+			{
+				free(buff);
+				return ret;
+			}
+			buff[ret] = 0;
+		    rv.resize(rv.size() + ret);
+			memcpy(&rv[i], buff, ret);
+		}
+		free(buff);
+		return (ret);
+	}
+
+	int		read(int fd, std::string& rv, size_t buf_size)
+	{
+		int ret = 1;
+		char *buff = (char *)malloc(sizeof(char) * (buf_size + 1));
+
+        if (!buff)
+            throw Plebception(ERR_FAIL_SYSCL, "read", "error allocating region");
+		for (size_t i = 0; ret > 0; i += ret)
+		{
+			ret = ::read(fd, buff, buf_size);
+			if (ret < 0)
+			{
+				free(buff);
+				return ret;
+			}
+			buff[ret] = 0;
+		    rv.resize(rv.size() + ret);
+			memcpy(&rv[i], buff, ret);
+		}
+		free(buff);
+		return (ret);
+	}
+
+    int write(int fd, std::string& body, size_t& i)
+    {
+        size_t write_size;
+        int ret;
+
+        for(ret = 1; ret > 0 && i != body.size(); i += ret)
+        {
+            write_size = i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
+            ret = ::write(fd, &body[i], write_size);
+        }
+        return (ret);
+    }
+
+    int write(int fd, std::string& body)
+    {
+        size_t write_size;
+        int ret = 1;
+
+        for(size_t i = 0; ret > 0 && i != body.size(); i += ret)
+        {
+            write_size = i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
+            ret = ::write(fd, &body[i], write_size);
+        }
+        return (ret);
+    }
 }
+
+
+// for (size_t i = 0; ret;)
+// {
+//     ret = read(fd, &buf, 1024);
+//     if (ret < 0)
+//         throw Plebception(ERR_READ, "read_file", path);
+//     buf[ret] = '\0';
+//     rv.resize(rv.size() + ret);
+//     memcpy(&rv[i], buf, ret);
+//     i += ret;
+// }
+
+// size_t write_size;
+// for (int ret = 1; ret > 0 && i != body.size();)
+// {
+// 	write_size = i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
+// 	// cerr << "WRITE " << i << " sz: " << write_size << endl;
+// 	ret = write(fdin[1], &body[i], write_size);
+// 	if (ret <= 0)
+// 		return ret;
+// 	i += ret;
+// }
