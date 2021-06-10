@@ -90,11 +90,11 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
 		{
 			cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->chunk_unchunked);
 			cur_conn->ready = true;
-			cout << "chonky boi is ready\n" << cur_conn->response << endl;
+			cout << "chonky boi is ready\n" << endl;
 		}
 		catch (std::exception& e)
 		{
-			std::cout << e.what() << std::endl;
+			std::cerr << e.what() << std::endl;
 			cur_conn->clear(); // error code something
 		}
 	}
@@ -203,7 +203,7 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections)
 		cur_conn->ready = false;
 	if (cur_conn->ready == false)
 	{
-		cout << "buf after send = " << cur_conn->buf << endl;
+		cout << "buf after send size = " << cur_conn->buf.size() << endl;
 		cur_conn->clear();
 	}
 }

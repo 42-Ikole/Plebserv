@@ -57,7 +57,7 @@ static void persistent_run_serv(int tries, std::vector<Server>& l)
 	}
 	catch(const Plebception& e)
 	{
-		std::cout << e.what() << std::endl;
+		std::cerr << e.what() << std::endl;
 		if (tries == -1)
 			persistent_run_serv (-1, l);
 		else
@@ -65,7 +65,7 @@ static void persistent_run_serv(int tries, std::vector<Server>& l)
 	}
 	catch (const Fatal& e)
 	{
-		std::cout << e.what() << std::endl;
+		std::cerr << e.what() << std::endl;
 	}
 }
 
