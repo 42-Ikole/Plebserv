@@ -242,13 +242,13 @@ void	Location::load_client_max_body_size(vector<string> val)
 	max_body_size = ft::stoi(val[0]) * mul;
 }
 
-bool	Location::run_cgi(Header& h, string& body, string file_path, Server& ser, size_t& size)
+bool	Location::run_cgi(Header& h, string& body, string file_path, Server& ser)
 {
 	for (size_t i = 0; i < cgi.size(); i++)
 	{
 		if (h._extension == cgi[i]._match)
 		{
-			cgi[i].cgi_response(h, body, file_path, ser, size);
+			cgi[i].cgi_response(h, body, file_path, ser);
 			return (true);
 		}
 	}

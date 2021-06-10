@@ -121,6 +121,7 @@ static void	read_file(string&  rv, string path)
 		memcpy(&rv[i], buf, ret);
 		i += ret;
 	}
+	close (fd);
 }
 
 Location*	Server::match_location(string path)
@@ -140,13 +141,12 @@ Location*	Server::match_location(string path)
 string	Server::return_get(Header& h, Location* l)
 {
 	int		response_code = 200;
-	size_t	body_size = 0;
 	string	body;
 
 	try
 	{
 		string file_path = l->find_file(h, response_code);
-		if (!l->run_cgi(h, body, file_path, *this, body_size))
+		if (!l->run_cgi(h, body, file_path, *this))
 			read_file(body, file_path);
 	}
 	catch(const std::exception& e)
@@ -170,7 +170,6 @@ string	Server::return_get(Header& h, Location* l)
 string	Server::return_post(Header& h, Location* l, string& body)
 {
 	int		response_code = 200;
-	size_t	body_size = 0;
 
 	try
 	{
@@ -182,7 +181,7 @@ string	Server::return_post(Header& h, Location* l, string& body)
 			return (h.create_header(response_code, body.size()) + string(body));
 		}
 		string file_path = l->find_file(h, response_code);
-		if (!l->run_cgi(h, body, file_path, *this, body_size))
+		if (!l->run_cgi(h, body, file_path, *this))
 			return (return_get(h, l));
 	}
 	catch (const std::exception& e)
@@ -285,13 +284,12 @@ string	Server::return_options(Header& h, Location* l)
 string	Server::return_head(Header& h, Location* l)
 {
 	string 	body;
-	size_t 	body_size = 0;
 	int		response_code = 200;
 
 	try
 	{
 		string file_path = l->find_file(h, response_code);
-		if (!l->run_cgi(h, body, file_path, *this, body_size))
+		if (!l->run_cgi(h, body, file_path, *this))
 			read_file(body, file_path);
 	}
 	catch(const exception& e)
@@ -307,8 +305,7 @@ string	Server::return_head(Header& h, Location* l)
 			err_code_file(body, response_code);
 		}
 	}
-	body_size = body.size();
-	return (h.create_header(response_code, body_size));
+	return (h.create_header(response_code, body.size()));
 }
 
 string	Server::create_response(Header& h, string& body)
@@ -321,7 +318,7 @@ string	Server::create_response(Header& h, string& body)
 	try {l->method_allowed(h, response_code); }
 	catch (std::exception& e)
 	{
-		cout << e.what() << response_code << endl;
+		cerr << e.what() << response_code << endl;
 		return (h.create_header(response_code, 0));
 	}
 	if (l->redir.first != 0)
