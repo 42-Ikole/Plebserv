@@ -103,12 +103,18 @@ static void inline create_dirlist(string root, string path, string& body)
 	ft::str_set(body, res);
 }
 
-static void	read_file(string&  rv, string path)
+void	Location::read_file(string&  rv, string path)
 {
 	int		fd;
 	int		ret = 1;
 	char	buf[1025];
 
+	if (static_files[path].empty() == false)
+	{
+		cout << "using cached response: " << path << endl;
+		rv = static_files[path];
+		return;
+	}
 	if ((fd = open(path.c_str(), O_RDONLY)) == -1)
 		throw Plebception(ERR_FD, "read_file", path);
 	for (size_t i = 0; ret;)
@@ -121,6 +127,7 @@ static void	read_file(string&  rv, string path)
 		memcpy(&rv[i], buf, ret);
 		i += ret;
 	}
+	static_files[path] = rv;
 	close (fd);
 }
 
@@ -147,7 +154,7 @@ string	Server::return_get(Header& h, Location* l)
 	{
 		string file_path = l->find_file(h, response_code);
 		if (!l->run_cgi(h, body, file_path, *this))
-			read_file(body, file_path);
+			l->read_file(body, file_path);
 	}
 	catch(const std::exception& e)
 	{
@@ -290,7 +297,7 @@ string	Server::return_head(Header& h, Location* l)
 	{
 		string file_path = l->find_file(h, response_code);
 		if (!l->run_cgi(h, body, file_path, *this))
-			read_file(body, file_path);
+			l->read_file(body, file_path);
 	}
 	catch(const exception& e)
 	{

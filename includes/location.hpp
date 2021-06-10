@@ -63,6 +63,7 @@ class Location
 		vector<http_methods>	_methods;
 	public:
 		size_t					max_body_size;
+		map<string, string>		static_files;
 		vector<string>			limit_except;
 		string					upload_store;
 		vector<string>			index_page;
@@ -92,6 +93,7 @@ class Location
 		bool	run_cgi(Header& h, string& body, string file_path, Server& ser);
 		bool	method_allowed(Header& h, int& response_code);
 
+		void	read_file(string&  rv, string path);
 		char*	read_file(size_t len);
 		string	find_file(Header h, int& response_code);
 };
