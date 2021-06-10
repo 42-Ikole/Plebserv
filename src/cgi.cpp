@@ -23,12 +23,12 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <stdio.h>
-
+#include <utilities.hpp>
 #include <cgi.hpp>
 #include <server.hpp>
+#include <utilities.hpp>
 
 #define HEADER_END	"\r\n\r\n"
-#define PIPE_BUFFER	16384
 
 Cgi::Cgi(string path, string match)
 {
@@ -93,19 +93,9 @@ inline	int cgi_write(int fdin[2], string &body, size_t &i)
 
 inline	int cgi_read(int fdout[2], string &body, size_t &i)
 {
-	char buff[PIPE_BUFFER + 1];
-
-	for (int ret = 1; ret > 0;)
-	{
-		// cerr << "READ " << i << endl;
-		ret = read(fdout[0], buff, PIPE_BUFFER);
-		if (ret <= 0)
-			return ret;
-		buff[ret] = 0;
-		body.resize(body.size() + ret);
-		memcpy(&body[i], buff, ret);
-		i += ret;
-	}
+	int ret;
+	if ((ret = ft::read(fdout[0], body, PIPE_BUFFER, i)) <= 0)
+		return (ret);
 	close(fdout[0]);
 	return 0;
 }

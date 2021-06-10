@@ -46,8 +46,6 @@ static void		default_error_page(string& body, int response_code)
 void	Server::err_code_file(string& body, int response_code)
 {
 	int		fd;
-	int		ret = 1;
-	char	buf[1025];
 
 	if (error_pages[response_code].empty())
 		default_error_page(body, response_code);
@@ -64,18 +62,8 @@ void	Server::err_code_file(string& body, int response_code)
 			default_error_page(body, response_code);
 			return ;
 		}
-		for (size_t i = 0; ret;)
-		{
-			ret = read(fd, &buf, 1024);
-			if (ret < 0)
-				throw Plebception(ERR_READ, "err_read_file", error_pages[response_code]);
-			if (ret == 0)
-				break ;
-			buf[ret] = '\0';
-			body.resize(body.size() + ret);
-			memcpy(&body[i], buf, ret);
-			i += ret;
-		}
+		if (ft::read(fd, body, 2048) < 0)
+			throw Plebception(ERR_READ, "err_read_file", error_pages[response_code]);
 	}
 }
 
@@ -103,11 +91,9 @@ static void inline create_dirlist(string root, string path, string& body)
 	ft::str_set(body, res);
 }
 
-void	Location::read_file(string&  rv, string path)
+void	Location::read_file(string& rv, string path)
 {
 	int		fd;
-	int		ret = 1;
-	char	buf[1025];
 
 	if (static_dir && static_files[path].empty() == false)
 	{
@@ -117,16 +103,8 @@ void	Location::read_file(string&  rv, string path)
 	}
 	if ((fd = open(path.c_str(), O_RDONLY)) == -1)
 		throw Plebception(ERR_FD, "read_file", path);
-	for (size_t i = 0; ret;)
-	{
-		ret = read(fd, &buf, 1024);
-		if (ret < 0)
-			throw Plebception(ERR_READ, "read_file", path);
-		buf[ret] = '\0';
-		rv.resize(rv.size() + ret);
-		memcpy(&rv[i], buf, ret);
-		i += ret;
-	}
+	if (ft::read(fd, rv, 2048) < 0)
+		throw Plebception(ERR_READ, "read_file", path);
 	if (static_dir)
 		static_files[path] = rv;
 	close (fd);
@@ -211,7 +189,8 @@ string	Server::return_post(Header& h, Location* l, string& body)
 				fd = open(string(full_path + "/" + ft::create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
 			if (fd == -1)
 				throw Plebception(ERR_FD, "return_post", full_path);
-			write(fd, body.c_str(), body.length());
+			if (ft::write(fd, body) == -1)
+				throw Plebception(ERR_WRITING, "return_post", "");
 			close(fd);
 			response_code = 201;
 		}
@@ -255,13 +234,8 @@ string	Server::return_put(Header& h, Location* l, string& body)
 		throw Plebception(ERR_FD, "opening file failed", full_path);
 	else
 	{
-		int	ret = 1;
-		for (size_t i = 0; ret > 0; i += ret)
-		{
-			ret = write(fd, &body[i], body.size() - i);
-			if (ret == -1)
-				throw Plebception(ERR_WRITING, "writing to file", full_path);
-		}
+		if (ft::write(fd, body) == -1)
+			throw Plebception(ERR_WRITING, "writing to file", full_path);
 	}
 	close(fd);
 	return(h.create_header(response_code, 0));
