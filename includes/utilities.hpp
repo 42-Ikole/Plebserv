@@ -35,6 +35,7 @@ namespace ft
 	std::string to_string(int val);
 	void str_set(string& res, string to_push);
 	string create_date();
+	string convert_header(const string& str);
 }
 
 #endif

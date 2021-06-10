@@ -18,6 +18,7 @@
 /*																					 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <cstring>
@@ -79,7 +80,7 @@ namespace ft
         for (size_t i = !!sign; i < number.size(); i++) {
             num = base.find(number[i]);
             if (num == std::string::npos)
-                continue;
+                continue ;
             res = res * base.size() + num;
         }
         sign += (!sign);
@@ -88,6 +89,7 @@ namespace ft
 
 	bool ends_with(std::string const& value, std::string const& ending)
 	{
+        
 		if (ending.size() > value.size()) return false;
 		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 	}
@@ -164,5 +166,18 @@ namespace ft
         timeinfo = gmtime(&rawtime);
         strftime(buf, 100, "%a, %d %b %G %H:%M:%S GMT", timeinfo);
         return (string(buf));
+    }
+
+    static void to_upper(char &ch) {
+        ch = toupper(static_cast<unsigned char>(ch));
+    }
+
+    string convert_header(const string& str)
+    {
+        string tmp = str;
+        replace(tmp.begin(), tmp.end(), '-', '_');
+        for_each(tmp.begin(), tmp.end(), to_upper);
+        tmp = "HTTP_" + tmp;
+        return tmp;
     }
 }
