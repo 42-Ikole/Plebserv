@@ -77,16 +77,14 @@ void	Cgi::cgi_child(int fdin[2], int fdout[2], char* args[3], char** env)
 
 inline	int cgi_write(int fdin[2], string &body, size_t &i)
 {
-	size_t write_size;
-	for (int ret = 1; ret > 0 && i != body.size();)
+	if (body.size() == 0)
 	{
-		write_size = i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
-		// cerr << "WRITE " << i << " sz: " << write_size << endl;
-		ret = write(fdin[1], &body[i], write_size);
-		if (ret <= 0)
-			return ret;
-		i += ret;
+		close (fdin[1]);
+		return (0);
 	}
+	int ret = ft::write(fdin[1], body, i);
+	if (ret <= 0)
+		return (ret);
 	close(fdin[1]);
 	return 0;
 }
@@ -109,11 +107,9 @@ string	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
 
 	close(fdin[0]);
 	close(fdout[1]);
-	if (body.size() == 0)
-		return ("");
 	while (read_s != 0)
 	{
-		// cerr << "statuses R: " << read_s << " W: " << write_s << endl; 
+		// cerr << "statuses R: " << read_s << " W: " << write_s << endl;
 		if (write_s != 0)
 			write_s = cgi_write(fdin, body, write_i);
 		read_s = cgi_read(fdout, rval, read_i);			
@@ -147,6 +143,7 @@ void Cgi::read_response(char** env, string& body, string file_path)
 	if (fcntl(fdout[1], F_SETFL, O_NONBLOCK) < 0)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl4",  "rip");
 
+	cerr << "FD Write: " << fdin[1] << " FD READ: " << fdout[0] << endl;
 	pid_t id = fork();
 	if (id == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "fork");
@@ -221,7 +218,7 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser)
 	char **env = create_env_array(env_tmp);
 	read_response(env, body, file_path);
 	size_t pos = body.find(HEADER_END);
-	// cerr << "kut body gvd: " << body.size() << endl;
+	cerr << "kut body gvd: " << body.size() << endl;
 	if (pos != string::npos)
 	{
 		//std::// cerr << "Found Header!!! end: " << pos << endl;
