@@ -33,6 +33,7 @@
 #include <server.hpp>
 #include <utilities.hpp>
 #include <plebception.hpp>
+#include <struct_tmp.hpp>
 
 #define HEADER_END "\r\n\r\n"
 #define TIMEOUT		150
@@ -44,34 +45,6 @@ struct server_data
 	Server*				ser;
 };
 
-struct	connect_data
-{
-	int					fd;		// client fd
-	Server*				ser;
-	Header				h;
-	string				buf;
-	string				chunk_unchunked;
-	string				header_raw;
-	struct	sockaddr_in	client_addr;
-	socklen_t			addr_size;
-	size_t				last_action;
-	size_t				bytes_send;
-	string				response;
-	bool				ready;
-	bool				last;
-	string				_session_cookies;
-
-	void clear()
-	{
-		bytes_send = 0;
-		buf.clear();
-		chunk_unchunked.clear();
-		response.clear();
-		header_raw.clear();
-		ready = false;
-		last = false;
-	}
-};
 
 server_data		setup_server(Server& ser, short port, int backlog);
 void			update_action(connect_data* cur_conn);
@@ -81,5 +54,7 @@ int				get_port_fd(size_t fd, vector<server_data>& data);
 connect_data 	*get_cur_conn(size_t fd, vector<connect_data>& data);
 void			clear_stale_connection(vector<connect_data>& open_connections, fd_set& current_sockets);
 void			unchunk_chunk(connect_data* cur_conn);
+// static void 	add_connection(connect_data &data);
+// static void		add_fd(int fd);
 
 #endif

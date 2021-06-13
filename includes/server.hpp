@@ -32,6 +32,8 @@
 # include <server.hpp>
 # include <utilities.hpp>
 # include <header.hpp>
+#include <struct_tmp.hpp>
+
 
 using namespace std;
 
@@ -70,19 +72,19 @@ class Server
 		void			check_servername(string& val);
 
 		Location		*match_location(string path);
-		string	create_response(Header& h, string& body);
+		string	create_response(connect_data &data);
 
 		void			err_code_file(string& body, int response_code);
 		inline size_t 	get_error_file_len(int response_code);
 
-		string	return_get(Header& h, Location* l);
-		string	return_post(Header& h, Location* l, string& body);
-		string	return_delete(Header& h, Location* l);
-		string	return_options(Header& h, Location* l);
-		string	return_put(Header& h, Location* l, string& body);
-		string	return_head(Header& h, Location* l);
-		string	return_connect(Header& h, Location* l);
-		string	return_trace(Header& h, Location* l);
+		string	return_get(connect_data &data, Location* l);
+		string	return_post(connect_data &data, Location* l);
+		string	return_delete(connect_data &data, Location* l);
+		string	return_options(connect_data &data, Location* l);
+		string	return_put(connect_data &data, Location* l);
+		string	return_head(connect_data &data, Location* l);
+		string	return_connect(connect_data &data, Location* l);
+		string	return_trace(connect_data &data, Location* l);
 
 };
 

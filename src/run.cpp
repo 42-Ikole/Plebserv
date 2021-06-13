@@ -20,6 +20,9 @@
 
 #include <run.hpp>
 
+vector<connect_data> 	open_connections;
+fd_set 					current_sockets;
+
 static void accept_connect(fd_set& current_sockets, server_data& data, vector<connect_data>& open_connections)	
 {
 	connect_data opencon = connect_data();
@@ -35,6 +38,7 @@ static void accept_connect(fd_set& current_sockets, server_data& data, vector<co
 		if (fcntl(opencon.fd, F_SETFL, O_NONBLOCK) == -1)
 			throw Plebception(ERR_SERVER, "accept_connect", "fcntl failed");
 		opencon.ser = data.ser;
+		opencon.type = 0;
 		update_action(&opencon);
 		FD_SET(opencon.fd, &current_sockets);
 		// std::// cout << "New connection " << inet_ntoa(opencon.client_addr.sin_addr) << " on port " << opencon.client_addr.sin_port << std::endl;
@@ -88,7 +92,8 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
 	{
 		try
 		{
-			cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->chunk_unchunked);
+			cur_conn->buf = cur_conn->chunk_unchunked;
+			cur_conn->response = cur_conn->ser->create_response(*cur_conn);
 			cur_conn->ready = true;
 			// cout << "chonky boi is ready\n" << endl;
 		}
@@ -140,7 +145,7 @@ static void	normal_response(connect_data* cur_conn)
 
 	if (cur_conn->buf.size() < body_size)
 		return ;
-	cur_conn->response = cur_conn->ser->create_response(cur_conn->h, cur_conn->buf);
+	cur_conn->response = cur_conn->ser->create_response(*cur_conn);
 	cur_conn->ready = true;
 }
 
@@ -277,8 +282,6 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 void	host_servers(vector<Server> serv)
 {
 	vector<server_data> 	data;
-	vector<connect_data> 	open_connections;
-	fd_set 					current_sockets;
 
 	for (size_t i = 0; i < serv.size(); i++)
 	{

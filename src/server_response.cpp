@@ -124,63 +124,63 @@ Location*	Server::match_location(string path)
 	return (closest_match);
 }
 
-string	Server::return_get(Header& h, Location* l)
+string	Server::return_get(connect_data &data, Location* l)
 {
 	int		response_code = 200;
 	string	body;
 
 	try
 	{
-		string file_path = l->find_file(h, response_code);
-		if (!l->run_cgi(h, body, file_path, *this))
+		string file_path = l->find_file(data.h, response_code);
+		if (!l->run_cgi(data.h, body, file_path, *this))
 			l->read_file(body, file_path);
 	}
 	catch(const std::exception& e)
 	{
 		//std::// cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->auto_index << endl;
-		if (response_code == 404 && ft::ends_with(h._path, "/") && l->auto_index == ON)
+		if (response_code == 404 && ft::ends_with(data.h._path, "/") && l->auto_index == ON)
 		{
 			response_code = 200;
-			create_dirlist(l->root, h._path, body);
+			create_dirlist(l->root, data.h._path, body);
 		}
 		else
 		{
 			std::cerr << e.what() << " response_code: " << response_code << '\n';
 			err_code_file(body, response_code);
-			h._extension = ".html";
+			data.h._extension = ".html";
 		}
 	}
-	return (h.create_header(response_code, body.size()) + string(body));
+	return (data.h.create_header(response_code, body.size()) + string(body));
 }
 
-string	Server::return_post(Header& h, Location* l, string& body)
+string	Server::return_post(connect_data &data, Location* l)
 {
 	int		response_code = 200;
 
 	try
 	{
-		if (body.size() > l->max_body_size)
+		if (data.buf.size() > l->max_body_size)
 		{
 			response_code = 413;
-			body.clear();
-			err_code_file(body, response_code);
-			return (h.create_header(response_code, body.size()) + string(body));
+			data.buf.clear();
+			err_code_file(data.buf, response_code);
+			return (data.h.create_header(response_code, data.buf.size()) + string(data.buf));
 		}
-		string file_path = l->find_file(h, response_code);
-		if (!l->run_cgi(h, body, file_path, *this))
-			return (return_get(h, l));
+		string file_path = l->find_file(data.h, response_code);
+		if (!l->run_cgi(data.h, data.buf, file_path, *this))
+			return (return_get(data, l));
 	}
 	catch (const std::exception& e)
 	{
 		if (response_code != 404)
 		{
 			std::cerr << e.what() << " response_code: " << response_code << '\n';
-			err_code_file(body, response_code);
+			err_code_file(data.buf, response_code);
 		}
 		else
 		{
 			int fd = 0;
-			string full_path = l->root + "/" + h._path.replace(h._path.find(l->location), l->location.size(), "");
+			string full_path = l->root + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
 			struct stat file_status;
 
 			if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
@@ -189,39 +189,39 @@ string	Server::return_post(Header& h, Location* l, string& body)
 				fd = open(string(full_path + "/" + ft::create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
 			if (fd == -1)
 				throw Plebception(ERR_FD, "return_post", full_path);
-			if (ft::write(fd, body) == -1)
+			if (ft::write(fd, data.buf) == -1)
 				throw Plebception(ERR_WRITING, "return_post", "");
 			close(fd);
 			response_code = 201;
 		}
 	}
-	return (h.create_header(response_code, body.size()) + string(body));
+	return (data.h.create_header(response_code, data.buf.size()) + string(data.buf));
 }
 
-string	Server::return_delete(Header& h, Location* l)
+string	Server::return_delete(connect_data &data, Location* l)
 {
 	int		response_code = 204;
-	string	full_path = l->root + h._path;
+	string	full_path = l->root + data.h._path;
 
 	if (unlink(full_path.c_str()) == -1)
 		response_code = 403;
-	return (h.create_header(response_code, 0));
+	return (data.h.create_header(response_code, 0));
 }
 
-string	Server::return_put(Header& h, Location* l, string& body)
+string	Server::return_put(connect_data &data, Location* l)
 {
-	string		full_path = l->upload_store + "/" + h._path.replace(h._path.find(l->location), l->location.size(), "");
+	string		full_path = l->upload_store + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
 	struct stat	file_status;
 	int			response_code = 201;
 	int			fd;
 
 	// cout << "Path to save to: " << full_path << endl;
-	if (body.size() > l->max_body_size)
+	if (data.buf.size() > l->max_body_size)
 	{
 		response_code = 413;
-		body.clear();
-		err_code_file(body, response_code);
-		return (h.create_header(response_code, body.size()) + string(body));
+		data.buf.clear();
+		err_code_file(data.buf, response_code);
+		return (data.h.create_header(response_code, data.buf.size()) + string(data.buf));
 	}
 	if (stat(full_path.c_str(), &file_status) == -1)
 		fd = open(full_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0777);
@@ -234,15 +234,15 @@ string	Server::return_put(Header& h, Location* l, string& body)
 		throw Plebception(ERR_FD, "opening file failed", full_path);
 	else
 	{
-		if (ft::write(fd, body) == -1)
+		if (ft::write(fd, data.buf) == -1)
 			throw Plebception(ERR_WRITING, "writing to file", full_path);
 	}
 	close(fd);
-	return(h.create_header(response_code, 0));
+	return(data.h.create_header(response_code, 0));
 }
 
 
-string	Server::return_options(Header& h, Location* l)
+string	Server::return_options(connect_data &data, Location* l)
 {
 	string header;
 	string allowed;
@@ -258,68 +258,68 @@ string	Server::return_options(Header& h, Location* l)
 				allowed += l->limit_except[i] + ", ";
 		}
 	//std::cout << "Allowed: " << allowed << endl;
-	h.add_to_header_out("Allow", allowed);
-	header = h.create_header(204, 0);
+	data.h.add_to_header_out("Allow", allowed);
+	header = data.h.create_header(204, 0);
 	return (header);
 }
 
-string	Server::return_head(Header& h, Location* l)
+string	Server::return_head(connect_data &data, Location* l)
 {
 	string 	body;
 	int		response_code = 200;
 
 	try
 	{
-		string file_path = l->find_file(h, response_code);
-		if (!l->run_cgi(h, body, file_path, *this))
+		string file_path = l->find_file(data.h, response_code);
+		if (!l->run_cgi(data.h, body, file_path, *this))
 			l->read_file(body, file_path);
 	}
 	catch(const exception& e)
 	{
-		if (response_code == 404 && ft::ends_with(h._path, "/") && l->auto_index == ON)
+		if (response_code == 404 && ft::ends_with(data.h._path, "/") && l->auto_index == ON)
 		{
 			response_code = 200;
-			create_dirlist(l->root, h._path, body);
+			create_dirlist(l->root, data.h._path, body);
 		}
 		else
 		{
 			cerr << e.what() << " response_code: " << response_code << '\n';
-			err_code_file(body, response_code);
+			err_code_file(data.buf, response_code);
 		}
 	}
-	return (h.create_header(response_code, body.size()));
+	return (data.h.create_header(response_code, body.size()));
 }
 
-string	Server::create_response(Header& h, string& body)
+string	Server::create_response(connect_data &data)
 {
 	int			response_code = 200;
-	Location*	l = match_location(h._path);
+	Location*	l = match_location(data.h._path);
 
 	if (l == NULL)
-		throw Plebception(ERR_NO_LOCATION, "create_response", h._path);
-	try {l->method_allowed(h, response_code); }
+		throw Plebception(ERR_NO_LOCATION, "create_response", data.h._path);
+	try {l->method_allowed(data.h, response_code); }
 	catch (std::exception& e)
 	{
 		cerr << e.what() << response_code << endl;
-		return (h.create_header(response_code, 0));
+		return (data.h.create_header(response_code, 0));
 	}
 	if (l->redir.first != 0)
 	{
-		h.add_to_header_out("Location", l->redir.second);
-		return (h.create_header(l->redir.first, 0));
+		data.h.add_to_header_out("Location", l->redir.second);
+		return (data.h.create_header(l->redir.first, 0));
 	}
 	//std::cout << "The match is " << l->location << std::endl;
-	if (h._method == "GET")
-		return (return_get(h, l));
-	if (h._method == "POST")
-		return (return_post(h, l, body));
-	if (h._method == "DELETE")
-		return (return_delete(h, l));
-	if (h._method == "PUT")
-		return (return_put(h, l, body));
-	if (h._method == "OPTIONS")
-		return (return_options(h, l));
-	if (h._method == "HEAD")
-		return (return_head(h, l));
-	return (return_post(h, l, body));
+	if (data.h._method == "GET")
+		return (return_get(data, l));
+	if (data.h._method == "POST")
+		return (return_post(data, l));
+	if (data.h._method == "DELETE")
+		return (return_delete(data, l));
+	if (data.h._method == "PUT")
+		return (return_put(data, l));
+	if (data.h._method == "OPTIONS")
+		return (return_options(data, l));
+	if (data.h._method == "HEAD")
+		return (return_head(data, l));
+	return (return_post(data, l));
 }
