@@ -57,16 +57,16 @@ std::ostream& operator<<(std::ostream& out, Cgi const& value)
 	return (out);
 }
 
-void	Cgi::cgi_child(int fdin[2], int fdout[2], char* args[3], char** env)
+void	Cgi::cgi_child(cgi_session &sesh, char* args[3], char** env)
 {
-	if (dup2 (fdout[1], 1) < 0)
+	if (dup2 (sesh.fd[FD_OUT][STDOUT_FILENO], 1) < 0)
 		throw Plebception(ERR_FAIL_SYSCL, "dup2", "rip1");
-	if (dup2 (fdin[0], 0) < 0)
+	if (dup2 (sesh.fd[FD_IN][STDIN_FILENO], 0) < 0)
 		throw Plebception(ERR_FAIL_SYSCL, "dup2", "rip2");
-	close(fdin[0]);
-	close(fdin[1]);
-    close(fdout[0]);
-    close(fdout[1]);
+	close(sesh.fd[0][0]);
+	close(sesh.fd[0][1]);
+    close(sesh.fd[1][0]);
+    close(sesh.fd[1][0]);
 	if (execve(_full_path.c_str(), args, env) == -1)
 	{
 		perror("exeve");
@@ -75,49 +75,41 @@ void	Cgi::cgi_child(int fdin[2], int fdout[2], char* args[3], char** env)
 	exit(0);
 }
 
-inline	int cgi_write(int fdin[2], string &body, size_t &i)
+inline	int cgi_write(int &fdin, string *body, size_t &i)
 {
-	if (body.size() == 0)
+	if (body->size() == 0)
 	{
-		close (fdin[1]);
+		close (fdin);
 		return (0);
 	}
-	int ret = ft::write(fdin[1], body, i);
+	int ret = ft::write(fdin, *body, i);
 	if (ret <= 0)
 		return (ret);
-	close(fdin[1]);
+	close(fdin);
 	return 0;
 }
 
-inline	int cgi_read(int fdout[2], string &body, size_t &i)
+inline	int cgi_read(int &fdout, string &body, size_t &i)
 {
 	int ret;
-	if ((ret = ft::read(fdout[0], body, PIPE_BUFFER, i)) <= 0)
+	if ((ret = ft::read(fdout, body, PIPE_BUFFER, i)) <= 0)
 		return (ret);
-	close(fdout[0]);
+	close(fdout);
 	return 0;
 }
 
 
-string	Cgi::cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body)
+void	Cgi::cgi_parent(cgi_session &sesh)
 {
-	string rval;
-	size_t write_i = 0, read_i = 0;
-	int read_s = 1, write_s = 1;
-
-	close(fdin[0]);
-	close(fdout[1]);
-	while (read_s != 0)
+	close(sesh.fd[0][0]);
+	close(sesh.fd[1][1]);
+	while (sesh.read_s != 0)
 	{
-		// cerr << "statuses R: " << read_s << " W: " << write_s << endl;
-		if (write_s != 0)
-			write_s = cgi_write(fdin, body, write_i);
-		read_s = cgi_read(fdout, rval, read_i);			
+		cerr << "statuses R: " << sesh.read_s << " W: " << sesh.write_s << endl;
+		if (sesh.write_s != 0)
+			sesh.write_s = cgi_write(sesh.fd[FD_IN][STDOUT_FILENO], sesh.input, sesh.write_i);
+		sesh.read_s = cgi_read(sesh.fd[FD_OUT][STDIN_FILENO], sesh.output, sesh.read_i);
 	}
-
-	// cerr << "Peace out bitch" << endl;
-	(void)id;
-	return (rval);
 }
 
 void Cgi::read_response(char** env, string& body, string file_path)
@@ -144,13 +136,16 @@ void Cgi::read_response(char** env, string& body, string file_path)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl4",  "rip");
 
 	cerr << "FD Write: " << fdin[1] << " FD READ: " << fdout[0] << endl;
+	cgi_session request_data(fdin, fdout, &body);
+
 	pid_t id = fork();
 	if (id == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "fork");
 	if (id == 0)
-		cgi_child(fdin, fdout, args, env);
+		cgi_child(request_data, args, env);
 	else
-		body = cgi_parent(fdin, fdout, id, body);
+		cgi_parent(request_data);
+	body = request_data.output;
 }
 
 char*	Cgi::create_env_var(string key, string value)
@@ -172,11 +167,6 @@ char	**Cgi::create_env_array(map<string, string> &env)
 	rval[i] = 0;
 	return (rval);
 }
-
-/*
-	Maybe
-	DOCUMENT_ROOT - This reflects the document root directory of the webserver.
-*/
 
 void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, map<string, string> &env_tmp)
 {
@@ -217,14 +207,15 @@ void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser)
 
 	char **env = create_env_array(env_tmp);
 	read_response(env, body, file_path);
+	cerr << "cgi body size: " << body.size() << endl;
+	
 	size_t pos = body.find(HEADER_END);
-	cerr << "kut body gvd: " << body.size() << endl;
 	if (pos != string::npos)
 	{
-		//std::// cerr << "Found Header!!! end: " << pos << endl;
 		h.add_to_header_out(ft::split(body.substr(0, pos), "\r\n"));
 		body = body.substr(pos + 4);
 	}
+
 	for (size_t i = 0; env[i]; i++)
 		free(env[i]);
 	free(env);

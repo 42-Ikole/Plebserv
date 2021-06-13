@@ -21,8 +21,12 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
+#define FD_IN 0
+#define FD_OUT 1
+
 #include <string>
 #include <header.hpp>
+#include <struct_tmp.hpp>
 
 class Server;
 
@@ -43,8 +47,8 @@ public:
 	void	default_env(Header &h, string &body, string &file_path, Server &ser, map<string, string> &env_tmp);
 	void	read_response(char** env, string& body, string file_path);
 	char*	create_env_var(string key, string value);
-	void	cgi_child(int fdin[2], int fdout[2], char* args[3], char** env);
-	string	cgi_parent(int fdin[2], int fdout[2], pid_t id, string& body);
+	void	cgi_child(cgi_session &sesh, char* args[3], char** env);
+	void	cgi_parent(cgi_session &sesh);
 	char	**create_env_array(map<string, string> &env);
 };
 
