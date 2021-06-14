@@ -20,8 +20,12 @@
 
 #include <run.hpp>
 
-vector<connect_data> 	open_connections;
-fd_set 					current_sockets;
+#define CURR_SESH cur_conn->cgi_sesh
+
+// vector<connect_data> 	open_connections;
+// fd_set 					current_sockets;
+
+// for x in `ps -eF| awk '{ print $2 }'`;do echo `ls /proc/$x/fd 2> /dev/null | wc -l` $x `cat /proc/$x/cmdline 2> /dev/null`;done | sort -n -r | head -n 20
 
 static void accept_connect(fd_set& current_sockets, server_data& data, vector<connect_data>& open_connections)	
 {
@@ -77,7 +81,7 @@ static string read_sok(size_t buff_size, bool& close_conn, size_t& fd)
 	return (ret);
 }
 
-static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
+static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size, fd_set &current_sockets)
 {
 	cur_conn->buf = cur_conn->buf.substr(pos + 2);
 	if (body_size > 0)
@@ -86,7 +90,7 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
 		cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find("\r\n") + 2);
 		// cout << "Added to unchunked! new size: " << cur_conn->chunk_unchunked.size() << " remainder: " << cur_conn->buf.size() << endl;
 		if (cur_conn->buf.size() != 0)
-			unchunk_chunk(cur_conn);
+			unchunk_chunk(cur_conn, current_sockets);
 	}
 	else
 	{
@@ -94,6 +98,11 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
 		{
 			cur_conn->buf = cur_conn->chunk_unchunked;
 			cur_conn->response = cur_conn->ser->create_response(*cur_conn);
+			if (cur_conn->response == "")
+			{
+				// cerr << "CGI was called! fd's: " << cur_conn->cgi_sesh->fd[FD_IN][1] << " | " << cur_conn->cgi_sesh->fd[FD_OUT][0] << endl;
+				FD_SET(CURR_SESH->fd[FD_OUT][0], &current_sockets);
+			}
 			cur_conn->ready = true;
 			// cout << "chonky boi is ready\n" << endl;
 		}
@@ -105,7 +114,7 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size)
 	}
 }
 
-void	unchunk_chunk(connect_data* cur_conn)
+void	unchunk_chunk(connect_data* cur_conn, fd_set &current_sockets)
 {
 	size_t	pos;
 	size_t	body_size;
@@ -123,7 +132,7 @@ void	unchunk_chunk(connect_data* cur_conn)
 		// cout << "no fully read! len: " << cur_conn->buf.length() - (pos + 2) << "vs: " << body_size + 2 << std::endl;
 		return ;
 	}
-	get_chunk_body(cur_conn, pos, body_size);
+	get_chunk_body(cur_conn, pos, body_size, current_sockets);
 }
 
 static void	set_header(connect_data* cur_conn, size_t pos)
@@ -139,13 +148,18 @@ static void	set_header(connect_data* cur_conn, size_t pos)
 	// std::cout << cur_conn->h << "\n\n" << std::endl;
 }
 
-static void	normal_response(connect_data* cur_conn)
+static void	normal_response(connect_data* cur_conn, fd_set& current_sockets)
 {
 	size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
 
 	if (cur_conn->buf.size() < body_size)
 		return ;
 	cur_conn->response = cur_conn->ser->create_response(*cur_conn);
+	if (cur_conn->response == "")
+	{
+		// cerr << "CGI was called! fd's: " << cur_conn->cgi_sesh->fd[FD_IN][1] << " | " << cur_conn->cgi_sesh->fd[FD_OUT][0] << endl;
+		FD_SET(CURR_SESH->fd[FD_OUT][0], &current_sockets);
+	}
 	cur_conn->ready = true;
 }
 
@@ -155,7 +169,7 @@ static void	create_custom_response(connect_data* cur_conn, string data)
 	cur_conn->ready = true;
 }
 
-static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn)
+static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn, fd_set& current_sockets)
 {
 	string ret;
 
@@ -174,9 +188,9 @@ static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn)
 			return create_custom_response(cur_conn, cur_conn->h.create_header(res, 0));
 	}
 	if (cur_conn->h._method == "GET" || cur_conn->h._chonky == false)
-		normal_response(cur_conn);
+		normal_response(cur_conn, current_sockets);
 	else if (cur_conn->h._chonky == true)
-		unchunk_chunk(cur_conn);
+		unchunk_chunk(cur_conn, current_sockets);
 }
 
 static void	handle_connection(fd_set& current_sockets, vector<connect_data>& open_connections, size_t cur_fd, size_t& fd)
@@ -186,18 +200,61 @@ static void	handle_connection(fd_set& current_sockets, vector<connect_data>& ope
 
 	cur_conn = &open_connections[cur_fd];
 	update_action(cur_conn);
-	read_request(close_conn, fd, cur_conn);
+	read_request(close_conn, fd, cur_conn, current_sockets);
 	if (close_conn == true)
 		return clear_connection(open_connections, current_sockets, cur_fd);
 }
 
-static void	send_data(size_t &fd, vector<connect_data> &open_connections)
+static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &current_sockets)
+{
+	if (isread)
+	{
+		// cerr << "starting to read.." << endl;
+		CURR_SESH->read_s = cgi_read(CURR_SESH->fd[FD_OUT][STDIN_FILENO], \
+									CURR_SESH->output, CURR_SESH->read_i);
+		// cerr << CURR_SESH->read_i << " Bytes read! status: " << CURR_SESH->read_s << endl;
+		if (CURR_SESH->read_s == 0)
+		{
+			// cerr << "we are done reading!" << endl;
+			size_t pos = CURR_SESH->output.find(HEADER_END);
+			if (pos != string::npos)
+			{
+				cur_conn->h.add_to_header_out(ft::split(CURR_SESH->output.substr(0, pos), "\r\n"));
+				CURR_SESH->output = CURR_SESH->output.substr(pos + 4);
+			}
+			cur_conn->response = cur_conn->h.create_header(200, CURR_SESH->output.length()) + string(CURR_SESH->output);
+			FD_CLR(CURR_SESH->fd[FD_OUT][STDIN_FILENO], &current_sockets);
+			// close(CURR_SESH->fd[FD_OUT][STDIN_FILENO]);
+			delete CURR_SESH;
+			cur_conn->cgi_sesh = 0;
+			cur_conn->ready = true;
+		}
+	}
+	else
+	{
+		if (CURR_SESH->write_s != 0)
+			CURR_SESH->write_s = cgi_write(CURR_SESH->fd[FD_IN][STDOUT_FILENO], CURR_SESH->input, CURR_SESH->write_i);
+		// cerr << CURR_SESH->write_i << " Bytes written! status: " << CURR_SESH->write_s << "input size: "<< CURR_SESH->input.size() << endl;
+		// if (CURR_SESH->write_s == 0)
+		// 	close(CURR_SESH->fd[FD_IN][STDOUT_FILENO]);
+
+	}
+}
+
+static void	send_data(size_t &fd, vector<connect_data> &open_connections, fd_set &current_sockets)
 {
 	connect_data* 	cur_conn = get_cur_conn(fd, open_connections);
 	ssize_t 		len = 0;
 
 	if (!cur_conn || cur_conn->ready == false)
 		return ;
+	if (CURR_SESH && cur_conn->cgi_sesh->fd[FD_IN][1] == (int)fd)
+	{
+		// cerr << "write cgi fd found!" << endl;
+		handle_cgi_response(cur_conn, false, current_sockets);
+		return;
+	}
+	// cerr << "we are in send!" << endl;
 	update_action(cur_conn);
 	len = send(fd, &cur_conn->response[cur_conn->bytes_send], cur_conn->response.size() - cur_conn->bytes_send, 0);
 	if (len == -1)
@@ -219,8 +276,13 @@ static fd_set	get_response_fd(vector<connect_data> &open_connections)
 
 	FD_ZERO(&ret);
 	for (size_t i = 0; i < open_connections.size(); i++)
-		if (open_connections[i].ready == true)
+	{
+		// cerr << "adding to write, maybe? " << open_connections[i].ready <<" | " << open_connections[i].cgi_sesh << endl;
+		if (open_connections[i].ready && open_connections[i].cgi_sesh != 0 && open_connections[i].cgi_sesh->write_s != 0)
+			FD_SET(open_connections[i].cgi_sesh->fd[FD_IN][1], &ret);
+		else if (open_connections[i].ready == true)
 			FD_SET(open_connections[i].fd, &ret);
+	}
 	return ret;
 }
 
@@ -240,10 +302,19 @@ static void	accept_handle_connection(fd_set& current_sockets, vector<server_data
 		}
 		else if (cur_fd >= 0)
 		{
-			// std::cout << "FD " << fd_match << " is readable!" << std::endl;
+			// std::cout << "FD " << fd_match << " is readable! cur_fd = " << cur_fd << std::endl;
+			// if (open_connections[cur_fd].cgi_sesh != 0)
+				// std::cout << " cgifd = " << open_connections[cur_fd].cgi_sesh->fd[FD_OUT][0] << std::endl;
 			try
 			{
-				handle_connection(current_sockets, open_connections, cur_fd, fd_match);
+				if (open_connections[cur_fd].cgi_sesh && open_connections[cur_fd].cgi_sesh->fd[FD_OUT][0] == (int)fd_match)
+				{
+					// cerr << "read cgi fd found!" << endl;
+					handle_cgi_response(&open_connections[cur_fd], true, current_sockets);
+					return;
+				}
+				else
+					handle_connection(current_sockets, open_connections, cur_fd, fd_match);
 			}
 			catch (const Plebception& e)
 			{
@@ -262,7 +333,7 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 	struct timeval 	to;
 
 	to.tv_sec = 30;
-	// std::cout << "Waiting on select.. [" << FD_SETSIZE << "]" <<  endl;
+	// std::cout << "Waiting on select.. "<<  endl;
 	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
 	if (rval < 0)
 		throw Fatal(ERR_SERVER_FATAL, "connect_handler", "select failed " + ft::to_string(errno));
@@ -274,7 +345,7 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 		if (FD_ISSET(fd_match, &write_sok))
 		{
 			// cout << "socket available for writing" << endl;
-			send_data(fd_match, open_connections);
+			send_data(fd_match, open_connections, current_sockets);
 		}
 	}
 }
@@ -282,6 +353,8 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 void	host_servers(vector<Server> serv)
 {
 	vector<server_data> 	data;
+	fd_set					current_sockets;
+	vector<connect_data> 	open_connections;
 
 	for (size_t i = 0; i < serv.size(); i++)
 	{

@@ -91,7 +91,7 @@ class Location
 		void	set_upload_store(vector<string> val);
 		void	set_redir(vector<string> val);
 		void	load_client_max_body_size(vector<string> val);
-		bool	run_cgi(Header& h, string& body, string file_path, Server& ser);
+		bool	run_cgi(connect_data &data, string& body, string file_path, Server& ser);
 		bool	method_allowed(Header& h, int& response_code);
 		void 	set_static_dir(vector<string> val);
 

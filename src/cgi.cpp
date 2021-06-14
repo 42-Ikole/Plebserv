@@ -75,21 +75,21 @@ void	Cgi::cgi_child(cgi_session &sesh, char* args[3], char** env)
 	exit(0);
 }
 
-inline	int cgi_write(int &fdin, string *body, size_t &i)
+int cgi_write(int &fdin, string &body, size_t &i)
 {
-	if (body->size() == 0)
+	if (body.size() == 0)
 	{
 		close (fdin);
 		return (0);
 	}
-	int ret = ft::write(fdin, *body, i);
+	int ret = ft::write(fdin, body, i);
 	if (ret <= 0)
 		return (ret);
 	close(fdin);
 	return 0;
 }
 
-inline	int cgi_read(int &fdout, string &body, size_t &i)
+int cgi_read(int &fdout, string &body, size_t &i)
 {
 	int ret;
 	if ((ret = ft::read(fdout, body, PIPE_BUFFER, i)) <= 0)
@@ -101,8 +101,6 @@ inline	int cgi_read(int &fdout, string &body, size_t &i)
 
 void	Cgi::cgi_parent(cgi_session &sesh)
 {
-	close(sesh.fd[0][0]);
-	close(sesh.fd[1][1]);
 	while (sesh.read_s != 0)
 	{
 		cerr << "statuses R: " << sesh.read_s << " W: " << sesh.write_s << endl;
@@ -112,7 +110,7 @@ void	Cgi::cgi_parent(cgi_session &sesh)
 	}
 }
 
-void Cgi::read_response(char** env, string& body, string file_path)
+void Cgi::read_response(connect_data &data, char** env, string file_path)
 {
 	char* 	args[3];
 	int		fdin[2];
@@ -134,18 +132,20 @@ void Cgi::read_response(char** env, string& body, string file_path)
 		throw Plebception(ERR_FAIL_SYSCL, "fcnt3l",  "rip");
 	if (fcntl(fdout[1], F_SETFL, O_NONBLOCK) < 0)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl4",  "rip");
+	data.cgi_sesh = new cgi_session(fdin, fdout, data.buf);
 
-	cerr << "FD Write: " << fdin[1] << " FD READ: " << fdout[0] << endl;
-	cgi_session request_data(fdin, fdout, &body);
-
+	data.cgi_sesh->input = data.buf;
 	pid_t id = fork();
 	if (id == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "fork");
 	if (id == 0)
-		cgi_child(request_data, args, env);
-	else
-		cgi_parent(request_data);
-	body = request_data.output;
+		cgi_child(*data.cgi_sesh, args, env);
+	// else
+	// 	cgi_parent(*data.cgi_sesh);
+	close(data.cgi_sesh->fd[0][0]);
+	close(data.cgi_sesh->fd[1][1]);
+	cerr << "FD Write: " << data.cgi_sesh->fd[FD_IN][1] << " FD READ: " << data.cgi_sesh->fd[FD_OUT][0] << endl;
+	data.buf = data.cgi_sesh->output;
 }
 
 char*	Cgi::create_env_var(string key, string value)
@@ -196,25 +196,28 @@ void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, m
 	env_tmp["HTTP_ACCEPT"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 }
 
-void	Cgi::cgi_response(Header& h, string& body, string file_path, Server& ser)
+void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Server& ser)
 {
 	map<string, string> env_tmp;
 
 	// cerr << "body size = " << body.size() << endl;
-	default_env(h, body, file_path, ser, env_tmp);
-	for(map<string, string>::iterator it = h._headers_in.begin(); it != h._headers_in.end(); it++)
+	default_env(data.h, body, file_path, ser, env_tmp);
+	for(map<string, string>::iterator it = data.h._headers_in.begin(); it != data.h._headers_in.end(); it++)
 		env_tmp[ft::convert_header(it->first)] = it->second;
 
 	char **env = create_env_array(env_tmp);
-	read_response(env, body, file_path);
-	cerr << "cgi body size: " << body.size() << endl;
+	read_response(data, env, file_path);
+	// cerr << data.buf << endl;
+	// body = data.buf;
+
+	// cerr << "cgi body size: " << body.size() << endl;
 	
-	size_t pos = body.find(HEADER_END);
-	if (pos != string::npos)
-	{
-		h.add_to_header_out(ft::split(body.substr(0, pos), "\r\n"));
-		body = body.substr(pos + 4);
-	}
+	// size_t pos = body.find(HEADER_END);
+	// if (pos != string::npos)
+	// {
+	// 	data.h.add_to_header_out(ft::split(body.substr(0, pos), "\r\n"));
+	// 	body = body.substr(pos + 4);
+	// }
 
 	for (size_t i = 0; env[i]; i++)
 		free(env[i]);

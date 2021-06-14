@@ -79,7 +79,8 @@ void	clear_stale_connection(vector<connect_data>& open_connections, fd_set& curr
 int get_cur_conn_index(size_t fd, vector<connect_data>& data)
 {
 	long x = 0;
-	for (; x < (long)data.size() && static_cast<size_t>(data[x].fd) != fd; x++);
+	for (; x < (long)data.size() && static_cast<size_t>(data[x].fd) != fd && \
+	(data[x].cgi_sesh && data[x].cgi_sesh->fd[FD_OUT][0] != (int)fd); x++);
 	return (x == (long)data.size() ? -1 : x);
 }
 
@@ -93,6 +94,7 @@ int get_port_fd(size_t fd, vector<server_data>& data)
 connect_data * get_cur_conn(size_t fd, vector<connect_data>& data)
 {
 	size_t x = 0;
-	for (; x < data.size() && static_cast<size_t>(data[x].fd) != fd; x++);
+	for (; x < data.size() && static_cast<size_t>(data[x].fd) != fd && \
+	(data[x].cgi_sesh && data[x].cgi_sesh->fd[FD_IN][1] != (int)fd); x++);
 	return (x == data.size() ? NULL : &data[x]);
 }

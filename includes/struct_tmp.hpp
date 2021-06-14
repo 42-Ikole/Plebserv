@@ -9,7 +9,7 @@ class Server;
 
 struct	cgi_session
 {
-	string	*input;
+	string	input;
 	string	output;
 	size_t	read_i;
 	size_t	write_i;
@@ -17,7 +17,7 @@ struct	cgi_session
 	int		write_s;
 	int		fd[2][2];
 
-	cgi_session(int fdin[2], int fdout[2] , string *in)
+	cgi_session(int fdin[2], int fdout[2] , string in)
 	{
 		fd[0][0] = fdin[0];
 		fd[0][1] = fdin[1];
@@ -29,7 +29,7 @@ struct	cgi_session
 		read_s = 1;
 		write_s = 1;
 	}
-	cgi_session(string *in)
+	cgi_session(string in)
 	{
 		input = in;
 		read_i = 0;
@@ -43,7 +43,7 @@ struct	connect_data
 {
 	int					fd;		// client fd
 	int					type;
-	int					cgifd[2];
+	cgi_session			*cgi_sesh;
 	Server*				ser;
 	Header				h;
 	string				buf;
@@ -60,6 +60,7 @@ struct	connect_data
 
 	void clear()
 	{
+		// cgi_sesh = 0;
 		bytes_send = 0;
 		buf.clear();
 		chunk_unchunked.clear();

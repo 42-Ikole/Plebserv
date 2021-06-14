@@ -132,8 +132,9 @@ string	Server::return_get(connect_data &data, Location* l)
 	try
 	{
 		string file_path = l->find_file(data.h, response_code);
-		if (!l->run_cgi(data.h, body, file_path, *this))
-			l->read_file(body, file_path);
+		if (l->run_cgi(data, body, file_path, *this))
+			return "";
+		l->read_file(body, file_path);
 	}
 	catch(const std::exception& e)
 	{
@@ -167,8 +168,9 @@ string	Server::return_post(connect_data &data, Location* l)
 			return (data.h.create_header(response_code, data.buf.size()) + string(data.buf));
 		}
 		string file_path = l->find_file(data.h, response_code);
-		if (!l->run_cgi(data.h, data.buf, file_path, *this))
-			return (return_get(data, l));
+		if (l->run_cgi(data, data.buf, file_path, *this))
+			return ("");
+		return (return_get(data, l));
 	}
 	catch (const std::exception& e)
 	{
@@ -271,8 +273,9 @@ string	Server::return_head(connect_data &data, Location* l)
 	try
 	{
 		string file_path = l->find_file(data.h, response_code);
-		if (!l->run_cgi(data.h, body, file_path, *this))
-			l->read_file(body, file_path);
+		if (!l->run_cgi(data, body, file_path, *this))
+			return ("");
+		l->read_file(body, file_path);
 	}
 	catch(const exception& e)
 	{
