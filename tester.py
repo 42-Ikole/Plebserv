@@ -37,15 +37,14 @@ def	send_command(curlcom, expected_status, to_compare=""):
 	curl_split = curlcom.split()
 	result = subprocess.run(curl_split, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	result_stio = result.stdout.decode("utf-8").replace('\r', '')
-	header = result.stderr.decode("utf-8").split('\r\n')
+	header = result.stderr.decode("utf-8").split('\n')
 	header_out = []
 	header_in = []
 	for i in header:
-		if i.startswith('<'):
+		if i.startswith("< "):
 			header_in.append(i[2:])
-		if i.startswith('>'):
+		if i.startswith("> "):
 			header_out.append(i[2:])
-	print(header_in)
 
 	if header_in[0].find(expected_status) == -1:
 		return (print_message(curlcom, 0))
@@ -64,12 +63,12 @@ def	main():
 	send_command("curl -v -s http://localhost:5000/", "200", "html/Website/Welcome.html")
 	send_command("curl -v -s http://localhost:5000/Store/", "200", "html/Website/Store/Start.html")
 	send_command("curl -v -s http://localhost:5000/jajaja", "404", "")
-	send_command("curl -X PUT --data-binary @/mnt/c/Users/Alpha_1337/Pictures/wp.png -v -s http://localhost:5000/new_image.png", "201", "") 
-	# print_message("samecheck", file_compare("html/Websites/new_image.png", "/mnt/c/Users/Alpha_1337/Pictures/wp.png"))
-	send_command("curl -X PUT --data-binary @/mnt/c/Users/Alpha_1337/Pictures/wp.png -v -s http://localhost:5000/new_image.png", "204", "")
-	# print_message(file_compare("html/Websites/new_image.png", "/mnt/c/Users/Alpha_1337/Pictures/wp.png"))
-	send_command("curl -X DELETE -v -s http://localhost:5000/new_image.png", "204", "")
-	send_command("curl -X DELETE -v -s http://localhost:5000/new_image.png", "403", "")
+	send_command("curl -v -s -X PUT -H \"Content-Type: application/json\" -d \"{\"key1\":\"value\"}\" http://localhost:5000/test.json", "405", "")
+	send_command("curl -v -s -X PUT -H \"Content-Type: application/json\" -d \"{\"key1\":\"value\"}\" http://localhost:5000/upload/test.json", "201", "")
+	send_command("curl -v -s -X PUT -H \"Content-Type: application/json\" -d \"{\"key1\":\"value\"}\" http://localhost:5000/upload/test.json", "204", "")
+	send_command("curl -X DELETE -v -s http://localhost:5000/upload/test.json", "405", "")
+	send_command("curl -X DELETE -v -s http://localhost:5000/delete/test.json", "204", "")
+	send_command("curl -X DELETE -v -s http://localhost:5000/delete/test.json", "403", "")
 	
 	print(str(total_count - error_count) + " out of " + str(total_count) + " OK")
 	if (error_count):
