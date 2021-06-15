@@ -203,7 +203,7 @@ string	Server::return_post(connect_data &data, Location* l)
 string	Server::return_delete(connect_data &data, Location* l)
 {
 	int		response_code = 204;
-	string	full_path = l->root + data.h._path;
+	string  full_path = l->root + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
 
 	if (unlink(full_path.c_str()) == -1)
 		response_code = 403;
