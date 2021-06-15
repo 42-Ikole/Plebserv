@@ -227,7 +227,9 @@ static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &cur
 			}
 			cur_conn->response = cur_conn->h.create_header(200, CURR_SESH->output.length()) + string(CURR_SESH->output);
 			FD_CLR(CURR_SESH->fd[FD_OUT][STDIN_FILENO], &current_sockets);
-			// close(CURR_SESH->fd[FD_OUT][STDIN_FILENO]);
+			FD_CLR(CURR_SESH->fd[FD_IN][STDOUT_FILENO], &current_sockets);
+			close(CURR_SESH->fd[FD_OUT][STDIN_FILENO]);
+			close(CURR_SESH->fd[FD_IN][STDOUT_FILENO]);
 			delete CURR_SESH;
 			cur_conn->cgi_sesh = 0;
 			cur_conn->ready = true;
@@ -238,9 +240,6 @@ static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &cur
 		if (CURR_SESH->write_s != 0)
 			CURR_SESH->write_s = cgi_write(CURR_SESH->fd[FD_IN][STDOUT_FILENO], CURR_SESH->input, CURR_SESH->write_i);
 		// cerr << CURR_SESH->write_i << " Bytes written! status: " << CURR_SESH->write_s << "input size: "<< CURR_SESH->input.size() << endl;
-		// if (CURR_SESH->write_s == 0)
-		// 	close(CURR_SESH->fd[FD_IN][STDOUT_FILENO]);
-
 	}
 }
 
@@ -321,7 +320,7 @@ static void	accept_handle_connection(fd_set& current_sockets, vector<server_data
 			}
 			catch (const Plebception& e)
 			{
-				// cerr << e.what() << endl;
+				std::cerr << e.what() << endl;
 				create_custom_response(&open_connections[fd_match], open_connections[fd_match].h.create_header(500, 0));
 			}
 		}
@@ -336,6 +335,7 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 	struct timeval 	to;
 
 	to.tv_sec = 30;
+	to.tv_usec = 0;
 	std::cout << "Waiting on select.. " << select_index++ << endl;
 	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
 	if (rval < 0)
@@ -379,7 +379,7 @@ void	host_servers(vector<Server> serv)
 		}
 		catch(const Plebception& e)
 		{
-			// std::// cerr << e.what() << '\n';
+			std::cerr << e.what() << '\n';
 		}
 	}	
 }
