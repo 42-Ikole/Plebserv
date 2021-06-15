@@ -227,6 +227,13 @@ string	Server::return_put(connect_data &data, Location* l)
 	}
 	if (stat(full_path.c_str(), &file_status) == -1)
 		fd = open(full_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0777);
+	else if (file_status.st_mode & S_IFDIR)
+	{
+		response_code = 409;
+		data.buf.clear();
+		err_code_file(data.buf, response_code);
+		return (data.h.create_header(response_code, data.buf.size()) + string(data.buf));
+	}
 	else
 	{
 		fd = open(full_path.c_str(), O_TRUNC | O_RDWR, 0777);
