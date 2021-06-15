@@ -24,7 +24,7 @@ class bcolors:
 # f = open("log.txt", "w")
 
 def test(path_to_config):
-	result = subprocess.run(['./plebserv', '-t', path_to_config], stdout=subprocess.PIPE)
+	result = subprocess.run(['./plebserv', '-t', path_to_config], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	# res = result.stdout.decode('utf-8').split("\n")
 	return (result.returncode)
 
