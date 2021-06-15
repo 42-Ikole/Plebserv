@@ -140,8 +140,6 @@ void Cgi::read_response(connect_data &data, char** env, string file_path)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "fork");
 	if (id == 0)
 		cgi_child(*data.cgi_sesh, args, env);
-	// else
-	// 	cgi_parent(*data.cgi_sesh);
 	close(data.cgi_sesh->fd[0][0]);
 	close(data.cgi_sesh->fd[1][1]);
 	cerr << "FD Write: " << data.cgi_sesh->fd[FD_IN][1] << " FD READ: " << data.cgi_sesh->fd[FD_OUT][0] << endl;
