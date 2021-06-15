@@ -176,7 +176,7 @@ string Header::create_header(int response_code, int body_length)
 {
 	string res;
 
-	if (!_headers_out["Status"].empty())
+	if (_headers_out["Status"].empty() == false)
 		res = "HTTP/1.1 " + _headers_out["Status"] + " " + g_http_errors[atoi(_headers_out["Status"].c_str())] +"\r\n";
 	else
 		res = "HTTP/1.1 " + ft::to_string(response_code) + " " + g_http_errors[response_code] +"\r\n";

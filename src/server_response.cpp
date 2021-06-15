@@ -58,7 +58,7 @@ void	Server::err_code_file(string& body, int response_code)
 		}
 		catch (Plebception& msg)
 		{
-			cerr << msg.what() << " Falling back to server default!" << endl;
+			std::cerr << msg.what() << " Falling back to server default!" << endl;
 			default_error_page(body, response_code);
 			return ;
 		}
@@ -246,7 +246,6 @@ string	Server::return_put(connect_data &data, Location* l)
 
 string	Server::return_options(connect_data &data, Location* l)
 {
-	string header;
 	string allowed;
 
 	if (l->limit_except.size() == 0)
@@ -261,8 +260,7 @@ string	Server::return_options(connect_data &data, Location* l)
 		}
 	//std::cout << "Allowed: " << allowed << endl;
 	data.h.add_to_header_out("Allow", allowed);
-	header = data.h.create_header(204, 0);
-	return (header);
+	return (data.h.create_header(204, 0));
 }
 
 string	Server::return_head(connect_data &data, Location* l)
