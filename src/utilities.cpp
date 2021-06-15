@@ -96,10 +96,13 @@ namespace ft
     std::vector<std::string> get_lines(std::string file)
     {
         int		fd	= open(file.c_str(), O_RDONLY);
+        int     ret = 1;
 		string	unparsed;
 		
-		if (ft::read(fd, unparsed, 2048) == -1)
+        for (; ret > 0; ret = ft::read(fd, unparsed, 2048));
+		if (ret == -1)
 			throw Plebception(ERR_READ, "get_lines", file.c_str());
+        close(fd);
         return (ft::split(unparsed, "\n"));
     }
 
