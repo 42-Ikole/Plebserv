@@ -69,6 +69,8 @@ void Location::set_root(vector<string> val)
 	if (stat(val[0].c_str(), &st) == -1 || !(st.st_mode & S_IFDIR))
 		throw Plebception(ERR_BAD_LOCATION, "set_root", val[0]);
 	root = val[0];
+	if (upload_store.empty())
+		upload_store = root;
 }
 
 void Location::set_static_dir(vector<string> val)
