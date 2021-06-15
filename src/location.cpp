@@ -279,7 +279,7 @@ bool	Location::method_allowed(Header& h, int& response_code)
 	{
 		size_t i = 0;
 		for (; i < limit_except.size() && h._method != limit_except[i]; i++);
-		if (i == limit_except.size())
+		if (i == limit_except.size() && h._method != limit_except[i])
 		{
 			response_code = 405;
 			throw Plebception("405 method not allowed", "find_file", h._path);
