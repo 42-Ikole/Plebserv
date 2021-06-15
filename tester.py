@@ -33,7 +33,7 @@ def print_message(message, result):
 		print('{:<40s} {:>20s}'.format(message, bcolors.FAIL + "[ KO ]" + bcolors.ENDC))
 		error_count += 1
 
-def	send_command(curlcom, expected_status, to_compare=""):
+def	send_command(curlcom, expected_status, to_compare="", check_header = ""):
 	curl_split = curlcom.split()
 	result = subprocess.run(curl_split, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	result_stio = result.stdout.decode("utf-8").replace('\r', '')
@@ -48,6 +48,10 @@ def	send_command(curlcom, expected_status, to_compare=""):
 
 	if header_in[0].find(expected_status) == -1:
 		return (print_message(curlcom, 0))
+
+	if check_header != "":
+		if (check_header in header_in == False):
+			return (print_message(curlcom, 0))
 	if to_compare != "":
 		f = open(to_compare, "r").read()
 		if f != result_stio:
@@ -63,12 +67,20 @@ def	main():
 	send_command("curl -v -s http://localhost:5000/", "200", "html/Website/Welcome.html")
 	send_command("curl -v -s http://localhost:5000/Store/", "200", "html/Website/Store/Start.html")
 	send_command("curl -v -s http://localhost:5000/jajaja", "404", "")
+	send_command("curl -v -s http://localhost:5000/redir", "301", "", "Location: /Coin/Home.html")
+	send_command("curl -X OPTIONS -v -s http://localhost:5000/", "204", "", "Allow: GET, POST, OPTIONS")
 	send_command("curl -v -s -X PUT -H \"Content-Type: application/json\" -d \"{\"key1\":\"value\"}\" http://localhost:5000/test.json", "405", "")
 	send_command("curl -v -s -X PUT -H \"Content-Type: application/json\" -d \"{\"key1\":\"value\"}\" http://localhost:5000/upload/test.json", "201", "")
 	send_command("curl -v -s -X PUT -H \"Content-Type: application/json\" -d \"{\"key1\":\"value\"}\" http://localhost:5000/upload/test.json", "204", "")
+	send_command("curl -v -s -X PUT -H \"Content-Type: application/json\" -d \"{\"key1\":\"valueaaaaaaaaaaaaaa\"}\" http://localhost:5000/upload/test.json", "413", "")
+	send_command("curl -v -s -X PUT -H \"Content-Type: application/json\" -d \"{\"key1\":\"value\"}\" http://localhost:5000/upload/", "409", "")
 	send_command("curl -X DELETE -v -s http://localhost:5000/upload/test.json", "405", "")
 	send_command("curl -X DELETE -v -s http://localhost:5000/delete/test.json", "204", "")
 	send_command("curl -X DELETE -v -s http://localhost:5000/delete/test.json", "403", "")
+	send_command("curl -v -s http://localhost:5000/cgis/best_lang.sh", "200", "")
+	send_command("curl -v -s http://localhost:5000/cgis/hello.py", "200", "", "X-secret-kiss: haram")
+	send_command("curl -v -s http://localhost:5000/cgis/status.py", "69", "")
+	send_command("curl -X POST -d \"HAHAHHAHA\" -v -s http://localhost:5000/cgis/postme.rb", "200", "")
 	
 	print(str(total_count - error_count) + " out of " + str(total_count) + " OK")
 	if (error_count):
