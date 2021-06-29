@@ -2,6 +2,7 @@
 
 import subprocess
 import glob
+import filecmp
 
 
 #
@@ -36,8 +37,11 @@ def print_message(message, result):
 def	send_command(curlcom, expected_status, to_compare="", check_header = ""):
 	curl_split = curlcom.split()
 	result = subprocess.run(curl_split, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	result_stio = result.stdout.decode("utf-8").replace('\r', '')
-	header = result.stderr.decode("utf-8").split('\n')
+	try:
+		result_stio = result.stdout.decode("utf-8").replace('\r', '')
+		header = result.stderr.decode("utf-8").split('\n')
+	except:
+		return print_message(curlcom, 1)
 	header_out = []
 	header_in = []
 	for i in header:
@@ -59,9 +63,7 @@ def	send_command(curlcom, expected_status, to_compare="", check_header = ""):
 	return (print_message(curlcom, 1))
 
 def	file_compare(loc1, loc2):
-	f1 = open(loc1, 'r').read()
-	f2 = open(loc2, 'r').read()
-	return (f1 == f2)
+	return (filecmp.cmp(loc1, loc2))
 
 def	main():
 	send_command("curl -v -s http://localhost:5000/", "200", "html/Website/Welcome.html")
@@ -81,6 +83,10 @@ def	main():
 	send_command("curl -v -s http://localhost:5000/cgis/hello.py", "200", "", "X-secret-kiss: haram")
 	send_command("curl -v -s http://localhost:5000/cgis/status.py", "69", "")
 	send_command("curl -X POST -d \"HAHAHHAHA\" -v -s http://localhost:5000/cgis/postme.rb", "200", "")
+	send_command("curl -v -X POST --data-binary @./plebserv.png http://localhost:5000/images/test1.png", "200", "")
+	send_command("curl -v -X POST --data-binary @./plebserv.png -H \"Transfer-Encoding: chunked\" http://localhost:5000/images/test2.png", "200", "")
+	print(file_compare("plebserv.png", "html/Website/uploads/test1.png"))
+	print(file_compare("plebserv.png", "html/Website/uploads/test2.png"))
 	
 	print(str(total_count - error_count) + " out of " + str(total_count) + " OK")
 	if (error_count):
