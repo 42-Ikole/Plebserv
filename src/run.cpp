@@ -39,6 +39,7 @@ static void accept_connect(fd_set& current_sockets, server_data& data, vector<co
 		opencon.ser = data.ser;
 		opencon.ready = false;
 		opencon.cgi_sesh = 0;
+		opencon.h = Header();
 		update_action(&opencon);
 		FD_SET(opencon.fd, &current_sockets);
 		std::cout << "New connection " << inet_ntoa(opencon.client_addr.sin_addr) << " on port " << opencon.client_addr.sin_port << " FD: " << opencon.fd << std::endl;
@@ -274,7 +275,7 @@ static void	accept_handle_connection(fd_set& current_sockets, vector<server_data
 			catch (const Plebception& e)
 			{
 				std::cerr << e.what() << std::endl;
-				create_custom_response(&open_connections[fd_match], open_connections[fd_match].h.create_header(500, 0));
+				create_custom_response(&open_connections[cur_fd], open_connections[cur_fd].h.create_header(500, 0));
 			}
 		}
 	}
