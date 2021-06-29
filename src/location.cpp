@@ -266,7 +266,7 @@ bool	Location::run_cgi(connect_data &data, string& body, string file_path, Serve
 {
 	for (size_t i = 0; i < cgi.size(); i++)
 	{
-		if (data.h._extension == cgi[i]._match)
+		if (data.h._extension == cgi[i].match)
 		{
 			cgi[i].cgi_response(data, body, file_path, ser);
 			return (true);
