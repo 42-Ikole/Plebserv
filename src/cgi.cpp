@@ -26,7 +26,6 @@
 #include <utilities.hpp>
 #include <cgi.hpp>
 #include <server.hpp>
-#include <utilities.hpp>
 
 #define HEADER_END	"\r\n\r\n"
 
@@ -172,26 +171,26 @@ void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, m
 	string 	cwd = string(cwd_cstr);
 
 	free(cwd_cstr);
-	env_tmp["AUTH_TYPE"] = h._headers_in["Authorization"];
-	env_tmp["CONTENT_LENGTH"] = h._chonky == true ? ft::to_string(body.size()) : h._headers_in["Content-Length"];
-	env_tmp["CONTENT_TYPE"] = h._method == "GET" ? "text/html" : h._headers_in["Content-Type"];
-	env_tmp["GATEWAY_INTERFACE"] = "CGI/1.1";
-	env_tmp["PATH_INFO"] = h._path;
-	env_tmp["PATH_TRANSLATED"] = cwd + '/' + file_path;
-	env_tmp["QUERY_STRING"] = h._query;
-	env_tmp["REMOTE_ADDR"] = "127.0.0.1";
-	env_tmp["REMOTE_IDENT"] = "";
-	env_tmp["REMOTE_USER"] = "";
-	env_tmp["REQUEST_METHOD"] =	h._method;
-	env_tmp["REQUEST_URI"] = h._path;
-	env_tmp["SCRIPT_NAME"] = "http://" + ser.server + h._path;
-	env_tmp["SERVER_NAME"] = ser.server;
-	env_tmp["SERVER_PORT"] = ft::to_string(ser.port[0]);
-	env_tmp["SERVER_PROTOCOL"] = "HTTP/1.1";
-	env_tmp["SERVER_SOFTWARE"] = "Plebserv (linux)";
-	env_tmp["REDIRECT_STATUS"] = "true";
-	env_tmp["SCRIPT_FILENAME"] = cwd + '/' + file_path;
-	env_tmp["HTTP_ACCEPT"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+	env_tmp["AUTH_TYPE"]			= h._headers_in["Authorization"];
+	env_tmp["CONTENT_LENGTH"]		= h._chonky == true ? ft::to_string(body.size()) : h._headers_in["Content-Length"];
+	env_tmp["CONTENT_TYPE"]			= h._method == "GET" ? "text/html" : h._headers_in["Content-Type"];
+	env_tmp["GATEWAY_INTERFACE"]	= "CGI/1.1";
+	env_tmp["PATH_INFO"] 			= h._path;
+	env_tmp["PATH_TRANSLATED"] 		= cwd + '/' + file_path;
+	env_tmp["QUERY_STRING"] 		= h._query;
+	env_tmp["REMOTE_ADDR"] 			= "127.0.0.1";
+	env_tmp["REMOTE_IDENT"] 		= "";
+	env_tmp["REMOTE_USER"] 			= "";
+	env_tmp["REQUEST_METHOD"] 		=	h._method;
+	env_tmp["REQUEST_URI"] 			= h._path;
+	env_tmp["SCRIPT_NAME"] 			= "http://" + ser.server + h._path;
+	env_tmp["SERVER_NAME"] 			= ser.server;
+	env_tmp["SERVER_PORT"] 			= ft::to_string(ser.port[0]);
+	env_tmp["SERVER_PROTOCOL"] 		= "HTTP/1.1";
+	env_tmp["SERVER_SOFTWARE"] 		= "Plebserv (linux)";
+	env_tmp["REDIRECT_STATUS"] 		= "true";
+	env_tmp["SCRIPT_FILENAME"] 		= cwd + '/' + file_path;
+	env_tmp["HTTP_ACCEPT"] 			= "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 }
 
 void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Server& ser)
