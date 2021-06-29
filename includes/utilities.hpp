@@ -38,6 +38,7 @@ namespace ft
 	std::vector<std::string> 	get_lines(std::string file);
 	char* 						strdup(char* str);
 	std::string 				to_string(int val);
+	void 						str_set(std::string& res, char *to_push, size_t size);
 	void 						str_set(std::string& res, std::string to_push);
 	std::string 				create_date();
 	std::string 				convert_header(const std::string& str);

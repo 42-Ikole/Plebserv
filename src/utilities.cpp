@@ -75,6 +75,8 @@ namespace ft
 
         if (!number.size())
             return (res);
+        for (size_t i = 0; i < number.size(); i++)
+            number[i] = tolower(number[i]);
         int sign = (number[0] == '+') - (number[0] == '-');
         for (size_t i = !!sign; i < number.size(); i++) {
             num = base.find(number[i]);
@@ -135,6 +137,12 @@ namespace ft
 
 		return (rval);
 	}
+
+    void str_set(string& res, char *to_push, size_t size)
+    {
+        res.resize(size);
+        memcpy(&res[0], to_push, size);
+    }
 
     void str_set(string& res, string to_push)
     {
