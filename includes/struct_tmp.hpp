@@ -47,6 +47,7 @@ struct	connect_data
 	Header				h;
 	string				buf;
 	string				chunk_unchunked;
+	size_t				chunk_size;
 	string				header_raw;
 	struct	sockaddr_in	client_addr;
 	socklen_t			addr_size;
@@ -55,10 +56,11 @@ struct	connect_data
 	string				response;
 	bool				ready;
 	bool				last;
-	string				_session_cookies;
+	string				session_cookies;
 
 	void clear()
 	{
+		chunk_size = 0;
 		bytes_send = 0;
 		buf.clear();
 		chunk_unchunked.clear();

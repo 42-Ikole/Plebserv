@@ -35,8 +35,8 @@ using namespace std;
 class Cgi
 {
 public:
-	string _full_path;
-	string _match;
+	string full_path;
+	string match;
 public:
 	Cgi(string path, string match);
 	Cgi(const Cgi& tbc);
