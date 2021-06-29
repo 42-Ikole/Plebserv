@@ -174,7 +174,7 @@ string	Server::return_post(connect_data &data, Location* l)
 		else
 		{
 			int fd = -1;
-			string full_path = l->root + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
+			string full_path = l->upload_store + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
 			struct stat file_status;
 
 			if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
