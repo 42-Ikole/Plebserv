@@ -264,9 +264,11 @@ void	Location::load_client_max_body_size(vector<string> val)
 
 bool	Location::run_cgi(connect_data &data, string& body, string file_path, Server& ser)
 {
+	string ext = file_path.substr(file_path.find_last_of("."));
+
 	for (size_t i = 0; i < cgi.size(); i++)
 	{
-		if (data.h._extension == cgi[i].match)
+		if (ext == cgi[i].match)
 		{
 			cgi[i].cgi_response(data, body, file_path, ser);
 			return (true);
