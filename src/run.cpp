@@ -41,7 +41,7 @@ static void accept_connect(fd_set& current_sockets, server_data& data, vector<co
 		opencon.cgi_sesh = 0;
 		update_action(&opencon);
 		FD_SET(opencon.fd, &current_sockets);
-		std:: cout << "New connection " << inet_ntoa(opencon.client_addr.sin_addr) << " on port " << opencon.client_addr.sin_port << "FD: " << opencon.fd << std::endl;
+		std::cout << "New connection " << inet_ntoa(opencon.client_addr.sin_addr) << " on port " << opencon.client_addr.sin_port << " FD: " << opencon.fd << std::endl;
 		open_connections.push_back(opencon);
 	} while(opencon.fd != -1);
 }
@@ -56,31 +56,25 @@ static string read_sok(size_t buff_size, bool& close_conn, size_t& fd)
 	if (buffer == NULL)
 		throw Fatal(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
 	rc = recv(fd, buffer, buff_size, 0);
-	if (rc < 0)
-	{
-		close_conn = true;
-		free(buffer);
-		return "";
-	}
-	if (rc == 0)
+	if (rc <= 0)
 	{
 		close_conn = true;
 		free(buffer);
 		return "";
 	}
 	buffer[rc] = 0;
-	ft::str_set(ret, buffer);
+	ft::str_set(ret, buffer, rc);
 	free(buffer);
 	return (ret);
 }
 
-static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size, fd_set &current_sockets)
+static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t chunk_size, fd_set &current_sockets)
 {
 	cur_conn->buf = cur_conn->buf.substr(pos + 2);
-	if (body_size > 0)
+	if (chunk_size > 0)
 	{
-		cur_conn->chunk_unchunked += cur_conn->buf.substr(0, cur_conn->buf.find("\r\n"));
-		cur_conn->buf = cur_conn->buf.substr(cur_conn->buf.find("\r\n") + 2);
+		cur_conn->chunk_unchunked += cur_conn->buf.substr(0, chunk_size);
+		cur_conn->buf = cur_conn->buf.substr(chunk_size + 2);
 		if (cur_conn->buf.size() != 0)
 			unchunk_chunk(cur_conn, current_sockets);
 	}
@@ -106,17 +100,16 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t body_size,
 void	unchunk_chunk(connect_data* cur_conn, fd_set &current_sockets)
 {
 	size_t	pos;
-	size_t	body_size;
+	string tmp;
 
 	pos = cur_conn->buf.find("\r\n");
 	if (pos == string::npos)
-	{
 		return ;
-	}
-	body_size = ft::stoi(cur_conn->buf.substr(0, pos), HEXADECIMAL);
-	if (cur_conn->buf.length() - (pos + 2) < body_size + 2)
+	tmp = cur_conn->buf.substr(0, pos);
+	cur_conn->chunk_size = ft::stoi(tmp, HEXADECIMAL);
+	if (cur_conn->buf.length() - (pos + 2) < cur_conn->chunk_size + 2)
 		return ;
-	get_chunk_body(cur_conn, pos, body_size, current_sockets);
+	get_chunk_body(cur_conn, pos, cur_conn->chunk_size, current_sockets);
 }
 
 static void	set_header(connect_data* cur_conn, size_t pos)
@@ -124,10 +117,10 @@ static void	set_header(connect_data* cur_conn, size_t pos)
 	cur_conn->header_raw = cur_conn->buf.substr(0, pos);
 	cur_conn->buf		 = cur_conn->buf.substr(pos + 4);
 	cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
-	if (cur_conn->_session_cookies.empty() == false)
-		cur_conn->h._cookies = cur_conn->_session_cookies + cur_conn->h._cookies;
+	if (cur_conn->session_cookies.empty() == false)
+		cur_conn->h._cookies = cur_conn->session_cookies + cur_conn->h._cookies;
 	if (cur_conn->h._cookies.empty() == false)
-		cur_conn->_session_cookies = cur_conn->h._cookies;
+		cur_conn->session_cookies = cur_conn->h._cookies;
 }
 
 static void	normal_response(connect_data* cur_conn, fd_set& current_sockets)
@@ -154,7 +147,8 @@ static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn, f
 	string ret;
 
 	ret = read_sok(10240, close_conn, fd);
-		cur_conn->buf += ret;
+	
+	cur_conn->buf += ret;
 	if (close_conn == true || cur_conn->ready == true)
 		return ;
 	size_t	pos = cur_conn->buf.find(HEADER_END);
