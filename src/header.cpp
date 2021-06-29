@@ -34,7 +34,7 @@ string	Header::decode_url(string& str)
 	char	rp;
 
 	for (size_t pos = str.find_first_of("%", 0); pos != string::npos; pos = str.find_first_of("%", pos)) {
-		rp = ft::stoi(str.substr(pos + 1, 2), "0123456789ABCDEF");
+		rp = ft::stoi(str.substr(pos + 1, 2), HEXADECIMAL);
 		str.replace(pos, 3, 1, rp);
 	}
 	return str;

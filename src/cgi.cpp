@@ -29,10 +29,10 @@
 
 #define HEADER_END	"\r\n\r\n"
 
-Cgi::Cgi(string path, string match)
+Cgi::Cgi(string path, string m)
 {
-	_match = match;
-	_full_path = path;
+	match = m;
+	full_path = path;
 }
 
 Cgi::~Cgi() {}
@@ -44,15 +44,15 @@ Cgi::Cgi(const Cgi& tbc)
 
 Cgi& Cgi::operator=(const Cgi& tba)
 {
-	_full_path = tba._full_path;
-	_match = tba._match;
+	full_path = tba.full_path;
+	match = tba.match;
 
 	return (*this);
 }
 
 std::ostream& operator<<(std::ostream& out, Cgi const& value)
 {
-	out << value._match << ":[" << value._full_path << "] ";
+	out << value.match << ":[" << value.full_path << "] ";
 	return (out);
 }
 
@@ -66,7 +66,7 @@ void	Cgi::cgi_child(cgi_session &sesh, char* args[3], char** env)
 	close(sesh.fd[0][1]);
     close(sesh.fd[1][0]);
     close(sesh.fd[1][0]);
-	if (execve(_full_path.c_str(), args, env) == -1)
+	if (execve(full_path.c_str(), args, env) == -1)
 	{
 		perror("exeve");
 		throw Plebception(ERR_FAIL_SYSCL, "read_response", "execve");
@@ -102,7 +102,6 @@ void	Cgi::cgi_parent(cgi_session &sesh)
 {
 	while (sesh.read_s != 0)
 	{
-		cerr << "statuses R: " << sesh.read_s << " W: " << sesh.write_s << endl;
 		if (sesh.write_s != 0)
 			sesh.write_s = cgi_write(sesh.fd[FD_IN][STDOUT_FILENO], sesh.input, sesh.write_i);
 		sesh.read_s = cgi_read(sesh.fd[FD_OUT][STDIN_FILENO], sesh.output, sesh.read_i);
@@ -115,7 +114,7 @@ void Cgi::read_response(connect_data &data, char** env, string file_path)
 	int		fdin[2];
 	int		fdout[2];
 
-	args[0] = (char *)_full_path.c_str();
+	args[0] = (char *)full_path.c_str();
 	args[1] = (char *)file_path.c_str();
 	args[2] = 0;
 
@@ -141,7 +140,6 @@ void Cgi::read_response(connect_data &data, char** env, string file_path)
 		cgi_child(*data.cgi_sesh, args, env);
 	close(data.cgi_sesh->fd[0][0]);
 	close(data.cgi_sesh->fd[1][1]);
-	cerr << "FD Write: " << data.cgi_sesh->fd[FD_IN][1] << " FD READ: " << data.cgi_sesh->fd[FD_OUT][0] << endl;
 	data.buf = data.cgi_sesh->output;
 }
 
