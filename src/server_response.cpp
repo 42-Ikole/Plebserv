@@ -30,15 +30,9 @@
 #include <server.hpp>
 #include <http_responses.hpp>
 
-#define HYPERLINK_OPEN	"<a href='"
-#define HYPERLINK_CLOSE	"</a> <br>"
-
-// make this define in a header
-static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Plebbin reeee</title></head><body style='background-color: #f72d49; padding: 50px 10vw 0 10vw; color: #3f3f3f;'><h1>Error: $error_code</h1><p style='size: 15px;'>$error_message</p></body></html>";
-
 static void		default_error_page(string& body, int response_code)
 {
-	string to_push = err_default;
+	string to_push(ERR_DEFAULT);
 	to_push.replace(to_push.find("$error_code"), 11, ft::to_string(response_code));
 	to_push.replace(to_push.find("$error_message"), 14, g_http_errors[response_code]);
 	ft::str_set(body, to_push);
@@ -70,8 +64,7 @@ void	Server::err_code_file(string& body, int response_code)
 
 static void inline create_dirlist(string root, string path, string& body)
 {
-	// make res a def
-	string			res = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Directory listing of $DIR </title></head><body><h1>Directory listing of $DIR</h1><br><br>";
+	string			res(DIR_LIST);
 	DIR*			dir;
 	struct dirent*	cur_file;
 	
