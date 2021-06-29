@@ -30,7 +30,7 @@ static size_t select_index = 0;
 static void accept_connect(fd_set& current_sockets, server_data& data, vector<connect_data>& open_connections)	
 {
 	connect_data opencon = connect_data();
-	do // why is this a do while?
+	do
 	{
 		opencon.fd = accept(data.fd, (struct sockaddr *)&opencon.client_addr, &opencon.addr_size);
 		if (opencon.fd < 0)
@@ -59,7 +59,7 @@ static string read_sok(size_t buff_size, bool& close_conn, size_t& fd)
 	
 	buffer = (char *)malloc(sizeof(char) * (buff_size + 1));
 	if (buffer == NULL)
-		throw Plebception(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
+		throw Fatal(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
 	rc = recv(fd, buffer, buff_size, 0);
 	if (rc < 0)
 	{
