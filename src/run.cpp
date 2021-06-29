@@ -30,7 +30,7 @@ static size_t select_index = 0;
 static void accept_connect(fd_set& current_sockets, server_data& data, vector<connect_data>& open_connections)	
 {
 	connect_data opencon = connect_data();
-	do
+	do // why is this a do while?
 	{
 		opencon.fd = accept(data.fd, (struct sockaddr *)&opencon.client_addr, &opencon.addr_size);
 		if (opencon.fd < 0)
@@ -320,7 +320,7 @@ static void	accept_handle_connection(fd_set& current_sockets, vector<server_data
 			}
 			catch (const Plebception& e)
 			{
-				std::cerr << e.what() << endl;
+				std::cerr << e.what() << std::endl;
 				create_custom_response(&open_connections[fd_match], open_connections[fd_match].h.create_header(500, 0));
 			}
 		}
@@ -336,7 +336,7 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 
 	to.tv_sec = 30;
 	to.tv_usec = 0;
-	std::cout << "Waiting on select.. " << select_index++ << endl;
+	std::cerr << "Waiting on select.. " << select_index++ << std::endl;
 	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
 	if (rval < 0)
 		throw Fatal(ERR_SERVER_FATAL, "connect_handler", "select failed " + ft::to_string(errno));
@@ -379,7 +379,7 @@ void	host_servers(vector<Server> serv)
 		}
 		catch(const Plebception& e)
 		{
-			std::cerr << e.what() << '\n';
+			std::cerr << e.what() << std::endl;
 		}
 	}	
 }

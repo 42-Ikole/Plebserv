@@ -33,6 +33,7 @@
 #define HYPERLINK_OPEN	"<a href='"
 #define HYPERLINK_CLOSE	"</a> <br>"
 
+// make this define in a header
 static string err_default = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Plebbin reeee</title></head><body style='background-color: #f72d49; padding: 50px 10vw 0 10vw; color: #3f3f3f;'><h1>Error: $error_code</h1><p style='size: 15px;'>$error_message</p></body></html>";
 
 static void		default_error_page(string& body, int response_code)
@@ -58,7 +59,7 @@ void	Server::err_code_file(string& body, int response_code)
 		}
 		catch (Plebception& msg)
 		{
-			std::cerr << msg.what() << " Falling back to server default!" << endl;
+			std::cerr << msg.what() << " Falling back to server default!" << std::endl;
 			default_error_page(body, response_code);
 			return ;
 		}
@@ -69,6 +70,7 @@ void	Server::err_code_file(string& body, int response_code)
 
 static void inline create_dirlist(string root, string path, string& body)
 {
+	// make res a def
 	string			res = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Directory listing of $DIR </title></head><body><h1>Directory listing of $DIR</h1><br><br>";
 	DIR*			dir;
 	struct dirent*	cur_file;
@@ -97,7 +99,7 @@ void	Location::read_file(string& rv, string path)
 
 	if (static_dir && static_files[path].empty() == false)
 	{
-		cout << "using cached response: " << path << endl;
+		// cout << "using cached response: " << path << endl;
 		rv = static_files[path];
 		return;
 	}
@@ -136,7 +138,7 @@ string	Server::return_get(connect_data &data, Location* l)
 			return "";
 		l->read_file(body, file_path);
 	}
-	catch(const std::exception& e)
+	catch(const Plebception& e)
 	{
 		//std::// cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->auto_index << endl;
 		if (response_code == 404 && ft::ends_with(data.h._path, "/") && l->auto_index == ON)
@@ -146,7 +148,7 @@ string	Server::return_get(connect_data &data, Location* l)
 		}
 		else
 		{
-			std::cerr << e.what() << " response_code: " << response_code << '\n';
+			std::cerr << e.what() << " response_code: " << response_code << std::endl;
 			err_code_file(body, response_code);
 			data.h._extension = ".html";
 		}
@@ -172,23 +174,23 @@ string	Server::return_post(connect_data &data, Location* l)
 			return ("");
 		return (return_get(data, l));
 	}
-	catch (const std::exception& e)
+	catch (const Plebception& e)
 	{
 		if (response_code != 404)
 		{
-			std::cerr << e.what() << " response_code: " << response_code << '\n';
+			std::cerr << e.what() << " response_code: " << response_code << std::endl;
 			err_code_file(data.buf, response_code);
 		}
 		else
 		{
-			int fd = 0;
+			int fd = -1;
 			string full_path = l->root + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
 			struct stat file_status;
 
 			if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
 				fd = open(full_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
 			else if (file_status.st_mode & S_IFDIR)
-				fd = open(string(full_path + "/" + ft::create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+				fd = open(string(full_path + "/" + ft::create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU); // waarom alle flags?
 			if (fd == -1)
 				throw Plebception(ERR_FD, "return_post", full_path);
 			if (ft::write(fd, data.buf) == -1)
@@ -282,7 +284,7 @@ string	Server::return_head(connect_data &data, Location* l)
 			return ("");
 		l->read_file(body, file_path);
 	}
-	catch(const exception& e)
+	catch(const Plebception& e)
 	{
 		if (response_code == 404 && ft::ends_with(data.h._path, "/") && l->auto_index == ON)
 		{
@@ -291,7 +293,7 @@ string	Server::return_head(connect_data &data, Location* l)
 		}
 		else
 		{
-			cerr << e.what() << " response_code: " << response_code << '\n';
+			std::cerr << e.what() << " response_code: " << response_code << std::endl;
 			err_code_file(data.buf, response_code);
 		}
 	}
@@ -306,9 +308,9 @@ string	Server::create_response(connect_data &data)
 	if (l == NULL)
 		throw Plebception(ERR_NO_LOCATION, "create_response", data.h._path);
 	try {l->method_allowed(data.h, response_code); }
-	catch (std::exception& e)
+	catch (const Plebception& e)
 	{
-		cerr << e.what() << response_code << endl;
+		std::cerr << e.what() << response_code << std::endl;
 		return (data.h.create_header(response_code, 0));
 	}
 	if (l->redir.first != 0)

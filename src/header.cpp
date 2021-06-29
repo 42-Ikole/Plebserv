@@ -62,9 +62,9 @@ void	Header::Parse_request(string request)
 			_extension = _path.substr(_path.find_last_of('.'), string::npos);
 		_http_version = parsed[2];
 	}
-	catch (exception& e)
+	catch (const Plebception& e)
 	{
-		std::cerr << e.what() << endl;
+		std::cerr << e.what() << std::endl;
 		throw Plebception(ERR_INVALID_VALUE, "parsing request", "");
 	}
 }

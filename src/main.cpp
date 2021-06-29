@@ -25,16 +25,16 @@
 #include <plebception.hpp>
 #include <server.hpp>
 
-std::vector<std::string> get_lines(std::string file);
-std::vector<Server> load_config(std::string filename);
-void	host_servers(vector<Server> serv);
+std::vector<std::string>	get_lines(std::string file);
+std::vector<Server>			load_config(std::string filename);
+void						host_servers(vector<Server> serv);
 
 static void	parser_test(char* filename)
 {
 	try
 	{
 		vector<Server> s = load_config(filename);
-		std::cout << "[ " << COLOR_GREEN << "OK" << COLOR_RESET << " ]" << std::endl;
+		std::cerr << "[ " << COLOR_GREEN << "OK" << COLOR_RESET << " ]" << std::endl;
 		exit(0);
 	}
 	catch(const std::exception& e)
@@ -48,7 +48,7 @@ static void persistent_run_serv(int tries, std::vector<Server>& l)
 {
 	if (tries == 0)
 	{
-		cout << "Too many retries. shutting down..." << endl;
+		std::cerr << "Too many retries. shutting down..." << std::endl;
 		exit(0);
 	}
 	try
@@ -66,13 +66,14 @@ static void persistent_run_serv(int tries, std::vector<Server>& l)
 	catch (const Fatal& e)
 	{
 		std::cerr << e.what() << std::endl;
+		exit (69);
 	}
 }
 
 int main(int argc, char** argv)
 {
-	std::string filename;
-	std::vector<Server> l;
+	std::string			filename;
+	std::vector<Server>	l;
 
 	if (argc == 1)
 		filename = "configs/basic-server.conf";
@@ -88,7 +89,7 @@ int main(int argc, char** argv)
 	}
 	catch (std::exception &e)
 	{
-		std::cout << e.what() << std::endl;
+		std::cerr << e.what() << std::endl;
 		return (-1);
 	}
 	for (size_t i = 0; i < l.size(); i++)
