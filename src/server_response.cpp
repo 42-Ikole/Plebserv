@@ -92,7 +92,6 @@ void	Location::read_file(string& rv, string path)
 
 	if (static_dir && static_files[path].empty() == false)
 	{
-		// cout << "using cached response: " << path << endl;
 		rv = static_files[path];
 		return;
 	}
@@ -111,7 +110,6 @@ Location*	Server::match_location(string path)
 
 	for (size_t i = 0; i < locations.size(); i++)
 	{
-		// std::cout << "Matching [" << locations[i].location << "] with [" << path << "]\n";
 		if (!strncmp(locations[i].location.c_str(), path.c_str(), locations[i].location.length()))
 			if (!closest_match || locations[i].location.length() > closest_match->location.length())
 				closest_match = &locations[i];
@@ -133,7 +131,6 @@ string	Server::return_get(connect_data &data, Location* l)
 	}
 	catch(const Plebception& e)
 	{
-		//std::// cout << "ENDS WITH: " << ft::ends_with(h._path, "/") << " AUTOINDEX " << l->auto_index << endl;
 		if (response_code == 404 && ft::ends_with(data.h._path, "/") && l->auto_index == ON)
 		{
 			response_code = 200;
@@ -183,7 +180,7 @@ string	Server::return_post(connect_data &data, Location* l)
 			if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
 				fd = open(full_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
 			else if (file_status.st_mode & S_IFDIR)
-				fd = open(string(full_path + "/" + ft::create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU); // waarom alle flags?
+				fd = open(string(full_path + "/" + ft::create_date()).c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
 			if (fd == -1)
 				throw Plebception(ERR_FD, "return_post", full_path);
 			if (ft::write(fd, data.buf) == -1)
@@ -212,7 +209,6 @@ string	Server::return_put(connect_data &data, Location* l)
 	int			response_code = 201;
 	int			fd;
 
-	// cout << "Path to save to: " << full_path << endl;
 	if (data.buf.size() > l->max_body_size)
 	{
 		response_code = 413;
@@ -260,7 +256,6 @@ string	Server::return_options(connect_data &data, Location* l)
 			else
 				allowed += l->limit_except[i] + ", ";
 		}
-	//std::cout << "Allowed: " << allowed << endl;
 	data.h.add_to_header_out("Allow", allowed);
 	return (data.h.create_header(204, 0));
 }
@@ -311,7 +306,6 @@ string	Server::create_response(connect_data &data)
 		data.h.add_to_header_out("Location", l->redir.second);
 		return (data.h.create_header(l->redir.first, 0));
 	}
-	//std::cout << "The match is " << l->location << std::endl;
 	if (data.h._method == "GET")
 		return (return_get(data, l));
 	if (data.h._method == "POST")

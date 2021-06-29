@@ -35,7 +35,6 @@ string	Header::decode_url(string& str)
 
 	for (size_t pos = str.find_first_of("%", 0); pos != string::npos; pos = str.find_first_of("%", pos)) {
 		rp = ft::stoi(str.substr(pos + 1, 2), "0123456789ABCDEF");
-		// cout << "rp = [" << rp << "]" << endl;
 		str.replace(pos, 3, 1, rp);
 	}
 	return str;
@@ -75,10 +74,7 @@ void	Header::load_headers_in(vector<string> in)
 	for (size_t i = 0; i < in.size(); i++)
 	{
 		if (in[i].compare(0, 10 ,"Set-Cookie") == 0)
-		{
 			_cookies = _cookies + in[i].substr(in[i].find(':') + 2) + ";";
-			// cout << "new cookie: " << _cookies << endl;
-		}
 		else
 		{
 			pos = in[i].find(':');

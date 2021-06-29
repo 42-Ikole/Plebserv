@@ -197,25 +197,12 @@ void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Serve
 {
 	map<string, string> env_tmp;
 
-	// cerr << "body size = " << body.size() << endl;
 	default_env(data.h, body, file_path, ser, env_tmp);
 	for(map<string, string>::iterator it = data.h._headers_in.begin(); it != data.h._headers_in.end(); it++)
 		env_tmp[ft::convert_header(it->first)] = it->second;
 
 	char **env = create_env_array(env_tmp);
 	read_response(data, env, file_path);
-	// cerr << data.buf << endl;
-	// body = data.buf;
-
-	// cerr << "cgi body size: " << body.size() << endl;
-	
-	// size_t pos = body.find(HEADER_END);
-	// if (pos != string::npos)
-	// {
-	// 	data.h.add_to_header_out(ft::split(body.substr(0, pos), "\r\n"));
-	// 	body = body.substr(pos + 4);
-	// }
-
 	for (size_t i = 0; env[i]; i++)
 		free(env[i]);
 	free(env);

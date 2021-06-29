@@ -3,7 +3,6 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/ip.h> /* superset of previous */
 
 class Server;
 
@@ -41,7 +40,7 @@ struct	cgi_session
 
 struct	connect_data
 {
-	int					fd;		// client fd
+	int					fd;
 	int					type;
 	cgi_session			*cgi_sesh;
 	Server*				ser;
@@ -60,7 +59,6 @@ struct	connect_data
 
 	void clear()
 	{
-		// cgi_sesh = 0;
 		bytes_send = 0;
 		buf.clear();
 		chunk_unchunked.clear();
