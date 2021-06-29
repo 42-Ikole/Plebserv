@@ -111,8 +111,9 @@ namespace ft
     char *strdup(char* str)
     {
         char* dup = (char *)malloc(sizeof(char) * strlen(str) + 1);
-        if (dup)
-            strcpy(dup, str);
+        if (!dup)
+            throw Fatal(ERR_BAD_ALLOC, "strdup", "malloc fail");
+        strcpy(dup, str);
         return(dup);
     }
 
@@ -181,7 +182,7 @@ namespace ft
 		char *buff = (char *)malloc(sizeof(char) * (buf_size + 1));
 
         if (!buff)
-            throw Plebception(ERR_FAIL_SYSCL, "read", "error allocating region");
+            throw Fatal(ERR_FAIL_SYSCL, "read", "error allocating region");
 		for (;ret > 0; i += ret)
 		{
 			ret = ::read(fd, buff, buf_size);
@@ -204,7 +205,7 @@ namespace ft
 		char *buff = (char *)malloc(sizeof(char) * (buf_size + 1));
 
         if (!buff)
-            throw Plebception(ERR_FAIL_SYSCL, "read", "error allocating region");
+            throw Fatal(ERR_FAIL_SYSCL, "read", "error allocating region");
 		for (size_t i = 0; ret > 0; i += ret)
 		{
 			ret = ::read(fd, buff, buf_size);

@@ -154,6 +154,8 @@ char	**Cgi::create_env_array(map<string, string> &env)
 	size_t i = 0;
 
 	rval = (char **)malloc(sizeof(char *) * (env.size() + 1));
+	if (!rval)
+		throw Fatal(ERR_BAD_ALLOC, "malloc", "create_env_array");
 	for(map<string, string>::iterator it = env.begin(); it != env.end(); it++)
 	{
 		rval[i] = create_env_var(it->first, it->second);
