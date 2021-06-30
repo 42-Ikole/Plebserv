@@ -7,7 +7,7 @@ SRC			=	src/cgi.cpp \
 				src/header.cpp \
 				src/location.cpp \
 				src/main.cpp \
-				src/perser_config.cpp \
+				src/parser_config.cpp \
 				src/plebception.cpp \
 				src/run_helper.cpp \
 				src/run.cpp \
