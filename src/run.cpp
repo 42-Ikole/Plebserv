@@ -63,13 +63,13 @@ static string read_sok(size_t buff_size, bool& close_conn, size_t& fd)
 	return (ret);
 }
 
-static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t chunk_size, fd_set &current_sockets)
+static void	get_chunk_body(connect_data* cur_conn, size_t pos, fd_set &current_sockets)
 {
 	cur_conn->buf = cur_conn->buf.substr(pos + 2);
-	if (chunk_size > 0)
+	if (cur_conn->chunk_size > 0)
 	{
-		cur_conn->chunk_unchunked += cur_conn->buf.substr(0, chunk_size);
-		cur_conn->buf = cur_conn->buf.substr(chunk_size + 2);
+		cur_conn->chunk_unchunked += cur_conn->buf.substr(0, cur_conn->chunk_size);
+		cur_conn->buf = cur_conn->buf.substr(cur_conn->chunk_size + 2);
 		if (cur_conn->buf.size() != 0)
 			unchunk_chunk(cur_conn, current_sockets);
 	}
@@ -77,10 +77,9 @@ static void	get_chunk_body(connect_data* cur_conn, size_t pos, size_t chunk_size
 	{
 		try
 		{
-			cur_conn->buf = cur_conn->chunk_unchunked;
-			cur_conn->chunk_unchunked.clear();
-			cur_conn->response = cur_conn->ser->create_response(*cur_conn);
 			cur_conn->buf.clear();
+			cur_conn->buf.swap(cur_conn->chunk_unchunked);
+			cur_conn->response = cur_conn->ser->create_response(*cur_conn);
 			if (cur_conn->response == "")
 				FD_SET(CURR_SESH->fd[FD_OUT][0], &current_sockets);
 			else
@@ -106,7 +105,7 @@ void	unchunk_chunk(connect_data* cur_conn, fd_set &current_sockets)
 	cur_conn->chunk_size = ft::stoi(tmp, HEXADECIMAL);
 	if (cur_conn->buf.length() - (pos + 2) < cur_conn->chunk_size + 2)
 		return ;
-	get_chunk_body(cur_conn, pos, cur_conn->chunk_size, current_sockets);
+	get_chunk_body(cur_conn, pos, current_sockets);
 }
 
 static void	set_header(connect_data* cur_conn, size_t pos)
@@ -114,10 +113,6 @@ static void	set_header(connect_data* cur_conn, size_t pos)
 	cur_conn->header_raw = cur_conn->buf.substr(0, pos);
 	cur_conn->buf		 = cur_conn->buf.substr(pos + 4);
 	cur_conn->h = Header(ft::split(cur_conn->header_raw, "\r\n"));
-	if (cur_conn->session_cookies.empty() == false)
-		cur_conn->h._cookies = cur_conn->session_cookies + cur_conn->h._cookies;
-	if (cur_conn->h._cookies.empty() == false)
-		cur_conn->session_cookies = cur_conn->h._cookies;
 }
 
 static void	normal_response(connect_data* cur_conn, fd_set& current_sockets)
@@ -127,7 +122,6 @@ static void	normal_response(connect_data* cur_conn, fd_set& current_sockets)
 	if (cur_conn->buf.size() < body_size)
 		return ;
 	cur_conn->response = cur_conn->ser->create_response(*cur_conn);
-	cur_conn->buf.clear();
 	if (cur_conn->response == "")
 		FD_SET(CURR_SESH->fd[FD_OUT][0], &current_sockets);
 	else
@@ -324,5 +318,5 @@ void	host_servers(vector<Server> serv)
 		{
 			std::cerr << e.what() << std::endl;
 		}
-	}	
+	}
 }
