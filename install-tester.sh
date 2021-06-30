@@ -4,11 +4,25 @@ echo "Installing tester.."
 
 mkdir html
 
-echo "Installing cgi.."
-wget https://projects.intra.42.fr/uploads/document/document/3408/ubuntu_cgi_tester -q -O html/cgi-tester
+OS_NAME=$(uname -s)
 
-echo "Installing tester.."
-wget https://projects.intra.42.fr/uploads/document/document/3410/ubuntu_tester -q -O tester
+echo $OS_NAME
+
+if [ "$OS_NAME" = "Linux" ]; then
+	echo "Downloading cgi.."
+	wget https://projects.intra.42.fr/uploads/document/document/4015/ubuntu_cgi_tester -q -O cgi-tester
+
+	echo "Downloading tester.."
+	wget https://projects.intra.42.fr/uploads/document/document/4017/ubuntu_tester -q -O tester
+elif [ $OS_NAME = "Darwin" ]; then
+	echo "Downloading cgi.."
+	wget https://projects.intra.42.fr/uploads/document/document/4016/cgi_tester -q -O cgi-tester
+
+	echo "Downloading tester.."
+	wget https://projects.intra.42.fr/uploads/document/document/4014/tester -q -O tester
+else
+	echo "error downloading"
+fi
 
 echo "Creating files.."
 
