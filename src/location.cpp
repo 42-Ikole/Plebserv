@@ -213,9 +213,9 @@ int	Location::parse_args(string str)
 	return (1);
 }
 
-Location::Location(vector<string> val) : max_body_size(16000), upload_store("/html/uploads"),
-										auto_index(OFF),  location(val[0]), redir(0, ""),
-										root("/html"), static_dir(false)
+Location::Location(vector<string> val) : 
+	max_body_size(16000), auto_index(OFF),  location(val[0]), redir(0, ""),
+	root("/html"), static_dir(false)
 {
 	index_page.push_back("index.html");
 	index_page.push_back("index");
@@ -225,6 +225,8 @@ Location::Location(vector<string> val) : max_body_size(16000), upload_store("/ht
 	for (size_t x = 1; x < val.size(); x++)
 		if (!val[x].empty())
 			parse_args(val[x]);
+	if (upload_store.empty())
+		upload_store = root;
 }
 
 void Location::call(const string& s, vector<string> val)
@@ -262,7 +264,7 @@ void	Location::load_client_max_body_size(vector<string> val)
 	max_body_size = ft::stoi(val[0]) * mul;
 }
 
-bool	Location::run_cgi(connect_data &data, string& body, string file_path, Server& ser)
+bool	Location::run_cgi(connect_data &data, string& body, string file_path, Server& ser, int &response_code)
 {
 	string ext = file_path.substr(file_path.find_last_of("."));
 
@@ -270,7 +272,7 @@ bool	Location::run_cgi(connect_data &data, string& body, string file_path, Serve
 	{
 		if (ext == cgi[i].match)
 		{
-			cgi[i].cgi_response(data, body, file_path, ser);
+			cgi[i].cgi_response(data, body, file_path, ser, response_code);
 			return (true);
 		}
 	}

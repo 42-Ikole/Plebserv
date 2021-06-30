@@ -64,12 +64,12 @@ class Location
 	public:
 		size_t					max_body_size;
 		vector<string>			limit_except;
-		string					upload_store;
 		vector<string>			index_page;
 		bool					auto_index;
 		string					location;
 		pair<int, string>		redir;
 		string					root;
+		string					upload_store;
 		vector<Cgi>				cgi;
 		map<string, string>		static_files;
 		bool					static_dir;
@@ -91,7 +91,7 @@ class Location
 		void	set_upload_store(vector<string> val);
 		void	set_redir(vector<string> val);
 		void	load_client_max_body_size(vector<string> val);
-		bool	run_cgi(connect_data &data, string& body, string file_path, Server& ser);
+		bool	run_cgi(connect_data &data, string& body, string file_path, Server& ser, int &response_code);
 		bool	method_allowed(Header& h, int& response_code);
 		void 	set_static_dir(vector<string> val);
 
