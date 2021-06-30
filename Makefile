@@ -21,7 +21,7 @@
 NAME		=	plebserv
 
 CC			=	clang++
-FLAGS		=	-std=c++98 -pedantic -Wall -Werror -Wextra -Ofast
+FLAGS		=	-std=c++98 -pedantic -Wall -Werror -Wextra
 DEBUG_FLAGS	=	-g -fsanitize=address
 SRC			=	src/cgi.cpp \
 				src/header.cpp \
