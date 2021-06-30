@@ -1,7 +1,27 @@
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+#	 																				#
+#     _ (`-.              ('-. .-. .-')    .-')      ('-.  _  .-')        (`-.   	#
+#    ( (OO  )           _(  OO)\  ( OO )  ( OO ).  _(  OO)( \( -O )     _(OO  )_ 	#
+#   _.`     \ ,--.     (,------.;-----.\ (_)---\_)(,------.,------. ,--(_/   ,. \	#
+#  (__...--'' |  |.-')  |  .---'| .-.  | /    _ |  |  .---'|   /`. '\   \   /(__/	#
+#   |  /  | | |  | OO ) |  |    | '-' /_)\  :` `.  |  |    |  /  | | \   \ /   / 	#
+#   |  |_.' | |  |`-' |(|  '--. | .-. `.  '..`''.)(|  '--. |  |_.' |  \   '   /, 	#
+#   |  .___.'(|  '---.' |  .--' | |  \  |.-._)   \ |  .--' |  .  '.'   \     /__)	#
+#   |  |      |      |  |  `---.| '--'  /\       / |  `---.|  |\  \     \   /    	#
+#   `--'      `------'  `------'`------'  `-----'  `------'`--' '--'     `-'     	#
+#																					#
+# 									MADE BY											#
+# 		—————————————————————————————————————————————————————————————————————		#
+#				 Alpha_1337k       |    https://github.com/Alpha1337k				#
+#				 VictorTennekes    |    https://github.com/VictorTennekes			#
+#				 Kingmar	 	   |    https://github.com/K1ngmar					#
+#																					#
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
 NAME		=	plebserv
 
 CC			=	clang++
-FLAGS		=	-std=c++98 -pedantic -Wall -Werror -Wextra 
+FLAGS		=	-std=c++98 -pedantic -Wall -Werror -Wextra -Ofast
 DEBUG_FLAGS	=	-g -fsanitize=address
 SRC			=	src/cgi.cpp \
 				src/header.cpp \
@@ -47,12 +67,9 @@ run: re
 debug: fclean
 	$(CC) $(FLAGS) $(DEBUG_FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME)
 
-superclean:
-	$(RM) $(NAME) html/* tester
-
 release:
 	@clear
-	@$(CC) $(FLAGS) $(SRC) $(LIBS) -Ofast -I includes -o $(NAME) &
+	@$(CC) $(FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME) &
 	@echo "   ___ _      _                         "
 	@sleep 1
 	@echo "  / _ \ | ___| |__  ___  ___ _ ____   __"
