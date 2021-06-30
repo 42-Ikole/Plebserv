@@ -49,23 +49,18 @@ static void accept_connect(fd_set& current_sockets, server_data& data, vector<co
 
 static string read_sok(size_t buff_size, bool& close_conn, size_t& fd)
 {
-	char*	buffer;
 	int		rc;
 	string	ret;
 	
-	buffer = (char *)malloc(sizeof(char) * (buff_size + 1));
-	if (buffer == NULL)
-		throw Fatal(ERR_BAD_ALLOC, "malloc", "region size " + ft::to_string(buff_size));
-	rc = recv(fd, buffer, buff_size, 0);
+	ret.resize(buff_size + 1);
+	rc = recv(fd, &ret[0], buff_size, 0);
 	if (rc <= 0)
 	{
 		close_conn = true;
-		free(buffer);
 		return "";
 	}
-	buffer[rc] = 0;
-	ft::str_set(ret, buffer, rc);
-	free(buffer);
+	ret[rc] = 0;
+	ret.resize(rc);
 	return (ret);
 }
 
@@ -186,7 +181,7 @@ static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &cur
 	{
 		CURR_SESH->read_s = cgi_read(CURR_SESH->fd[FD_OUT][STDIN_FILENO], \
 									CURR_SESH->output, CURR_SESH->read_i);
-		if (CURR_SESH->read_s == 0)
+		if (CURR_SESH->read_s <= 0)
 		{
 			size_t pos = CURR_SESH->output.find(HEADER_END);
 			if (pos != string::npos)
@@ -206,8 +201,10 @@ static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &cur
 	}
 	else
 	{
-		if (CURR_SESH->write_s != 0)
+		if (CURR_SESH->write_s > 0)
 			CURR_SESH->write_s = cgi_write(CURR_SESH->fd[FD_IN][STDOUT_FILENO], CURR_SESH->input, CURR_SESH->write_i);
+		if (CURR_SESH->write_s <= 0)
+			close(CURR_SESH->fd[FD_IN][STDOUT_FILENO]);
 	}
 }
 
@@ -241,7 +238,7 @@ static fd_set	get_response_fd(vector<connect_data> &open_connections)
 	FD_ZERO(&ret);
 	for (size_t i = 0; i < open_connections.size(); i++)
 	{
-		if (open_connections[i].cgi_sesh != 0 && open_connections[i].cgi_sesh->write_s != 0)
+		if (open_connections[i].cgi_sesh != 0 && open_connections[i].cgi_sesh->write_s > 0)
 			FD_SET(open_connections[i].cgi_sesh->fd[FD_IN][1], &ret);
 		else if (open_connections[i].ready == true)
 			FD_SET(open_connections[i].fd, &ret);
