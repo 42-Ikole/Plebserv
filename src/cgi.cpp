@@ -203,6 +203,7 @@ void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Serve
 	try	{
 		read_response(data, env, file_path);
 	} catch (Plebception &e) {
+		std::cerr << e.what() << endl;
 		response_code = 500;
 		throw e;
 	}
