@@ -171,12 +171,22 @@ static void	handle_connection(fd_set& current_sockets, vector<connect_data>& ope
 		return clear_connection(open_connections, current_sockets, cur_fd);
 }
 
+static void	remove_cgi(connect_data *cur_conn, fd_set &current_sockets)
+{
+	FD_CLR(CURR_SESH->fd[FD_OUT][STDIN_FILENO], &current_sockets);
+	close(CURR_SESH->fd[FD_OUT][STDIN_FILENO]);
+	close(CURR_SESH->fd[FD_IN][STDOUT_FILENO]);
+	delete CURR_SESH;
+	cur_conn->cgi_sesh = 0;
+	cur_conn->ready = true;
+}
+
 static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &current_sockets)
 {
 	if (isread)
 	{
 		CURR_SESH->read_s = cgi_read(CURR_SESH->fd[FD_OUT][STDIN_FILENO], \
-									CURR_SESH->output, CURR_SESH->read_i);
+									CURR_SESH->output);
 		if (CURR_SESH->read_s == 0)
 		{
 			size_t pos = CURR_SESH->output.find(HEADER_END);
@@ -186,18 +196,21 @@ static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &cur
 				CURR_SESH->output = CURR_SESH->output.substr(pos + 4);
 			}
 			cur_conn->response = cur_conn->h.create_header(200, CURR_SESH->output.length()) + string(CURR_SESH->output);
-			FD_CLR(CURR_SESH->fd[FD_OUT][STDIN_FILENO], &current_sockets);
-			close(CURR_SESH->fd[FD_OUT][STDIN_FILENO]);
-			close(CURR_SESH->fd[FD_IN][STDOUT_FILENO]);
-			delete CURR_SESH;
-			cur_conn->cgi_sesh = 0;
-			cur_conn->ready = true;
 		}
+		else if (CURR_SESH->read_s < 0)
+			create_custom_response(cur_conn, cur_conn->h.create_header(500, 0));
+		if (CURR_SESH->read_s <= 0)
+			remove_cgi(cur_conn, current_sockets);
 	}
 	else
 	{
-		if (CURR_SESH->write_s != 0)
+		if (CURR_SESH->write_s > 0)
 			CURR_SESH->write_s = cgi_write(CURR_SESH->fd[FD_IN][STDOUT_FILENO], CURR_SESH->input, CURR_SESH->write_i);
+		if (CURR_SESH->write_s < 0)
+		{
+			create_custom_response(cur_conn, cur_conn->h.create_header(500, 0));
+			remove_cgi(cur_conn, current_sockets);
+		}
 	}
 }
 
@@ -218,9 +231,9 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections, fd_set
 	update_action(cur_conn);
 	len = send(fd, &cur_conn->response[cur_conn->bytes_send], cur_conn->response.size() - cur_conn->bytes_send, 0);
 	if (len == -1)
-		throw Plebception(ERR_WRITE_SOCK, "send_data", "");
+		throw Plebception(ERR_WRITE_SOCK, "send_data", ft::to_string(errno));
 	cur_conn->bytes_send += len;
-	if (cur_conn->bytes_send == cur_conn->response.size())
+	if (cur_conn->bytes_send >= cur_conn->response.size())
 		cur_conn->clear();
 }
 
@@ -231,7 +244,7 @@ static fd_set	get_response_fd(vector<connect_data> &open_connections)
 	FD_ZERO(&ret);
 	for (size_t i = 0; i < open_connections.size(); i++)
 	{
-		if (open_connections[i].cgi_sesh != 0 && open_connections[i].cgi_sesh->write_s != 0)
+		if (open_connections[i].cgi_sesh != 0 && open_connections[i].cgi_sesh->write_s > 0)
 			FD_SET(open_connections[i].cgi_sesh->fd[FD_IN][1], &ret);
 		else if (open_connections[i].ready == true)
 			FD_SET(open_connections[i].fd, &ret);
