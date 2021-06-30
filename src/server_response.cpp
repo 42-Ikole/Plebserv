@@ -125,7 +125,7 @@ string	Server::return_get(connect_data &data, Location* l)
 	try
 	{
 		string file_path = l->find_file(data.h, response_code);
-		if (l->run_cgi(data, body, file_path, *this))
+		if (l->run_cgi(data, body, file_path, *this, response_code))
 			return "";
 		l->read_file(body, file_path);
 	}
@@ -160,7 +160,7 @@ string	Server::return_post(connect_data &data, Location* l)
 			return (data.h.create_header(response_code, data.buf.size()) + string(data.buf));
 		}
 		string file_path = l->find_file(data.h, response_code);
-		if (l->run_cgi(data, data.buf, file_path, *this))
+		if (l->run_cgi(data, data.buf, file_path, *this, response_code))
 			return ("");
 		return (return_get(data, l));
 	}
@@ -268,7 +268,7 @@ string	Server::return_head(connect_data &data, Location* l)
 	try
 	{
 		string file_path = l->find_file(data.h, response_code);
-		if (!l->run_cgi(data, body, file_path, *this))
+		if (!l->run_cgi(data, body, file_path, *this, response_code))
 			return ("");
 		l->read_file(body, file_path);
 	}

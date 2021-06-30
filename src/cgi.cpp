@@ -59,53 +59,50 @@ std::ostream& operator<<(std::ostream& out, Cgi const& value)
 void	Cgi::cgi_child(cgi_session &sesh, char* args[3], char** env)
 {
 	if (dup2 (sesh.fd[FD_OUT][STDOUT_FILENO], 1) < 0)
-		throw Plebception(ERR_FAIL_SYSCL, "dup2", "rip1");
+		throw Plebception(ERR_FAIL_SYSCL, "dup2", "stdout");
 	if (dup2 (sesh.fd[FD_IN][STDIN_FILENO], 0) < 0)
-		throw Plebception(ERR_FAIL_SYSCL, "dup2", "rip2");
+		throw Plebception(ERR_FAIL_SYSCL, "dup2", "stdin");
 	close(sesh.fd[0][0]);
 	close(sesh.fd[0][1]);
     close(sesh.fd[1][0]);
     close(sesh.fd[1][0]);
 	if (execve(full_path.c_str(), args, env) == -1)
 	{
+		std::cerr << "execve failed!!!!" << std::endl;
 		perror("exeve");
-		throw Plebception(ERR_FAIL_SYSCL, "read_response", "execve");
 	}
 	exit(0);
 }
 
 int cgi_write(int &fdin, string &body, size_t &i)
 {
-	if (body.size() == 0)
+	if (body.size() == i)
 	{
 		close (fdin);
 		return (0);
 	}
-	int ret = ft::write(fdin, body, i);
+	int ret = write(fdin, &body[i], i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER);
+	i += i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
+	// std::cout << i << " | " << body.size() << std::endl;
 	if (ret <= 0)
-		return (ret);
-	close(fdin);
-	return 0;
+		close(fdin);
+	return ret;
 }
 
-int cgi_read(int &fdout, string &body, size_t &i)
+int cgi_read(int &fdout, string &body)
 {
-	int ret;
-	if ((ret = ft::read(fdout, body, PIPE_BUFFER, i)) <= 0)
-		return (ret);
-	close(fdout);
-	return 0;
-}
+	string tmp;
 
-
-void	Cgi::cgi_parent(cgi_session &sesh)
-{
-	while (sesh.read_s != 0)
+	tmp.resize(PIPE_BUFFER);
+	int ret = read(fdout, &tmp[0], PIPE_BUFFER);
+	if (ret <= 0)
 	{
-		if (sesh.write_s != 0)
-			sesh.write_s = cgi_write(sesh.fd[FD_IN][STDOUT_FILENO], sesh.input, sesh.write_i);
-		sesh.read_s = cgi_read(sesh.fd[FD_OUT][STDIN_FILENO], sesh.output, sesh.read_i);
+		close(fdout);
+		return (ret);
 	}
+	tmp.resize(ret);
+	body += tmp;
+	return (ret);
 }
 
 void Cgi::read_response(connect_data &data, char** env, string file_path)
@@ -113,11 +110,14 @@ void Cgi::read_response(connect_data &data, char** env, string file_path)
 	char* 	args[3];
 	int		fdin[2];
 	int		fdout[2];
+	struct	stat buf;
 
 	args[0] = (char *)full_path.c_str();
 	args[1] = (char *)file_path.c_str();
 	args[2] = 0;
 
+	if (stat(full_path.c_str(), &buf) != 0 || (buf.st_mode & S_IXUSR) == 0)
+		throw Plebception(ERR_BAD_LOCATION, "cgi", full_path);
 	if (pipe(fdin) == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "pipe");
 	if (pipe(fdout) == -1)
@@ -179,7 +179,7 @@ void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, m
 	env_tmp["REMOTE_ADDR"] 			= "127.0.0.1";
 	env_tmp["REMOTE_IDENT"] 		= "";
 	env_tmp["REMOTE_USER"] 			= "";
-	env_tmp["REQUEST_METHOD"] 		=	h._method;
+	env_tmp["REQUEST_METHOD"] 		= h._method;
 	env_tmp["REQUEST_URI"] 			= h._path;
 	env_tmp["SCRIPT_NAME"] 			= "http://" + ser.server + h._path;
 	env_tmp["SERVER_NAME"] 			= ser.server;
@@ -191,7 +191,7 @@ void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, m
 	env_tmp["HTTP_ACCEPT"] 			= "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 }
 
-void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Server& ser)
+void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Server& ser, int &response_code)
 {
 	map<string, string> env_tmp;
 
@@ -200,7 +200,12 @@ void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Serve
 		env_tmp[ft::convert_header(it->first)] = it->second;
 
 	char **env = create_env_array(env_tmp);
-	read_response(data, env, file_path);
+	try	{
+		read_response(data, env, file_path);
+	} catch (Plebception &e) {
+		response_code = 500;
+		throw e;
+	}
 	for (size_t i = 0; env[i]; i++)
 		free(env[i]);
 	free(env);

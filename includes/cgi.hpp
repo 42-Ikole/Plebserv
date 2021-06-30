@@ -43,7 +43,7 @@ public:
 	~Cgi();
 	Cgi& operator=(const Cgi& tba);
 
-	void	cgi_response(connect_data &data, string& body, string file_path, Server& ser);
+	void	cgi_response(connect_data &data, string& body, string file_path, Server& ser, int &response_code);
 	void	default_env(Header &h, string &body, string &file_path, Server &ser, map<string, string> &env_tmp);
 	void	read_response(connect_data &data, char** env, string file_path);
 	char*	create_env_var(string key, string value);
@@ -53,7 +53,7 @@ public:
 };
 
 int cgi_write(int &fdin, string &body, size_t &i);
-int cgi_read(int &fdout, string &body, size_t &i);
+int cgi_read(int &fdout, string &body);
 
 std::ostream &operator<<(std::ostream& out, Cgi const& value);
 

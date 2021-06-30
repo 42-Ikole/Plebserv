@@ -63,7 +63,7 @@ static void persistent_run_serv(int tries, std::vector<Server>& l)
 		else
 			persistent_run_serv (tries - 1, l);
 	}
-	catch (const Fatal& e)
+	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << std::endl;
 		exit (69);
