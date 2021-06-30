@@ -3,6 +3,7 @@
 import subprocess
 import glob
 import filecmp
+import os
 
 
 #
@@ -87,6 +88,10 @@ def	main():
 	send_command("curl -v -X POST --data-binary @./plebserv.png -H \"Transfer-Encoding: chunked\" http://localhost:5000/images/test2.png", "200", "")
 	print(file_compare("plebserv.png", "html/Website/uploads/test1.png"))
 	print(file_compare("plebserv.png", "html/Website/uploads/test2.png"))
+	os.system("chmod 777 html/Website/cgi/super_cgi")
+	send_command("curl -v -s http://localhost:5000/cgis/supercgi.cpp", "200", "")
+	os.system("chmod 000 html/Website/cgi/super_cgi")
+	send_command("curl -v -s http://localhost:5000/cgis/supercgi.cpp", "500", "")
 	
 	print(str(total_count - error_count) + " out of " + str(total_count) + " OK")
 	if (error_count):
