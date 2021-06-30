@@ -3,13 +3,18 @@ NAME		=	plebserv
 CC			=	clang++
 FLAGS		=	-std=c++98 -pedantic -Wall -Werror -Wextra 
 DEBUG_FLAGS	=	-g -fsanitize=address
-SRC			=	src/*.cpp
-# SRC			=	src/main.cpp \
-# 				src/error.cpp \
-# 				src/parser_config.cpp \
-# 				src/server.cpp
-LIBS		=	
-OBJ			=	
+SRC			=	src/cgi.cpp \
+				src/header.cpp \
+				src/location.cpp \
+				src/main.cpp \
+				src/perser_config.cpp \
+				src/plebception.cpp \
+				src/run_helper.cpp \
+				src/run.cpp \
+				src/server_response.cpp \
+				src/server.cpp \
+				src/utilities.cpp
+
 RM 			=	rm -rf
 
 # OS detection for libs and headers
