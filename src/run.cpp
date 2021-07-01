@@ -21,6 +21,7 @@
 #include <run.hpp>
 #include <signal.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #define CURR_SESH cur_conn->cgi_sesh
 
