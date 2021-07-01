@@ -88,7 +88,6 @@ def	main():
 	send_command("curl -v -X POST --data-binary @./plebserv.png -H \"Transfer-Encoding: chunked\" http://localhost:5000/images/test2.png", "200", "")
 	print(file_compare("plebserv.png", "html/Website/uploads/test1.png"))
 	print(file_compare("plebserv.png", "html/Website/uploads/test2.png"))
-	os.system("clang++ html/Website/cgi/supercgi.cpp -o html/Website/cgi/super_cgi")
 	os.system("chmod 777 html/Website/cgi/super_cgi")
 	send_command("curl -v -s http://localhost:5000/cgis/supercgi.cpp", "200", "")
 	os.system("chmod 000 html/Website/cgi/super_cgi")
