@@ -12,6 +12,7 @@ struct	cgi_session
 	string	output;
 	size_t	read_i;
 	size_t	write_i;
+	pid_t	pid;
 	int		read_s;
 	int		write_s;
 	int		fd[2][2];

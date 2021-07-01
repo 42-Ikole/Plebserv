@@ -135,10 +135,10 @@ void Cgi::read_response(connect_data &data, char** env, string file_path)
 		throw Plebception(ERR_FAIL_SYSCL, "fcntl4",  "rip");
 	data.cgi_sesh = new cgi_session(fdin, fdout, data.buf);
 
-	pid_t id = fork();
-	if (id == -1)
+	data.cgi_sesh->pid = fork();
+	if (data.cgi_sesh->pid == -1)
 		throw Plebception(ERR_FAIL_SYSCL, "cgi_read_response", "fork");
-	if (id == 0)
+	if (data.cgi_sesh->pid == 0)
 		cgi_child(*data.cgi_sesh, args, env);
 	close(data.cgi_sesh->fd[0][0]);
 	close(data.cgi_sesh->fd[1][1]);
