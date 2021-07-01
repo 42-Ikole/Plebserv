@@ -10,13 +10,13 @@ echo $OS_NAME
 
 if [ "$OS_NAME" = "Linux" ]; then
 	echo "Downloading cgi.."
-	wget https://projects.intra.42.fr/uploads/document/document/4015/ubuntu_cgi_tester -q -O cgi-tester
+	wget https://projects.intra.42.fr/uploads/document/document/4015/ubuntu_cgi_tester -q -O cgi_tester
 
 	echo "Downloading tester.."
 	wget https://projects.intra.42.fr/uploads/document/document/4017/ubuntu_tester -q -O tester
 elif [ $OS_NAME = "Darwin" ]; then
 	echo "Downloading cgi.."
-	wget https://projects.intra.42.fr/uploads/document/document/4016/cgi_tester -q -O cgi-tester
+	wget https://projects.intra.42.fr/uploads/document/document/4016/cgi_tester -q -O cgi_tester
 
 	echo "Downloading tester.."
 	wget https://projects.intra.42.fr/uploads/document/document/4014/tester -q -O tester
