@@ -57,7 +57,9 @@ void	Server::err_code_file(string& body, int response_code)
 			default_error_page(body, response_code);
 			return ;
 		}
-		if (ft::read(fd, body, 2048) < 0)
+		int ret = ft::read(fd, body, 2048);
+		close(fd);
+		if (ret < 0)
 			throw Plebception(ERR_READ, "err_read_file", error_pages[response_code]);
 	}
 }
