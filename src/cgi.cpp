@@ -83,7 +83,8 @@ int cgi_write(int &fdin, string &body, size_t &i)
 	}
 	int ret = write(fdin, &body[i], i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER);
 	i += i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
-	// std::cout << i << " | " << body.size() << std::endl;
+	if (ret < 0)
+		std::cerr << "write errno = " << errno << " on fd " << fdin << endl;
 	if (ret <= 0)
 		close(fdin);
 	return ret;
@@ -95,6 +96,8 @@ int cgi_read(int &fdout, string &body)
 
 	tmp.resize(PIPE_BUFFER);
 	int ret = read(fdout, &tmp[0], PIPE_BUFFER);
+	if (ret < 0)
+		std::cerr << "read errno = " << errno << " on fd " << fdout << endl;
 	if (ret <= 0)
 	{
 		close(fdout);
@@ -178,7 +181,7 @@ void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, m
 	env_tmp["QUERY_STRING"] 		= h._query;
 	env_tmp["REMOTE_ADDR"] 			= "127.0.0.1";
 	env_tmp["REMOTE_IDENT"] 		= "";
-	env_tmp["REMOTE_USER"] 			= "";
+	env_tmp["REMOTE_USER"] 				= "";
 	env_tmp["REQUEST_METHOD"] 		= h._method;
 	env_tmp["REQUEST_URI"] 			= h._path;
 	env_tmp["SCRIPT_NAME"] 			= "http://" + ser.server + h._path;
@@ -188,7 +191,7 @@ void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, m
 	env_tmp["SERVER_SOFTWARE"] 		= "Plebserv (linux)";
 	env_tmp["REDIRECT_STATUS"] 		= "true";
 	env_tmp["SCRIPT_FILENAME"] 		= cwd + '/' + file_path;
-	env_tmp["HTTP_ACCEPT"] 			= "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+	env_tmp["HTTP_ACCEPT"] 		= "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 }
 
 void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Server& ser, int &response_code)
