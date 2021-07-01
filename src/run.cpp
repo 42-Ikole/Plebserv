@@ -178,7 +178,7 @@ static void	remove_cgi(connect_data *cur_conn, fd_set &current_sockets)
 	FD_CLR(CURR_SESH->fd[FD_OUT][STDIN_FILENO], &current_sockets);
 	close(CURR_SESH->fd[FD_OUT][STDIN_FILENO]);
 	close(CURR_SESH->fd[FD_IN][STDOUT_FILENO]);
-	int ret = kill(CURR_SESH->pid, SIGTERM);
+	kill(CURR_SESH->pid, SIGTERM);
 	waitpid(CURR_SESH->pid, NULL, 0);
 	delete CURR_SESH;
 	cur_conn->cgi_sesh = 0;

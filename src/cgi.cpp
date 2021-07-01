@@ -26,6 +26,7 @@
 #include <utilities.hpp>
 #include <cgi.hpp>
 #include <server.hpp>
+#include <errno.h>
 
 #define HEADER_END	"\r\n\r\n"
 
@@ -84,7 +85,7 @@ int cgi_write(int &fdin, string &body, size_t &i)
 	int ret = write(fdin, &body[i], i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER);
 	i += ret;
 	if (ret < 0)
-		std::cerr << "write errno = " << errno << " on fd " << fdin << endl;
+		std::cerr << "write errno = " << errno << " on fd " << fdin << " i = " << i << endl;
 	if (ret <= 0)
 		close(fdin);
 	return ret;
