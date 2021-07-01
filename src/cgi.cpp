@@ -82,7 +82,7 @@ int cgi_write(int &fdin, string &body, size_t &i)
 		return (0);
 	}
 	int ret = write(fdin, &body[i], i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER);
-	i += i + PIPE_BUFFER >= body.size() ? body.size() - i : PIPE_BUFFER;
+	i += ret;
 	if (ret < 0)
 		std::cerr << "write errno = " << errno << " on fd " << fdin << endl;
 	if (ret <= 0)
@@ -194,6 +194,13 @@ void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, m
 	env_tmp["HTTP_ACCEPT"] 		= "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 }
 
+static void free_env(char **env)
+{
+	for (size_t i = 0; env[i]; i++)
+		free(env[i]);
+	free(env);
+}
+
 void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Server& ser, int &response_code)
 {
 	map<string, string> env_tmp;
@@ -207,10 +214,9 @@ void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Serve
 		read_response(data, env, file_path);
 	} catch (Plebception &e) {
 		std::cerr << e.what() << endl;
+		free_env(env);
 		response_code = 500;
 		throw e;
 	}
-	for (size_t i = 0; env[i]; i++)
-		free(env[i]);
-	free(env);
+	free_env(env);
 }
