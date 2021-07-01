@@ -8,7 +8,7 @@ class Server;
 
 struct	cgi_session
 {
-	string	&input;
+	string	input;
 	string	output;
 	size_t	read_i;
 	size_t	write_i;
