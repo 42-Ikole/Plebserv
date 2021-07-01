@@ -131,16 +131,16 @@ string	Server::return_get(connect_data &data, Location* l)
 	}
 	catch(const Plebception& e)
 	{
-		if (response_code == 404 && ft::ends_with(data.h._path, "/") && l->auto_index == ON)
+		if (response_code == 404 && ft::ends_with(data.h.path, "/") && l->auto_index == ON)
 		{
 			response_code = 200;
-			create_dirlist(l->root, data.h._path, body);
+			create_dirlist(l->root, data.h.path, body);
 		}
 		else
 		{
 			std::cerr << e.what() << " response_code: " << response_code << std::endl;
 			err_code_file(body, response_code);
-			data.h._extension = ".html";
+			data.h.extension = ".html";
 		}
 	}
 	return (data.h.create_header(response_code, body.size()) + string(body));
@@ -174,7 +174,7 @@ string	Server::return_post(connect_data &data, Location* l)
 		else
 		{
 			int fd = -1;
-			string full_path = l->upload_store + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
+			string full_path = l->upload_store + "/" + data.h.path.replace(data.h.path.find(l->location), l->location.size(), "");
 			struct stat file_status;
 
 			if (stat(full_path.c_str(), &file_status) == -1 || file_status.st_mode & S_IFREG)
@@ -195,7 +195,7 @@ string	Server::return_post(connect_data &data, Location* l)
 string	Server::return_delete(connect_data &data, Location* l)
 {
 	int		response_code = 204;
-	string  full_path = l->root + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
+	string  full_path = l->root + "/" + data.h.path.replace(data.h.path.find(l->location), l->location.size(), "");
 
 	if (unlink(full_path.c_str()) == -1)
 		response_code = 403;
@@ -204,7 +204,7 @@ string	Server::return_delete(connect_data &data, Location* l)
 
 string	Server::return_put(connect_data &data, Location* l)
 {
-	string		full_path = l->upload_store + "/" + data.h._path.replace(data.h._path.find(l->location), l->location.size(), "");
+	string		full_path = l->upload_store + "/" + data.h.path.replace(data.h.path.find(l->location), l->location.size(), "");
 	struct stat	file_status;
 	int			response_code = 201;
 	int			fd;
@@ -274,10 +274,10 @@ string	Server::return_head(connect_data &data, Location* l)
 	}
 	catch(const Plebception& e)
 	{
-		if (response_code == 404 && ft::ends_with(data.h._path, "/") && l->auto_index == ON)
+		if (response_code == 404 && ft::ends_with(data.h.path, "/") && l->auto_index == ON)
 		{
 			response_code = 200;
-			create_dirlist(l->root, data.h._path, body);
+			create_dirlist(l->root, data.h.path, body);
 		}
 		else
 		{
@@ -291,10 +291,10 @@ string	Server::return_head(connect_data &data, Location* l)
 string	Server::create_response(connect_data &data)
 {
 	int			response_code = 200;
-	Location*	l = match_location(data.h._path);
+	Location*	l = match_location(data.h.path);
 
 	if (l == NULL)
-		throw Plebception(ERR_NO_LOCATION, "create_response", data.h._path);
+		throw Plebception(ERR_NO_LOCATION, "create_response", data.h.path);
 	try {l->method_allowed(data.h, response_code); }
 	catch (const Plebception& e)
 	{
@@ -306,17 +306,17 @@ string	Server::create_response(connect_data &data)
 		data.h.add_to_header_out("Location", l->redir.second);
 		return (data.h.create_header(l->redir.first, 0));
 	}
-	if (data.h._method == "GET")
+	if (data.h.method == "GET")
 		return (return_get(data, l));
-	if (data.h._method == "POST")
+	if (data.h.method == "POST")
 		return (return_post(data, l));
-	if (data.h._method == "DELETE")
+	if (data.h.method == "DELETE")
 		return (return_delete(data, l));
-	if (data.h._method == "PUT")
+	if (data.h.method == "PUT")
 		return (return_put(data, l));
-	if (data.h._method == "OPTIONS")
+	if (data.h.method == "OPTIONS")
 		return (return_options(data, l));
-	if (data.h._method == "HEAD")
+	if (data.h.method == "HEAD")
 		return (return_head(data, l));
 	return (return_post(data, l));
 }

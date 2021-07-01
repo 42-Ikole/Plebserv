@@ -34,15 +34,15 @@ using namespace std;
 class Header
 {
 public:
-	string				_method;
-	string				_path;
-	string				_query;
-	string				_extension;
-	string				_http_version;
-	string 				_cookies;
-	bool				_chonky;
-	map<string, string> _headers_in;
-	map<string, string> _headers_out;
+	string				method;
+	string				path;
+	string				query;
+	string				extension;
+	string				http_version;
+	string 				cookies;
+	bool				chonky;
+	map<string, string> headers_in;
+	map<string, string> headers_out;
 	
 public:
 	Header();

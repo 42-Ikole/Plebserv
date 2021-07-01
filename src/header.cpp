@@ -48,18 +48,18 @@ void	Header::Parse_request(string request)
 		throw Plebception(ERR_INVALID_VALUE, "parsing request", "");
 	try
 	{
-		_method = parsed[0];
+		method = parsed[0];
 		if (parsed[1].find("?") != string::npos)
 		{
 			vector<string> tmp = ft::split(parsed[1], "?");
-			_path = decode_url(tmp[0]);
-			_query = tmp[1];
+			path = decode_url(tmp[0]);
+			query = tmp[1];
 		}
 		else
-			_path = decode_url(parsed[1]);
-		if (_path.find('.') != string::npos)
-			_extension = _path.substr(_path.find_last_of('.'), string::npos);
-		_http_version = parsed[2];
+			path = decode_url(parsed[1]);
+		if (path.find('.') != string::npos)
+			extension = path.substr(path.find_last_of('.'), string::npos);
+		http_version = parsed[2];
 	}
 	catch (const Plebception& e)
 	{
@@ -74,11 +74,11 @@ void	Header::load_headers_in(vector<string> in)
 	for (size_t i = 0; i < in.size(); i++)
 	{
 		if (in[i].compare(0, 10 ,"Set-Cookie") == 0)
-			_cookies = _cookies + in[i].substr(in[i].find(':') + 2) + ";";
+			cookies = cookies + in[i].substr(in[i].find(':') + 2) + ";";
 		else
 		{
 			pos = in[i].find(':');
-			_headers_in[in[i].substr(0, pos)] = in[i].substr(pos + 2, string::npos);
+			headers_in[in[i].substr(0, pos)] = in[i].substr(pos + 2, string::npos);
 		}
 	}
 }
@@ -87,15 +87,15 @@ Header::Header() {}
 
 Header&	Header::operator=(const Header& h)
 {
-	this->_method		= h._method;
-	this->_cookies		= h._cookies;
-	this->_path			= h._path;
-	this->_query		= h._query;
-	this->_extension	= h._extension;
-	this->_http_version	= h._http_version;
-	this->_chonky		= h._chonky;
-	this->_headers_in 	= h._headers_in;
-	this->_headers_out	= h._headers_out;
+	this->method		= h.method;
+	this->cookies		= h.cookies;
+	this->path			= h.path;
+	this->query		= h.query;
+	this->extension	= h.extension;
+	this->http_version	= h.http_version;
+	this->chonky		= h.chonky;
+	this->headers_in 	= h.headers_in;
+	this->headers_out	= h.headers_out;
 	return *this;
 }
 
@@ -111,40 +111,40 @@ Header::Header(vector<string> in)
 	Parse_request(in[0]);
 	in.erase(in.begin());
 	load_headers_in(in);
-	_chonky = (_headers_in["Transfer-Encoding"] == "chunked") ? true : false; 
+	chonky = (headers_in["Transfer-Encoding"] == "chunked") ? true : false; 
 }
 
 int	Header::validate_header()
 {
-	if (_http_version != "HTTP/1.1")
+	if (http_version != "HTTP/1.1")
 		return (505);
-	if (_path.length() > 2000)
+	if (path.length() > 2000)
 		return (414);
 	return (0);
 }
 
 string	Header::content_type_switch()
 {
-	if (_extension == ".html")
+	if (extension == ".html")
 		return ("text/html; charset=utf-8");
-	if (_extension == ".css")
+	if (extension == ".css")
 		return ("text/css; charset=utf-8");
-	if (_extension == ".jpg")
+	if (extension == ".jpg")
 		return ("image/jpeg");
-	if (_extension == ".js")
+	if (extension == ".js")
 		return ("text/javascript; charset=utf-8");
-	if (_extension == ".png")
+	if (extension == ".png")
 		return ("image/png");
-	if (_extension == ".json")
+	if (extension == ".json")
 		return ("application/json; charset=utf-8");
-	if (_extension == ".svg")
+	if (extension == ".svg")
 		return ("image/svg+xml");
 	return ("text/html; charset=utf-8");
 }
 
 void	Header::add_to_header_out(string val, string key)
 {
-	_headers_out[val] = key;
+	headers_out[val] = key;
 }
 
 void	Header::add_to_header_out(vector<string> head)
@@ -160,7 +160,7 @@ void	Header::add_to_header_out(vector<string> head)
 		{
 			val = head[i].substr(0, pos);
 			key = head[i].substr(pos + 2);
-			_headers_out[val] = key;
+			headers_out[val] = key;
 		}
 		else
 			throw Plebception(ERR_TOO_FEW_ARG, "add_to_header", head[i]);
@@ -172,8 +172,8 @@ string Header::create_header(int response_code, int body_length)
 {
 	string res;
 
-	if (_headers_out["Status"].empty() == false)
-		res = "HTTP/1.1 " + _headers_out["Status"] + " " + g_http_errors[atoi(_headers_out["Status"].c_str())] +"\r\n";
+	if (headers_out["Status"].empty() == false)
+		res = "HTTP/1.1 " + headers_out["Status"] + " " + g_http_errors[atoi(headers_out["Status"].c_str())] +"\r\n";
 	else
 		res = "HTTP/1.1 " + ft::to_string(response_code) + " " + g_http_errors[response_code] +"\r\n";
 
@@ -181,11 +181,11 @@ string Header::create_header(int response_code, int body_length)
 	add_to_header_out("Server", "Plebserv/1.3.29 (Unix)");
 	add_to_header_out("Connection", "keep-alive");
 	add_to_header_out("Content-Type", content_type_switch());
-	if (_headers_out["Content-Length"].empty() == true)
+	if (headers_out["Content-Length"].empty() == true)
 		add_to_header_out("Content-Length", ft::to_string(body_length));
-	add_to_header_out("Cookie", _cookies);
+	add_to_header_out("Cookie", cookies);
 
-	for (map<string, string>::const_iterator i = _headers_out.begin(); i != _headers_out.end(); i++)
+	for (map<string, string>::const_iterator i = headers_out.begin(); i != headers_out.end(); i++)
 		res += i->first + ": " + i->second + "\r\n";
 
 	res += "\r\n";
@@ -195,12 +195,12 @@ string Header::create_header(int response_code, int body_length)
 std::ostream& operator<<(std::ostream& out, Header const& value)
 {
 	out << "------------ HEADER --------" << std::endl;
-	out << std::setw(15) << "REQUEST LINE | " << "[" << value._method << "] [" << value._path << "]" << std::endl;
-	out << std::setw(15) << "QUERY | " << value._query << std::endl;
-	out << std::setw(15) << "EXTENSION | " << value._extension << std::endl;
-	out << std::setw(15) << "CHONKY | " << value._chonky << std::endl;
+	out << std::setw(15) << "REQUEST LINE | " << "[" << value.method << "] [" << value.path << "]" << std::endl;
+	out << std::setw(15) << "QUERY | " << value.query << std::endl;
+	out << std::setw(15) << "EXTENSION | " << value.extension << std::endl;
+	out << std::setw(15) << "CHONKY | " << value.chonky << std::endl;
 	out << std::setw(15) << "OTHER HEADERS:\n";
-	for (map<string, string>::const_iterator i = value._headers_in.begin(); i != value._headers_in.end(); i++)
+	for (map<string, string>::const_iterator i = value.headers_in.begin(); i != value.headers_in.end(); i++)
 		out << i->first << ": " <<  i->second << std::endl;
 	out << "------------ DONE ----------" << std::endl;
 	return (out);

@@ -172,19 +172,19 @@ void	Cgi::default_env(Header &h, string &body, string &file_path, Server &ser, m
 	string 	cwd = string(cwd_cstr);
 
 	free(cwd_cstr);
-	env_tmp["AUTH_TYPE"]			= h._headers_in["Authorization"];
-	env_tmp["CONTENT_LENGTH"]		= h._chonky == true ? ft::to_string(body.size()) : h._headers_in["Content-Length"];
-	env_tmp["CONTENT_TYPE"]			= h._method == "GET" ? "text/html" : h._headers_in["Content-Type"];
+	env_tmp["AUTH_TYPE"]			= h.headers_in["Authorization"];
+	env_tmp["CONTENT_LENGTH"]		= h.chonky == true ? ft::to_string(body.size()) : h.headers_in["Content-Length"];
+	env_tmp["CONTENT_TYPE"]			= h.method == "GET" ? "text/html" : h.headers_in["Content-Type"];
 	env_tmp["GATEWAY_INTERFACE"]	= "CGI/1.1";
-	env_tmp["PATH_INFO"] 			= h._path;
+	env_tmp["PATH_INFO"] 			= h.path;
 	env_tmp["PATH_TRANSLATED"] 		= cwd + '/' + file_path;
-	env_tmp["QUERY_STRING"] 		= h._query;
+	env_tmp["QUERY_STRING"] 		= h.query;
 	env_tmp["REMOTE_ADDR"] 			= "127.0.0.1";
 	env_tmp["REMOTE_IDENT"] 		= "";
 	env_tmp["REMOTE_USER"] 				= "";
-	env_tmp["REQUEST_METHOD"] 		= h._method;
-	env_tmp["REQUEST_URI"] 			= h._path;
-	env_tmp["SCRIPT_NAME"] 			= "http://" + ser.server + h._path;
+	env_tmp["REQUEST_METHOD"] 		= h.method;
+	env_tmp["REQUEST_URI"] 			= h.path;
+	env_tmp["SCRIPT_NAME"] 			= "http://" + ser.server + h.path;
 	env_tmp["SERVER_NAME"] 			= ser.server;
 	env_tmp["SERVER_PORT"] 			= ft::to_string(ser.port[0]);
 	env_tmp["SERVER_PROTOCOL"] 		= "HTTP/1.1";
@@ -199,7 +199,7 @@ void	Cgi::cgi_response(connect_data &data, string& body, string file_path, Serve
 	map<string, string> env_tmp;
 
 	default_env(data.h, body, file_path, ser, env_tmp);
-	for(map<string, string>::iterator it = data.h._headers_in.begin(); it != data.h._headers_in.end(); it++)
+	for(map<string, string>::iterator it = data.h.headers_in.begin(); it != data.h.headers_in.end(); it++)
 		env_tmp[ft::convert_header(it->first)] = it->second;
 
 	char **env = create_env_array(env_tmp);

@@ -117,7 +117,7 @@ static void	set_header(connect_data* cur_conn, size_t pos)
 
 static void	normal_response(connect_data* cur_conn, fd_set& current_sockets)
 {
-	size_t body_size = atoi(cur_conn->h._headers_in["Content-Length"].c_str());
+	size_t body_size = atoi(cur_conn->h.headers_in["Content-Length"].c_str());
 
 	if (cur_conn->buf.size() < body_size)
 		return ;
@@ -153,9 +153,9 @@ static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn, f
 		if (res != 0)
 			return create_custom_response(cur_conn, cur_conn->h.create_header(res, 0));
 	}
-	if (cur_conn->h._method == "GET" || cur_conn->h._chonky == false)
+	if (cur_conn->h.method == "GET" || cur_conn->h.chonky == false)
 		normal_response(cur_conn, current_sockets);
-	else if (cur_conn->h._chonky == true)
+	else if (cur_conn->h.chonky == true)
 		unchunk_chunk(cur_conn, current_sockets);
 }
 

@@ -284,11 +284,11 @@ bool	Location::method_allowed(Header& h, int& response_code)
 	if (limit_except.size())
 	{
 		size_t i = 0;
-		for (; i < limit_except.size() && h._method != limit_except[i]; i++);
+		for (; i < limit_except.size() && h.method != limit_except[i]; i++);
 		if (i == limit_except.size())
 		{
 			response_code = 405;
-			throw Plebception("405 method not allowed", "find_file", h._path);
+			throw Plebception("405 method not allowed", "find_file", h.path);
 			return (false);
 		}
 	}
@@ -298,7 +298,7 @@ bool	Location::method_allowed(Header& h, int& response_code)
 string	Location::find_file(Header h, int& response_code)
 {
 	struct stat	file_status;
-	string		full_path = root + "/" + h._path.replace(h._path.find(location), location.size(), "");
+	string		full_path = root + "/" + h.path.replace(h.path.find(location), location.size(), "");
 
 	if (stat(full_path.c_str(), &file_status) == -1)
 	{
