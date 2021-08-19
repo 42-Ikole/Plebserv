@@ -22,6 +22,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <thread>
 
 #define CURR_SESH cur_conn->cgi_sesh
 
@@ -219,9 +220,9 @@ static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &cur
 	}
 }
 
-static void	send_data(size_t &fd, vector<connect_data> &open_connections, fd_set &current_sockets)
+static void	send_data(size_t &fd, vector<connect_data> &open_connections, fd_set &current_sockets, int &cur_fd)
 {
-	connect_data* 	cur_conn = get_cur_conn(fd, open_connections);
+	connect_data* 	cur_conn = &open_connections[cur_fd];
 	ssize_t 		len = 0;
 
 	if (!cur_conn)
@@ -257,44 +258,42 @@ static fd_set	get_response_fd(vector<connect_data> &open_connections)
 	return ret;
 }
 
-static void	accept_handle_connection(fd_set& current_sockets, vector<server_data>& data, vector<connect_data>& open_connections, fd_set& read_sok, size_t& fd_match)
+static void	accept_handle_connection(fd_set& current_sockets, vector<server_data>& data, \
+	vector<connect_data>& open_connections, size_t& fd_match, int &cur_fd)
 {
-	int		cur_fd;
 	int		server_idx;
 
-	cur_fd = get_cur_conn_index(fd_match, open_connections);
-	if (FD_ISSET(fd_match, &read_sok))
+	server_idx = get_port_fd(fd_match, data);
+	if (server_idx >= 0 && fd_match == static_cast<size_t>(data[server_idx].fd))
+		accept_connect(current_sockets, data[server_idx], open_connections);
+
+	else if (cur_fd >= 0)
 	{
-		server_idx = get_port_fd(fd_match, data);
-		if (server_idx >= 0 && fd_match == static_cast<size_t>(data[server_idx].fd))
-			accept_connect(current_sockets, data[server_idx], open_connections);
-		else if (cur_fd >= 0)
+		try
 		{
-			try
+			if (open_connections[cur_fd].cgi_sesh && open_connections[cur_fd].cgi_sesh->fd[FD_OUT][0] == (int)fd_match)
 			{
-				if (open_connections[cur_fd].cgi_sesh && open_connections[cur_fd].cgi_sesh->fd[FD_OUT][0] == (int)fd_match)
-				{
-					handle_cgi_response(&open_connections[cur_fd], true, current_sockets);
-					return;
-				}
-				else
-					handle_connection(current_sockets, open_connections, cur_fd, fd_match);
+				handle_cgi_response(&open_connections[cur_fd], true, current_sockets);
+				return;
 			}
-			catch (const Plebception& e)
-			{
-				std::cerr << e.what() << std::endl;
-				create_custom_response(&open_connections[cur_fd], open_connections[cur_fd].h.create_header(500, 0));
-			}
+			else
+				handle_connection(current_sockets, open_connections, cur_fd, fd_match);
+		}
+		catch (const Plebception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			create_custom_response(&open_connections[cur_fd], open_connections[cur_fd].h.create_header(500, 0));
 		}
 	}
 }
 
 static void	connection_handler(fd_set& current_sockets, vector<server_data>& data, vector<connect_data>& open_connections)
 {
-	fd_set			read_sok  = current_sockets;
-	fd_set			write_sok = get_response_fd(open_connections);
-	int				rval;
-	struct timeval 	to;
+	fd_set				read_sok  = current_sockets;
+	fd_set				write_sok = get_response_fd(open_connections);
+	int					rval;
+	struct timeval 		to;
+	int					cur_fd;
 
 	to.tv_sec = 30;
 	to.tv_usec = 0;
@@ -305,9 +304,11 @@ static void	connection_handler(fd_set& current_sockets, vector<server_data>& dat
 		return;
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
 	{
-		accept_handle_connection(current_sockets, data, open_connections, read_sok, fd_match);
+		cur_fd = get_conn(fd_match, open_connections);
+		if (FD_ISSET(fd_match, &read_sok))
+			accept_handle_connection(current_sockets, data, open_connections, fd_match, cur_fd);
 		if (FD_ISSET(fd_match, &write_sok))
-			send_data(fd_match, open_connections, current_sockets);
+			send_data(fd_match, open_connections, current_sockets, cur_fd);
 	}
 }
 

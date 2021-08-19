@@ -49,9 +49,8 @@ struct server_data
 server_data		setup_server(Server& ser, short port, int backlog);
 void			update_action(connect_data* cur_conn);
 void			clear_connection(vector<connect_data>& open_connections, fd_set& current_sockets, size_t i);
-int				get_cur_conn_index(size_t fd, vector<connect_data>& data);
 int				get_port_fd(size_t fd, vector<server_data>& data);
-connect_data 	*get_cur_conn(size_t fd, vector<connect_data>& data);
+int				get_conn(int fd, vector<connect_data> &data);
 void			clear_stale_connection(vector<connect_data>& open_connections, fd_set& current_sockets);
 void			unchunk_chunk(connect_data* cur_conn, fd_set &current_sockets);
 
