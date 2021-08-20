@@ -28,7 +28,7 @@
 
 static void accept_connect(fd_set& current_sockets, server_data& data, vector<connect_data>& open_connections)	
 {
-	connect_data opencon = connect_data();
+	connect_data opencon;
 	do
 	{
 		opencon.fd = accept(data.fd, (struct sockaddr *)&opencon.client_addr, &opencon.addr_size);
@@ -163,16 +163,16 @@ static void	read_request(bool& close_conn, size_t& fd, connect_data* cur_conn, f
 		unchunk_chunk(cur_conn, current_sockets);
 }
 
-static void	handle_connection(fd_set& current_sockets, vector<connect_data>& open_connections, size_t cur_fd, size_t& fd)
+static void	handle_connection(fd_set& current_sockets, vector<connect_data>& open_connections, size_t fd_idx, size_t& fd)
 {
 	bool 			close_conn = false;
 	connect_data*	cur_conn;
 
-	cur_conn = &open_connections[cur_fd];
+	cur_conn = &open_connections[fd_idx];
 	update_action(cur_conn);
 	read_request(close_conn, fd, cur_conn, current_sockets);
 	if (close_conn == true)
-		return clear_connection(open_connections, current_sockets, cur_fd);
+		return clear_connection(open_connections, current_sockets, fd_idx);
 }
 
 static void	remove_cgi(connect_data *cur_conn, fd_set &current_sockets)
@@ -220,9 +220,9 @@ static void	handle_cgi_response(connect_data *cur_conn, bool isread, fd_set &cur
 	}
 }
 
-static void	send_data(size_t &fd, vector<connect_data> &open_connections, fd_set &current_sockets, int &cur_fd)
+static void	send_data(size_t &fd, vector<connect_data> &open_connections, fd_set &current_sockets, int &fd_idx)
 {
-	connect_data* 	cur_conn = &open_connections[cur_fd];
+	connect_data* 	cur_conn = &open_connections[fd_idx];
 	ssize_t 		len = 0;
 
 	if (!cur_conn)
@@ -243,7 +243,7 @@ static void	send_data(size_t &fd, vector<connect_data> &open_connections, fd_set
 		cur_conn->clear();
 }
 
-static fd_set	get_response_fd(vector<connect_data> &open_connections)
+static fd_set	get_response_fd(const vector<connect_data> &open_connections)
 {
 	fd_set ret;
 
@@ -258,80 +258,114 @@ static fd_set	get_response_fd(vector<connect_data> &open_connections)
 	return ret;
 }
 
-static void	accept_handle_connection(fd_set& current_sockets, vector<server_data>& data, \
-	vector<connect_data>& open_connections, size_t& fd_match, int &cur_fd)
+static void	accept_handle_connection(fd_set& current_sockets, \
+	vector<connect_data>& open_connections, size_t& fd_match, int &fd_idx)
 {
-	int		server_idx;
-
-	server_idx = get_port_fd(fd_match, data);
-	if (server_idx >= 0 && fd_match == static_cast<size_t>(data[server_idx].fd))
-		accept_connect(current_sockets, data[server_idx], open_connections);
-
-	else if (cur_fd >= 0)
+	try
 	{
-		try
+		if (open_connections[fd_idx].cgi_sesh && open_connections[fd_idx].cgi_sesh->fd[FD_OUT][0] == (int)fd_match)
 		{
-			if (open_connections[cur_fd].cgi_sesh && open_connections[cur_fd].cgi_sesh->fd[FD_OUT][0] == (int)fd_match)
-			{
-				handle_cgi_response(&open_connections[cur_fd], true, current_sockets);
-				return;
-			}
-			else
-				handle_connection(current_sockets, open_connections, cur_fd, fd_match);
+			handle_cgi_response(&open_connections[fd_idx], true, current_sockets);
+			return;
 		}
-		catch (const Plebception& e)
-		{
-			std::cerr << e.what() << std::endl;
-			create_custom_response(&open_connections[cur_fd], open_connections[cur_fd].h.create_header(500, 0));
-		}
+		else
+			handle_connection(current_sockets, open_connections, fd_idx, fd_match);
+	}
+	catch (const Plebception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		create_custom_response(&open_connections[fd_idx], open_connections[fd_idx].h.create_header(500, 0));
 	}
 }
 
-static void	connection_handler(fd_set& current_sockets, vector<server_data>& data, vector<connect_data>& open_connections)
+static void fd_worker (connection_wrapper *wrp)
 {
-	fd_set				read_sok  = current_sockets;
-	fd_set				write_sok = get_response_fd(open_connections);
+	try
+	{
+		wrp->rdr.open_connections[wrp->fd_idx].lox.lock();
+		if (FD_ISSET(wrp->fd_match, &wrp->read_sok))
+			accept_handle_connection(wrp->rdr.current_sockets, wrp->rdr.open_connections, wrp->fd_match, wrp->fd_idx);
+		if (FD_ISSET(wrp->fd_match, &wrp->write_sok))
+			send_data(wrp->fd_match, wrp->rdr.open_connections, wrp->rdr.current_sockets, wrp->fd_idx);
+
+		if (wrp->rdr.open_connections[wrp->fd_idx].ready == true)
+			write(wrp->rdr.pipe_fd[FD_OUT], "!", 1);
+		wrp->rdr.open_connections[wrp->fd_idx].lox.unlock();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	delete wrp;
+}
+
+static void	connection_handler(run_data_run &rdr) 
+{
+	connection_wrapper	wrp(rdr);
+	wrp.read_sok		= wrp.rdr.current_sockets;
+	wrp.write_sok		= get_response_fd(wrp.rdr.open_connections);
+	std::thread			worker;
 	int					rval;
-	struct timeval 		to;
-	int					cur_fd;
+	char				buff[FD_SETSIZE];
+	struct timeval		to;
+	int					fd_idx;
 
 	to.tv_sec = 30;
 	to.tv_usec = 0;
-	rval = select(FD_SETSIZE, &read_sok, &write_sok, NULL, &to);
+	rval = select(FD_SETSIZE, &wrp.read_sok, &wrp.write_sok, NULL, &to);
 	if (rval < 0)
 		throw Fatal(ERR_SERVER_FATAL, "connect_handler", "select failed " + ft::to_string(errno));
 	else if (rval == 0)
 		return;
+	if (read(rdr.pipe_fd[FD_IN], &buff, FD_SETSIZE) >= 0)
+	{
+		return ;
+	}
 	for (size_t fd_match = 0; fd_match < FD_SETSIZE; fd_match++)
 	{
-		cur_fd = get_conn(fd_match, open_connections);
-		if (FD_ISSET(fd_match, &read_sok))
-			accept_handle_connection(current_sockets, data, open_connections, fd_match, cur_fd);
-		if (FD_ISSET(fd_match, &write_sok))
-			send_data(fd_match, open_connections, current_sockets, cur_fd);
+		fd_idx = get_conn(fd_match, rdr.open_connections);
+		if (fd_idx != -1)
+		{
+			if (FD_ISSET(fd_match, &wrp.write_sok) == false && FD_ISSET(fd_match, &wrp.read_sok) == false)
+				continue ;
+			worker = std::thread(fd_worker, new connection_wrapper(wrp, rdr, fd_match, fd_idx));
+			worker.detach();
+		}
+		else
+		{
+			int server_idx = get_port_fd(fd_match, rdr.data);
+			if (server_idx >= 0 && fd_match == static_cast<size_t>(rdr.data[server_idx].fd))
+				accept_connect(rdr.current_sockets, rdr.data[server_idx], rdr.open_connections);
+		}
 	}
 }
 
 void	host_servers(vector<Server> serv)
 {
-	vector<server_data> 	data;
-	fd_set					current_sockets;
-	vector<connect_data> 	open_connections;
+	run_data_run			rdr;
 
+	rdr.open_connections.reserve(FD_SETSIZE);
 	for (size_t i = 0; i < serv.size(); i++)
 	{
 		for (size_t x = 0; x < serv[i].port.size(); x++)
-			data.push_back(setup_server(serv[i], serv[i].port[x] , 128));
+			rdr.data.push_back(setup_server(serv[i], serv[i].port[x] , 128));
 	}
-	FD_ZERO(&current_sockets);
-	for (size_t i = 0; i < data.size(); i++)
-		FD_SET(data[i].fd, &current_sockets);
+	FD_ZERO(&rdr.current_sockets);
+	for (size_t i = 0; i < rdr.data.size(); i++)
+		FD_SET(rdr.data[i].fd, &rdr.current_sockets);
+	if (pipe(rdr.pipe_fd) == -1)
+		throw Plebception(ERR_FAIL_SYSCL, "host_server", "failed setting up pipe");
+	if (fcntl(rdr.pipe_fd[0], F_SETFL, O_NONBLOCK) < 0)
+		throw Plebception(ERR_FAIL_SYSCL, "fcntl1",  "rip");
+	if (fcntl(rdr.pipe_fd[1], F_SETFL, O_NONBLOCK) < 0)
+		throw Plebception(ERR_FAIL_SYSCL, "fcntl1",  "rip");
+	FD_SET(rdr.pipe_fd[FD_IN], &rdr.current_sockets);
 	while (true)
 	{
 		try
 		{
-			clear_stale_connection(open_connections, current_sockets);
-			connection_handler(current_sockets, data, open_connections);
+			//clear_stale_connection(open_connections, current_sockets);
+			connection_handler(rdr);
 		}
 		catch(const Plebception& e)
 		{

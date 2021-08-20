@@ -38,13 +38,6 @@
 #define HEADER_END "\r\n\r\n"
 #define TIMEOUT		150
 
-struct server_data
-{
-	int 				fd;
-	struct sockaddr_in 	server_addr;
-	Server*				ser;
-};
-
 
 server_data		setup_server(Server& ser, short port, int backlog);
 void			update_action(connect_data* cur_conn);

@@ -35,7 +35,7 @@ server_data	setup_server(Server& ser, short port, int backlog)
 	res.server_addr.sin_port = htons(port);
 	if (fcntl(res.fd, F_SETFL, O_NONBLOCK) == -1)
 		throw Plebception(ERR_SERVER_FATAL, "setup_server", "socket set failed");
-	if (bind(res.fd, (struct sockaddr *)&res.server_addr, sizeof(res.server_addr)) < 0)
+	if (::bind(res.fd, (struct sockaddr *)&res.server_addr, sizeof(res.server_addr)) < 0)
 		throw Plebception(ERR_SERVER_FATAL, "setup_server", "bind failed");
 	if (listen(res.fd, backlog) < 0)
 		throw Plebception(ERR_SERVER_FATAL, "setup_server", "listen failed");
