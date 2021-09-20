@@ -32,7 +32,7 @@
 # include <server.hpp>
 # include <utilities.hpp>
 # include <header.hpp>
-#include <struct_tmp.hpp>
+#include <connections.hpp>
 
 
 using namespace std;

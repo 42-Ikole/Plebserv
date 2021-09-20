@@ -26,7 +26,7 @@
 
 #include <string>
 #include <header.hpp>
-#include <struct_tmp.hpp>
+#include <connections.hpp>
 
 class Server;
 

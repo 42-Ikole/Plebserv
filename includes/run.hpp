@@ -33,7 +33,7 @@
 #include <server.hpp>
 #include <utilities.hpp>
 #include <plebception.hpp>
-#include <struct_tmp.hpp>
+#include <connections.hpp>
 
 #define HEADER_END "\r\n\r\n"
 #define TIMEOUT		150
