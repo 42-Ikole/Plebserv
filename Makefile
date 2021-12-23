@@ -20,9 +20,12 @@
 
 NAME		=	plebserv
 
-CC			=	clang++
-FLAGS		=	-std=c++98 -pedantic -Wall -Werror -Wextra
+CXX			=	clang++
+CXX_FLAGS		=	-std=c++98 -pedantic -Wall -Werror -Wextra
 DEBUG_FLAGS	=	-g -fsanitize=address
+IFLAGS		:=	-Iincludes
+SDIR		:=	src
+ODIR		:=	obj
 SRC			=	src/cgi.cpp \
 				src/header.cpp \
 				src/location.cpp \
@@ -34,24 +37,28 @@ SRC			=	src/cgi.cpp \
 				src/server_response.cpp \
 				src/server.cpp \
 				src/utilities.cpp
-
+OBJ				:= $(patsubst $(SDIR)/%.cpp,$(ODIR)/%.o,$(SRC))
 RM 			=	rm -rf
 
 # OS detection for libs and headers
 UNAME_S			:=	$(shell uname -s)
 
 ifeq ($(UNAME_S),Linux)
-FLAGS			+=	-DLINUX
+CXX_FLAGS			+=	-DLINUX
 endif #Linux
 
 ifeq ($(UNAME_S),Darwin)
 endif #Darwin
 
 
-all: $(NAME)
+all:
+	$(MAKE) $(NAME) -j8
 
-$(NAME): $(SRC)
-	$(CC) $(FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME)
+$(NAME): $(OBJ)
+	$(CXX) $(OBJ) $(LIBS) -o $(NAME)
+$(OBJ): $(ODIR)/%.o: $(SDIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CXX_FLAGS) -c -o $@ $< $(IFLAGS)
 
 clean:
 	$(RM) $(OBJ)
@@ -65,11 +72,11 @@ run: re
 	./$(NAME)
 
 debug: fclean
-	$(CC) $(FLAGS) $(DEBUG_FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME)
+	$(CXX) $(FLAGS) $(DEBUG_FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME)
 
 release:
 	@clear
-	@$(CC) $(FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME) &
+	@$(CXX) $(FLAGS) $(SRC) $(LIBS) -I includes -o $(NAME) &
 	@echo "   ___ _      _                         "
 	@sleep 1
 	@echo "  / _ \ | ___| |__  ___  ___ _ ____   __"
